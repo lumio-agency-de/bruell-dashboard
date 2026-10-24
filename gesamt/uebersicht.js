@@ -214,9 +214,9 @@
         <div class="ue-inhalt">${inhalt[id](g)}</div>${BEARBEITEN ? `<span class="ue-griff" data-griff="${id}" title="Ziehen: Breite und Höhe ändern · Doppelklick: Höhe automatisch" aria-hidden="true"></span>` : ""}</article>`; };
     return `<div class="seite uebersicht">
       <header class="ue-kopf">
-        <div class="ue-gruss"><p class="eyebrow">${WT[d.getDay()]}, ${d.getDate()}. ${MON[d.getMonth()]} ${d.getFullYear()}</p>
+        <div class="ue-gruss"><img class="ue-logo" src="bad/app/img/logo.svg" alt="Brüll GmbH"><div class="ue-gruss-text"><p class="eyebrow">${WT[d.getDay()]}, ${d.getDate()}. ${MON[d.getMonth()]} ${d.getFullYear()}</p>
           <h1>${begruessung()}, ${esc(vorname(person.name))}</h1>
-          <p class="ue-lage">${zaehler.bad + zaehler.heizung ? `<b>${zaehler.bad + zaehler.heizung}</b> ${zaehler.bad + zaehler.heizung === 1 ? "Punkt ist" : "Punkte sind"} fällig` : "Nichts fällig"}${zaehler.mail ? ` · <b>${zaehler.mail}</b> ${zaehler.mail === 1 ? "Mail" : "Mails"} zu schreiben` : ""}</p></div>
+          <p class="ue-lage">${zaehler.bad + zaehler.heizung ? `<b>${zaehler.bad + zaehler.heizung}</b> ${zaehler.bad + zaehler.heizung === 1 ? "Punkt ist" : "Punkte sind"} fällig` : "Nichts fällig"}${zaehler.mail ? ` · <b>${zaehler.mail}</b> ${zaehler.mail === 1 ? "Mail" : "Mails"} zu schreiben` : ""}</p></div></div>
         <div class="ue-zeitwetter">
           <div class="ue-uhr" aria-live="off"><b id="uhr">${zwei(d.getHours())}:${zwei(d.getMinutes())}</b><small>Uhr</small></div>
           <div class="ue-wetter" id="wetter"><p class="leise klein-text">Wetter wird geladen …</p></div>

@@ -191,3 +191,27 @@
 body.uebersicht-seite { background: #fff !important; background-image: none !important; }
 .ue-groesse button { min-width: 24px; font-size: .78rem; }
 .ue-foto { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex: none; }
+
+/* ---------- Test: Leiste oben statt links, Logo neben dem Gruß ---------- */
+body.oben-leiste .shell { grid-template-columns: minmax(0, 1fr); }
+body.oben-leiste .rail { position: sticky; top: 0; z-index: 30; height: auto; flex-direction: row; align-items: center; gap: 18px;
+  padding: 10px 72px 10px clamp(16px, 2.6vw, 40px); min-height: 62px; box-shadow: 0 8px 24px -18px rgb(0 0 0 / .6); }
+body.oben-leiste .rail .marke { display: none; }
+body.oben-leiste .nav { flex-direction: row; flex-wrap: wrap; gap: 4px; }
+body.oben-leiste .nav a { padding: 8px 14px; white-space: nowrap; border-radius: 99px; }
+body.oben-leiste .nav a[aria-current="page"] { box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--akzent) 70%, transparent); }
+body.oben-leiste .speicher { margin: 0 0 0 auto; padding: 0; border-top: 0; display: flex; align-items: center; gap: 12px; white-space: nowrap; }
+body.oben-leiste .speicher .modus { display: none; }
+body.oben-leiste .speicher .ich { margin: 0; }
+body.oben-leiste .speicher .ich-aktionen { margin: 0; }
+body.oben-leiste .ue-gruss { display: flex; align-items: center; gap: clamp(14px, 1.6vw, 22px); min-width: 0; }
+body.oben-leiste .ue-gruss-text { min-width: 0; }
+.ue-logo { flex: none; width: clamp(64px, 6vw, 92px); height: auto; aspect-ratio: 1; object-fit: contain; background: #fff; padding: 6px; border-radius: 14px;
+  box-shadow: 0 10px 24px -16px rgb(0 0 0 / .5); }
+@media (max-width: 1100px) { body.oben-leiste .speicher .ich span:not(.ich-k) { display: none; } }
+@media (max-width: 760px) {
+  body.oben-leiste .rail { padding: 8px 52px 8px 10px; min-height: 0; }
+  body.oben-leiste .nav { flex-wrap: nowrap; }
+  body.oben-leiste .speicher { display: none; }
+  .ue-logo { width: 56px; border-radius: 10px; padding: 4px; }
+}
