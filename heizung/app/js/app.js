@@ -998,7 +998,7 @@
     const f = S.filter;
     return `<div class="seite">
       <header class="kopf"><div><p class="eyebrow">Projekte</p><h1>Alle Heizungen</h1></div>
-        <div class="kopf-aktionen"><div class="seg reiter" role="tablist">${[["offen", "In Bearbeitung"], ["abgeschlossen", "Abgeschlossen"], ["verloren", "Abgesagt"], ...(istGF() ? [["papierkorb", "Papierkorb"]] : [])].map(([id, l]) => {
+        <div class="kopf-aktionen">${istBuero() ? `<button class="btn jetzt" data-aktion="neu">+ Neue Anfrage</button>` : ""}<div class="seg reiter" role="tablist">${[["offen", "In Bearbeitung"], ["abgeschlossen", "Abgeschlossen"], ["verloren", "Abgesagt"], ...(istGF() ? [["papierkorb", "Papierkorb"]] : [])].map(([id, l]) => {
           const n = id === "papierkorb" ? papierkorb().length : alle().filter((p) => (id === "offen" ? p.status === "aktiv" || p.status === "pausiert" : p.status === id)).length;
           return `<button class="seg-k${(f.status === id || (id === "offen" && !["abgeschlossen", "verloren", "papierkorb"].includes(f.status))) ? " an" : ""}" role="tab" data-aktion="projekte-reiter" data-wert="${id}">${l} <small>${n}</small></button>`; }).join("")}</div></div></header>
       <div class="werkzeuge">
@@ -2050,11 +2050,66 @@
     try { localStorage.setItem("heizdashboard:demo", "1"); } catch (e) { /* egal */ }
   }
   function vorraum(html) { document.body.classList.add("vorraum"); $("#main").innerHTML = html; const f = $("#main input"); if (f) setTimeout(() => f.focus(), 30); }
+
+  /* ================================================================
+     Auszug für die Übersichtsseite (Brüll Dashboard): mit ?auszug=1 berechnet der Bereich
+     seine Fälligkeiten, Termine, Mails, Baustellen, Team und Kennzahlen und meldet sie an die Übersicht.
+     ================================================================ */
+  const AUSZUG = new URLSearchParams(location.search).has("auszug");
+  function auszug() {
+    const heute = new Date(); heute.setHours(0, 0, 0, 0);
+    const laufend = alle().filter((p) => p.status === "aktiv" || p.status === "pausiert");
+    const kurz = (p) => ({ pid: p.id, name: anzeigeName(p), ort: (p.kunde || {}).ort || "", zust: p.zustaendig || "", zugriff: p.zugriff || [] });
+    const faellig = laufend.flatMap(faelligkeiten).sort((a, b) => a.d - b.d).map((f) => ({ ...kurz(f.p), text: f.text, unter: f.unter, d: +f.d, ueber: f.ueber }));
+    const naechstes = laufend.filter((p) => p.status === "aktiv").map((p) => {
+      const st = phaseStatus(p, p.phase), o = st.offen[0];
+      return { ...kurz(p), phase: p.phase, level: phase(p.phase).titel, schritt: o ? ersetzen(o.s.titel) : "Level abschließen", fertig: st.fertig, pflicht: st.pflicht, komplett: st.komplett };
+    }).sort((a, b) => (b.komplett - a.komplett) || (b.phase - a.phase));
+    const termine = [];
+    for (const p of alle()) for (const t of TERMINE) {
+      const d = datum((p.termine || {})[t.key]);
+      if (d && tageBis(d) >= 0 && tageBis(d) <= 31 && p.status !== "verloren") termine.push({ ...kurz(p), label: t.label, s: p.termine[t.key], d: +d });
+    }
+    termine.sort((a, b) => a.d - b.d);
+    const mails = [];
+    for (const p of laufend.filter((x) => x.status === "aktiv")) for (const s of phase(p.phase).schritte)
+      if (s.typ === "mail" && schrittGilt(p, p.phase, s) && !(p.mails || {})[s.mail]) mails.push({ ...kurz(p), titel: ersetzen(s.titel), an: (p.kunde || {}).email || "" });
+    const neu = {};
+    for (const d of S.dateien.filter((x) => x.neu && finde(x.projekt_id))) { const p = finde(d.projekt_id); (neu[p.id] = neu[p.id] || { ...kurz(p), n: 0 }).n++; }
+    const baustellen = laufend.filter((p) => { const bs = datum((p.termine || {}).baustart), ab = datum((p.termine || {}).abnahme); return bs && tageBis(bs) <= 7 && (!ab || tageBis(ab) >= 0) && p.phase >= 9; })
+      .map((p) => ({ ...kurz(p), baustart: p.termine.baustart, abnahme: p.termine.abnahme || "", phase: p.phase, level: phase(p.phase).titel,
+        team: (p.zugriff || []).map((id) => (mitgliedZu(id) || {}).name || id), laeuftHeute: tageBis(datum(p.termine.baustart)) <= 0 }));
+    const team = cfg().team.filter((m) => m.name).map((m) => {
+      const l = m.ebene === "monteur" ? laufend.filter((p) => (p.zugriff || []).includes(m.kuerzel)) : laufend.filter((p) => p.zustaendig === m.kuerzel);
+      const timer = alle().map((p) => ({ p, z: (p.zeiten || []).find((z) => z.wer === m.kuerzel && !z.ende) })).find((x) => x.z);
+      return { kuerzel: m.kuerzel, name: m.name, ebene: m.ebene, funktion: m.bezeichnung || "", projekte: l.length, timer: timer ? { name: anzeigeName(timer.p), seit: timer.z.start } : null };
+    });
+    let kennzahlen = null;
+    if (istGF()) {
+      const jahr = new Date().getFullYear(), sum = (l, f) => l.reduce((a, p) => a + (f(p) || 0), 0);
+      const fertigJahr = alle().filter((p) => p.status === "abgeschlossen" && p.abgeschlossenAm && new Date(p.abgeschlossenAm).getFullYear() === jahr);
+      kennzahlen = {
+        anfragen: laufend.filter((p) => p.phase <= 3).length,
+        angebote: laufend.filter((p) => p.phase >= 4 && p.phase <= 5).length, angeboteWert: sum(laufend.filter((p) => p.phase >= 4 && p.phase <= 5), (p) => geld(p).angebot),
+        bestand: sum(laufend.filter((p) => p.phase >= 6), (p) => geld(p).auftrag || geld(p).angebot), auftraege: laufend.filter((p) => p.phase >= 6).length,
+        umsatzJahr: sum(fertigJahr, (p) => geld(p).umsatz), fertigJahr: fertigJahr.length, ziel: (cfg().ziele || {}).jahresumsatz || 0,
+        verloren: alle().filter((p) => p.status === "verloren").length,
+      };
+    }
+    return { titel: cfg().bereich || "", ich: { id: S.ich.id, name: S.ich.name, ebene: S.ich.ebene }, laufend: laufend.length,
+      abschnitte: (window.ABSCHNITTE || []).map((a) => ({ titel: a.titel, n: laufend.filter((p) => p.phase >= a.von && p.phase <= a.bis).length })),
+      faellig, naechstes, termine, mails, neu: Object.values(neu), baustellen, team, kennzahlen, firma: { name: cfg().name, adresse: cfg().adresse } };
+  }
+  function auszugSenden() {
+    try { parent.postMessage({ typ: "bruell-auszug", pfad: location.pathname, daten: auszug() }, location.origin); }
+    catch (e) { parent.postMessage({ typ: "bruell-auszug", pfad: location.pathname, fehler: String(e && e.message || e) }, location.origin); }
+  }
   async function weiter() {
     if (!Daten.angemeldet) return vorraum(Daten.ersteinrichtungNoetig() ? ansichtErsteinrichtung() : ansichtLogin());
     if (!Daten.mitglied) return vorraum(keinZugang());
     if (Daten.mitglied.mussAendern) return vorraum(ansichtPasswortPflicht());
     await laden();
+    if (AUSZUG) return auszugSenden();
     document.body.classList.remove("vorraum");
     S.kontenGeladen = false;
     letztePid = aktuellePid();
@@ -2140,7 +2195,7 @@
       : e === "monteur" ? [["cockpit", "Meine Baustellen", "projekte"]]
       : [["cockpit", "Cockpit", "cockpit"], ["projekte", "Projekte", "projekte"], ["adressbuch", "Adressbuch", "adressbuch"], ...(istGF() ? [["kennzahlen", "Unternehmen", "kennzahlen"], ["konten", "Konten", "konten"], ["einrichtung", "Einrichtung", "einrichtung"]] : [])];
     $(".nav").innerHTML = punkte.map(([id, l, i]) => `<a href="#/${id}" data-nav="${id}"><span class="nav-i i-${i}" aria-hidden="true"></span>${l}</a>`).join("");
-    $(".neu-knopf").hidden = !istBuero();
+    const nk = $(".neu-knopf"); if (nk) nk.hidden = !istBuero();
   }
   function allesNeu() {
     const r = route();

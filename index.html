@@ -4,14 +4,28 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <title>Brüll Dashboard</title>
+  <title>Brüll · Übersicht</title>
   <link rel="icon" href="bad/app/img/logo.svg">
-  <script>
-    /* Startadresse: zuletzt genutzter Bereich (sonst Bad) */
-    var b = "bad"; try { b = localStorage.getItem("bruell:bereich") || "bad"; } catch (e) {}
-    if (b !== "bad" && b !== "heizung") b = "bad";
-    location.replace(b + "/" + location.search + location.hash);
-  </script>
+  <link rel="stylesheet" href="bad/app/css/app.css?v=202610241500">
+  <link rel="stylesheet" href="gesamt/uebersicht.css?v=202610241500">
 </head>
-<body><p><a href="bad/">Bad</a> · <a href="heizung/">Heizung</a></p></body>
+<body class="uebersicht-seite">
+  <div class="shell">
+    <aside class="rail" aria-label="Hauptnavigation">
+      <a class="marke" href="./">
+        <img class="marke-logo" src="bad/app/img/logo.svg" alt="">
+        <span class="marke-text"><strong>Brüll GmbH</strong><small>Bad &amp; Heizung</small></span>
+      </a>
+      <nav class="nav" id="nav"></nav>
+      <div class="speicher" id="ich"></div>
+    </aside>
+    <main class="main" id="main" tabindex="-1">
+      <p class="ue-laedt">Übersicht wird geladen …</p>
+      <noscript><p class="noscript">Bitte JavaScript aktivieren.</p></noscript>
+    </main>
+  </div>
+  <div id="auszuege" hidden></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="gesamt/uebersicht.js?v=202610241500"></script>
+</body>
 </html>

@@ -1,0 +1,127 @@
+/* ==========================================================================
+   Brüll Dashboard – Übersicht: Kopf mit Begrüßung/Uhr/Wetter + Widgets im Apple-Stil
+   (baut auf den Farben und Schriften von bad/app/css/app.css auf)
+   ========================================================================== */
+.ue-laedt { color: var(--leise); padding: 40px 0; }
+.uebersicht { max-width: 1480px; }
+
+/* Kopf */
+.ue-kopf { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 18px 28px; align-items: end; margin: 6px 0 26px; }
+.ue-gruss h1 { font: 400 clamp(2rem, 3.4vw, 2.9rem)/1.05 var(--serif); color: var(--tinte); margin: 4px 0 8px; letter-spacing: -.01em; }
+.ue-lage { margin: 0; color: var(--leise); font-size: 1rem; }
+.ue-lage b { color: var(--tinte); }
+.ue-uhr { text-align: right; line-height: 1; }
+.ue-uhr b { font: 400 clamp(2.4rem, 4vw, 3.4rem)/1 var(--serif); color: var(--tinte); letter-spacing: -.02em; }
+.ue-uhr small { display: block; color: var(--leise); font-size: .78rem; margin-top: 4px; letter-spacing: .1em; text-transform: uppercase; }
+.ue-wetter { min-width: 290px; padding: 14px 16px; border-radius: 20px; color: #fff;
+  background: linear-gradient(160deg, #2f6fb8, #1c4a87 70%); box-shadow: 0 14px 30px -18px rgb(4 36 97 / .55); }
+.ue-wetter .leise { color: rgb(255 255 255 / .75); }
+.wt-jetzt { display: flex; align-items: center; gap: 10px; }
+.wt-sym { font-size: 2rem; line-height: 1; }
+.wt-jetzt b { display: block; font: 400 1.9rem/1 var(--serif); }
+.wt-jetzt small { color: rgb(255 255 255 / .82); font-size: .78rem; }
+.wt-tage { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgb(255 255 255 / .2); text-align: center; }
+.wt-tage span { display: grid; gap: 1px; }
+.wt-tage small { font-size: .7rem; color: rgb(255 255 255 / .8); }
+.wt-tage i { font-style: normal; font-size: 1.15rem; }
+.wt-tage b { font-size: .95rem; }
+
+/* Raster */
+/* Spalten ohne Lücken (wie Widgets auf dem iPad): Widgets laufen von oben nach unten */
+.ue-raster { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; }
+.ue-spalte { display: grid; gap: 18px; min-width: 0; }
+.ue-w { background: var(--blatt, #fbf9f4); border-radius: 22px; padding: 16px 18px 14px; box-shadow: 0 1px 0 rgb(4 36 97 / .04), 0 18px 34px -24px rgb(4 36 97 / .35); border: 1px solid rgb(4 36 97 / .06); min-width: 0; display: flex; flex-direction: column; }
+.ue-w > header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.ue-w h2 { font-family: inherit; font-size: .74rem; font-weight: 700; line-height: 1; letter-spacing: .12em; text-transform: uppercase; color: var(--leise); margin: 0; }
+.ue-w.w-bad h2, .ue-w.w-heizung h2, .ue-w.w-kalender h2 { color: var(--tinte); }
+.ue-w.w-bad > header::before, .ue-w.w-heizung > header::before, .ue-w.w-kalender > header::before, .ue-w.w-mail > header::before { content: ""; width: 10px; height: 10px; border-radius: 3px; background: var(--tinte); }
+.ue-w.w-heizung > header::before { background: #c0392b; }
+.ue-w.w-kalender > header::before { background: var(--akzent); }
+.ue-w.w-mail > header::before { background: #2f6fb8; }
+.ue-badge { margin-left: auto; min-width: 24px; height: 24px; padding: 0 8px; border-radius: 99px; background: var(--akzent); color: var(--tinte); font-weight: 700; font-size: .8rem; display: grid; place-items: center; }
+.ue-inhalt { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+
+/* Listen */
+.ue-liste { list-style: none; margin: 0; padding: 0; }
+.ue-liste li + li { border-top: 1px solid var(--fuge); }
+.ue-liste a { display: flex; align-items: center; gap: 10px; padding: 8px 2px; text-decoration: none; color: inherit; border-radius: 10px; min-width: 0; }
+.ue-liste a:hover { background: color-mix(in oklab, var(--tinte) 5%, transparent); }
+.ue-liste.dicht a { padding: 6px 2px; }
+.ue-zt { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.ue-zt b { font-weight: 600; font-size: .92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ue-zt small { color: var(--leise); font-size: .78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ue-zeit { display: flex; flex-direction: column; width: 70px; flex: none; }
+.ue-zeit b { font-size: .82rem; color: var(--tinte); }
+.ue-zeit small { font-size: .76rem; color: var(--leise); }
+.ue-wann { flex: none; font-size: .78rem; color: var(--leise); white-space: nowrap; }
+.ue-wann.rot { color: var(--rot); font-weight: 600; }
+.ue-punkt { width: 8px; height: 8px; border-radius: 50%; background: var(--akzent); flex: none; }
+.ue-punkt.rot { background: var(--rot); }
+.ue-lv { font: 400 .8rem/1 var(--serif); color: var(--akzent); width: 22px; flex: none; }
+.ue-ico { width: 26px; height: 26px; flex: none; display: grid; place-items: center; border-radius: 8px; background: color-mix(in oklab, var(--tinte) 7%, transparent); color: var(--tinte); font-size: .8rem; }
+.ue-ico.an { background: color-mix(in oklab, var(--gruen, #2f6b45) 16%, transparent); color: var(--gruen, #2f6b45); }
+.ue-tag { flex: none; font-size: .64rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 2px 7px; border-radius: 99px; background: color-mix(in oklab, var(--tinte) 9%, transparent); color: var(--tinte); }
+.ue-tag.heizung { background: color-mix(in oklab, #c0392b 12%, transparent); color: #9b2c20; }
+.ue-unter { margin: 6px 0 0; font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--leise); }
+.ue-unter em { font-style: normal; color: var(--akzent); }
+.ue-leer { margin: 4px 0; color: var(--leise); font-size: .88rem; }
+.ue-fuss { margin: 4px 0 0; color: var(--leise); font-size: .74rem; }
+.ue-aktion { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; padding-top: 8px; }
+
+/* Kalender-Woche */
+.ue-woche { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; margin-bottom: 4px; }
+.ue-woche span { display: grid; gap: 2px; padding: 6px 0; border-radius: 12px; }
+.ue-woche small { font-size: .68rem; color: var(--leise); text-transform: uppercase; letter-spacing: .06em; }
+.ue-woche b { font: 400 1.1rem/1 var(--serif); color: var(--tinte); }
+.ue-woche i { font-style: normal; color: var(--akzent); font-size: .8rem; line-height: .6; height: 8px; }
+.ue-woche .heute { background: var(--tinte); }
+.ue-woche .heute b, .ue-woche .heute small { color: #fff; }
+.ue-woche .vorbei { opacity: .45; }
+
+/* Bereiche: Zahlen je Abschnitt */
+.ue-zahlen { display: grid; grid-template-columns: repeat(auto-fit, minmax(70px, 1fr)); gap: 6px; }
+.ue-zahlen span { display: grid; gap: 2px; padding: 8px 10px; border-radius: 12px; background: color-mix(in oklab, var(--tinte) 5%, transparent); }
+.ue-zahlen b { font: 400 1.35rem/1 var(--serif); color: var(--tinte); }
+.ue-zahlen small { font-size: .7rem; color: var(--leise); line-height: 1.2; }
+
+/* Kennzahlen */
+.ue-kz-gross { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ue-kz-gross > span:first-child small { display: block; color: var(--leise); font-size: .74rem; }
+.ue-kz-gross > span:first-child b { font: 400 2rem/1.1 var(--serif); color: var(--tinte); }
+.ue-ring { --p: 0; width: 76px; height: 76px; border-radius: 50%; display: grid; place-content: center; text-align: center; flex: none;
+  background: radial-gradient(closest-side, var(--blatt, #fbf9f4) 76%, transparent 78% 100%), conic-gradient(var(--akzent) calc(var(--p) * 1%), color-mix(in oklab, var(--tinte) 10%, transparent) 0); }
+.ue-ring b { font-size: .95rem; color: var(--tinte); }
+.ue-ring small { font-size: .62rem; color: var(--leise); }
+.ue-kz { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ue-kz span { display: grid; gap: 2px; padding: 10px 12px; border-radius: 14px; background: color-mix(in oklab, var(--tinte) 5%, transparent); }
+.ue-kz b { font: 400 1.15rem/1.1 var(--serif); color: var(--tinte); }
+.ue-kz small { font-size: .72rem; color: var(--leise); }
+
+/* Personal */
+.ue-team { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.ue-team li { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.ue-last { width: 90px; height: 7px; border-radius: 99px; background: color-mix(in oklab, var(--tinte) 8%, transparent); display: flex; overflow: hidden; flex: none; }
+.ue-last .b { background: var(--tinte); }
+.ue-last .h { background: #c0392b; }
+.ue-live { color: var(--gruen, #2f6b45); font-weight: 600; }
+.ue-leg { display: inline-block; width: 9px; height: 9px; border-radius: 2px; vertical-align: -1px; margin-left: 4px; }
+.ue-leg.b { background: var(--tinte); }
+.ue-leg.h { background: #c0392b; }
+
+/* Anpassen */
+.ue-anpassen { margin-top: 26px; }
+.ue-anpassen summary { cursor: pointer; padding: 14px 18px; display: flex; gap: 12px; align-items: baseline; font-weight: 600; color: var(--tinte); list-style: none; }
+.ue-anpassen summary::-webkit-details-marker { display: none; }
+.ue-anpassen summary::before { content: "›"; color: var(--leise); transition: transform 160ms ease; }
+.ue-anpassen[open] summary::before { transform: rotate(90deg); }
+.ue-anpassen summary small { color: var(--leise); font-weight: 400; }
+.ue-matrix th { text-align: center; font-size: .66rem; }
+.ue-matrix th:first-child { text-align: left; }
+.ue-matrix input { width: 18px; height: 18px; accent-color: var(--tinte); }
+
+@media (max-width: 1000px) { .ue-raster { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 900px) { .ue-kopf { grid-template-columns: 1fr auto; } .ue-wetter { grid-column: 1 / -1; } }
+@media (max-width: 640px) {
+  .ue-raster { grid-template-columns: minmax(0, 1fr); }
+  .ue-kopf { grid-template-columns: 1fr; } .ue-uhr { text-align: left; } .ue-wetter { min-width: 0; }
+}

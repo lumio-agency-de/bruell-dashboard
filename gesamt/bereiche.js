@@ -1,17 +1,31 @@
-/* Brüll Dashboard (Gesamt): Bereichs-Umschalter Bad | Heizung in der linken Leiste.
+/* Brüll Dashboard (Gesamt): Navigation Übersicht · Bad · Heizung in der linken Leiste der Bereiche.
    Wird beim Zusammenbau in beide Dashboards eingebunden – die Einzelversionen bleiben unverändert. */
 (function () {
-  const BEREICHE = [["bad", "Bad"], ["heizung", "Heizung"]];
+  if (window !== window.top) return;                       // Auszug-Rahmen der Übersicht: nichts tun
   const akt = document.currentScript && document.currentScript.dataset.bereich;
-  try { localStorage.setItem("bruell:bereich", akt); } catch (e) { /* egal */ }
+  const QS = location.search;
+  const EINTRAEGE = [["", "Übersicht", "i-cockpit"], ["bad", "Bad", "i-projekte"], ["heizung", "Heizung", "i-projekte"]];
   function einbauen() {
-    const rail = document.querySelector(".rail"), marke = rail && rail.querySelector(".marke");
-    if (!marke || rail.querySelector(".bereich-wahl")) return;
+    const rail = document.querySelector(".rail"), nav = rail && rail.querySelector(".nav");
+    if (!nav || rail.querySelector(".bereich-nav")) return;
     const d = document.createElement("nav");
-    d.className = "bereich-wahl"; d.setAttribute("aria-label", "Bereich");
-    d.innerHTML = BEREICHE.map(([id, t]) => `<a href="../${id}/${location.search}" class="${id === akt ? "an" : ""}"${id === akt ? ' aria-current="page"' : ""}>${t}</a>`).join("");
-    marke.after(d);
-    document.title = document.title.replace(/^(Bad|Heizungs)-Dashboard/, "Brüll Dashboard · " + (akt === "bad" ? "Bad" : "Heizung"));
+    d.className = "bereich-nav"; d.setAttribute("aria-label", "Bereiche");
+    d.innerHTML = EINTRAEGE.map(([id, t, i]) => `<a href="../${id ? id + "/" : ""}${QS}" class="${id === akt ? "hier" : ""}"><span class="nav-i ${i}" aria-hidden="true"></span>${t}</a>`).join("")
+      + `<p class="bereich-titel">${akt === "bad" ? "Bad" : "Heizung"}</p>`;
+    nav.before(d);
   }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", einbauen); else einbauen();
+  /* Nach der Anmeldung zurück zur Übersicht, wenn man von dort kam */
+  function zurueckPruefen() {
+    let z = null; try { z = sessionStorage.getItem("bruell:zurueck"); } catch (e) { /* egal */ }
+    if (!z) return;
+    const ob = new MutationObserver(() => {
+      if (!document.body.classList.contains("vorraum") && document.querySelector(".ich")) {
+        ob.disconnect(); try { sessionStorage.removeItem("bruell:zurueck"); } catch (e) { /* egal */ }
+        location.replace("../" + QS);
+      }
+    });
+    ob.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ["class"] });
+  }
+  const los = () => { einbauen(); zurueckPruefen(); };
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", los); else los();
 })();

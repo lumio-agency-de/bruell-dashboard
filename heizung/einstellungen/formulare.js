@@ -4,6 +4,7 @@
    Feld-Typen
      abschnitt   Zwischenüberschrift                 { titel }
      untertitel  kleine Überschrift innerhalb eines Abschnitts   { titel }
+     hinweis     kleiner Erklärtext über die ganze Breite         { text }
      text        einzeilig            textarea  mehrzeilig
      zahl        Zahl (einheit: "m²")  datum     Datum
      regler      Schieberegler        { min, max, schritt, einheit: "€" }
@@ -209,8 +210,31 @@
         { id: "kaminD", typ: "text", label: "Kamin Ø", breite: "drittel" },
         { id: "kaminL", typ: "text", label: "Kamin Länge", breite: "drittel" },
         { id: "solarleitung", typ: JN, label: "Zuführung Solarleitung möglich", breite: "drittel" },
-        { id: "oellager", typ: "text", label: "Heizöllagerung", breite: "halb" },
-        { id: "tankraum", typ: "text", label: "Tankraumgröße", breite: "halb" },
+        { id: "oellager", typ: JN, label: "Heizöllagerung", breite: "drittel", start: 1 },
+        { typ: "untertitel", titel: "Checkliste Tankdemontage", wenn: { feld: "oellager", wert: "ja" } },
+        { id: "oelTankart", typ: "mehrfach", label: "Tankart", optionen: ["Kellertank", "Batterietank", "Erdtank"], breite: "drittel", wenn: { feld: "oellager", wert: "ja" } },
+        { id: "oelMaterial", typ: "mehrfach", label: "Öltank Material", optionen: ["Kellertank (Stahl)", "PE-Batterietank", "Alu-Tank", "GFK Glasfaser"], breite: 8, wenn: { feld: "oellager", wert: "ja" } },
+        { id: "oelGroesse", typ: "zahl", label: "Tankgröße", einheit: "Liter", breite: "drittel", start: 1, wenn: { feld: "oellager", wert: "ja" } },
+        { id: "oelInhalt", typ: "zahl", label: "Tankinhalt gesamt (gemessen)", einheit: "Liter", breite: "drittel", wenn: { feld: "oellager", wert: "ja" } },
+        { id: "oelSchlauch", typ: "zahl", label: "Schlauchlänge zum Abpumpen (vom Tank zum Fahrzeug)", einheit: "m", breite: "drittel", wenn: { feld: "oellager", wert: "ja" } },
+        { typ: "hinweis", text: "Formel Batterietank: Tankgröße (L) × gemessene cm ÷ Tankhöhe in cm = Inhalt in Liter", wenn: { feld: "oellager", wert: "ja" } },
+        { id: "oelEntsorgen", typ: JN, label: "Tankinhalt entsorgen", breite: "drittel", start: 1, wenn: { feld: "oellager", wert: "ja" } },
+        { id: "oelTransport", typ: JN, label: "Öltransport", breite: "drittel", wenn: { feld: "oellager", wert: "ja" } },
+        { id: "oelUmpumpen", typ: JN, label: "Restl. Öl umpumpen (bis 30 m, direkter Nachbar nicht über die Straße)", breite: "drittel", wenn: { feld: "oellager", wert: "ja" } },
+        { id: "oelVormauerung", typ: JN, label: "Vormauerung", breite: "drittel", start: 1, wenn: { feld: "oellager", wert: "ja" } },
+        { id: "oelVormauerungBauseits", typ: JN, label: "Beseitigung bauseits", breite: "drittel", wenn: { feld: "oelVormauerung", wert: "ja" } },
+        { id: "oelVormauerungLaenge", typ: "zahl", label: "Wenn nein, Länge", einheit: "m", breite: "drittel", wenn: { feld: "oelVormauerungBauseits", wert: "nein" } },
+        { id: "oelLuke", typ: JN, label: "Luke zur Tür", breite: "drittel", start: 1, wenn: { feld: "oellager", wert: "ja" } },
+        { id: "oelLukeBauseits", typ: JN, label: "Beseitigung bauseits", breite: "drittel", wenn: { feld: "oelLuke", wert: "ja" } },
+        { id: "oelZugang", typ: "mehrfach", label: "Zugang Tankraum", optionen: ["Zugang zu UG und Tankraum über separaten Treppenabgang", "Zugang über Treppenhaus", "Erschwerter Zugang durch Wohnräume, Wendeltreppe usw."], wenn: { feld: "oellager", wert: "ja" } },
+        { id: "oelSonstiges", typ: "text", label: "Sonstiges", wenn: { feld: "oellager", wert: "ja" } },
+        { id: "oelAbdeckung", typ: JN, label: "Abdeckmaterial Auslegeware erforderlich", breite: "drittel", start: 1, wenn: { feld: "oellager", wert: "ja" } },
+        { id: "oelAbdeckungMeter", typ: "zahl", label: "Wenn ja, Anzahl Meter", einheit: "m", breite: "drittel", wenn: { feld: "oelAbdeckung", wert: "ja" } },
+        { id: "oelInnenhuelle", typ: JN, label: "Tankinnenhülle", breite: "drittel", start: 9, wenn: { feld: "oellager", wert: "ja" } },
+        { id: "oelParken", typ: JN, label: "Parkmöglichkeit für Langsprinter mit Hänger und LKW bauseits durch Kunde", breite: "drittel", start: 1, wenn: { feld: "oellager", wert: "ja" } },
+        { id: "oelParkverbot", typ: "auswahl", label: "Notwendiges Parkverbot beantragen", optionen: ["Ja", "Nein", "Bauseits"], breite: "drittel", wenn: { feld: "oellager", wert: "ja" } },
+        { id: "oelAbnahme", typ: JN, label: "Amtliche Abnahme", breite: "drittel", wenn: { feld: "oellager", wert: "ja" } },
+        { id: "oelBilder", typ: JN, label: "Bilder beigefügt", breite: "drittel", start: 1, wenn: { feld: "oellager", wert: "ja" } },
         { typ: "abschnitt", titel: "Weitere Angaben" },
         { id: "weitere", typ: "mehrfach", label: "Was wird benötigt?", optionen: ["Gerüst", "Steiger", "Straßensperrung", "Möbelpacker", "Tank leer pumpen", "Tankdemontage", "Demontage Tankraum-Mauer", "Demontage Tankraum-Stahltür", "Elektro klein", "Elektro groß", "Inbetriebnahme WP", "Türeinbau"] },
         { id: "check", typ: "checkliste", modus: "janein", label: "Fotos & Infos", pflicht: true, punkte: [
@@ -218,8 +242,9 @@
           { id: "heizkoerper", label: "Bilder Heizkörper" },
           { id: "leitungen", label: "Bilder Leitungen" },
           { id: "parken", label: "Bilder Parkmöglichkeiten" },
-          { id: "vormauerung", label: "Bilder Vormauerung", optional: true },
-          { id: "garten", label: "Bilder Garten (bei Bedarf)", optional: true },
+          { id: "vormauerung", label: "Bilder Öltankraum (Vormauerung)", optional: true },
+          { id: "zaehlerschrank", label: "Bilder Zählerschrank" },
+          { id: "garten", label: "Bilder Garten", optional: true },
           { id: "hausverwaltung", label: "Info Hausverwaltung", optional: true },
         ] },
         { id: "weitereText", typ: "text", label: "Sonstiges" },

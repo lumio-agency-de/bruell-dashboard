@@ -348,11 +348,18 @@ a.zeile:hover { background: var(--tinte-weich); }
 .ff-index { position: sticky; top: 100px; align-self: start; display: grid; gap: 2px; font-size: .8rem; }
 .ff-index a { text-decoration: none; color: var(--leise); padding: 4px 8px; border-left: 2px solid var(--fuge-stark); transition: color 150ms ease, border-color 150ms ease; }
 .ff-index a:hover { color: var(--tinte); border-color: var(--akzent); }
-.ff-raster { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 14px 14px; align-items: start; }
+.ff-raster { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 14px 14px; align-items: stretch; }
 .ff { grid-column: span var(--span); min-width: 0; }
+/* Felder einer Reihe an der Unterkante ausrichten – zweizeilige Überschriften verschieben das Eingabefeld nicht */
+.ff { display: flex; flex-direction: column; justify-content: flex-end; }
+.ff > .seg { align-self: flex-start; }
+/* Knöpfe in Formularen so hoch wie ein Eingabefeld – dann stimmen Ober- und Unterkante einer Reihe */
+.ff .chip { min-height: 37.8px; }
+.ff > .seg { min-height: 37.8px; }
 .ff[data-start] { grid-column: var(--start) / span var(--span); }
 .ff.breit-tab { grid-column: 1 / -1; }
 .ff-abschnitt { grid-column: 1 / -1; font-size: 1.15rem; padding-top: 14px; margin-top: 4px; border-top: 2px solid var(--tinte); scroll-margin-top: 110px; }
+.ff-hinweis { grid-column: 1 / -1; margin: -6px 0 0; font-size: .8rem; color: var(--leise); }
 .ff-untertitel { grid-column: 1 / -1; font-size: .95rem; margin: 6px 0 -4px; color: var(--tinte); }
 .ff-abschnitt:first-child { border-top: 0; padding-top: 0; margin-top: 0; }
 .ff-label { display: block; font-size: .7rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--leise); margin-bottom: 5px; }
