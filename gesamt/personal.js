@@ -161,6 +161,16 @@ var PK_NR = (new URLSearchParams(location.search).get("nr") || "").replace(/\D/g
   }
   if (document.body.classList.contains("karte-seite")) {
     document.addEventListener("input", (e) => { if (["vorname", "nachname", "position"].includes(e.target.id)) window.pkKopfAktualisieren(); });
+    /* Abteilungs-Chips → Position (z. B. Ausbildung + Heizung = „Azubi – Heizung“) */
+    const ROLLE = [["inhaber", "Inhaber"], ["meister", "Meister"], ["ausbildung", "Azubi"], ["buero", "Büro"], ["buchhaltung", "Buchhaltung"], ["kundendienst", "Kundendienst"]];
+    const BEREICH = [["bad_sanitaer", "Bad"], ["heizung", "Heizung"], ["fliesen", "Fliesen"]];
+    document.addEventListener("change", (e) => {
+      if (e.target.name !== "abt") return;
+      const an = [...document.querySelectorAll('input[name="abt"]:checked')].map((c) => c.value);
+      const teile = [...ROLLE, ...BEREICH].filter(([k]) => an.includes(k)).map(([, t]) => t);
+      const pos = document.getElementById("position");
+      if (pos) { pos.value = teile.join(" – "); window.pkKopfAktualisieren(); }
+    });
     window.addEventListener("beforeunload", () => { /* Hinweis: Speichern mit 💾 */ });
   }
 })();
