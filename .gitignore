@@ -3,3 +3,8 @@ werkzeuge/ordner-sync/.env
 */werkzeuge/ordner-sync/.env
 Personalkarten/
 personal/daten-lokal.js
+
+# Personal-Exporte (vertraulich)
+*.xlsx
+*.xls
+*.csv

@@ -75,6 +75,18 @@ var PK_NR = (new URLSearchParams(location.search).get("nr") || "").replace(/\D/g
   const FZ_AUS_PK = [["fz_kennzeichen", "fz_kennzeichen"], ["fz_modell", "fz_modell"], ["fz_seit", "fz_zuweisung_seit"], ["fz_fuehrerschein", "fz_fuehrerschein"],
     ["fz_fs_gueltig", "fz_fs_gueltig"], ["fz_km", "fz_km"], ["fz_tuev", "fz_tuev"], ["fz_tankkarte", "fz_tankkarte"], ["fz_privatnutzung", "fz_privatnutzung"], ["fz_schaden", "fz_schaeden"]];
   function fahrzeugeVorladen() {
+    /* Neuer Excel-Stand (werkzeuge/excel_import.py): Fahrzeuge + Kleidung einmalig übernehmen */
+    const stand = window.DATEN_STAND;
+    if (stand && localStorage.getItem("bruell:datenstand") !== stand) {
+      for (const [nr, f] of Object.entries(window.FZ_VOLL || {})) {
+        try { localStorage.setItem("fz_" + nr, JSON.stringify({ ...lesen("fz_" + nr, {}), ...f })); } catch (e) { /* voll */ }
+      }
+      for (const [nr, d] of Object.entries(window.PK_VOLL || {})) {
+        const alt = lesen("pk_" + nr, null);
+        if (alt && d._ak_table) { alt._ak_table = d._ak_table; try { localStorage.setItem("pk_" + nr, JSON.stringify(alt)); } catch (e) { /* voll */ } }
+      }
+      try { localStorage.setItem("bruell:datenstand", stand); } catch (e) { /* egal */ }
+    }
     for (const [pnr, vnr] of Object.entries(FZ_ZUORDNUNG)) {
       if (localStorage.getItem("fz_" + vnr)) continue;
       const d = lesen("pk_" + pnr, null);

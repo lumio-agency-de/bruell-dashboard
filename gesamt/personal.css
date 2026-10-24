@@ -138,3 +138,4 @@ body { background: #fff !important; background-image: none !important; }
 
 .topbar { background: rgb(255 255 255 / .9); }
 .fz-seite[data-ansicht="karte"] .main { padding-top: 0; }
+.fz-art { display: inline-block; font-size: .7rem; font-weight: 700; letter-spacing: .04em; padding: 1px 7px; border-radius: 99px; background: var(--tinte-weich); color: var(--tinte); margin-right: 4px; }

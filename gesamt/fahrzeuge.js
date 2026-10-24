@@ -48,9 +48,9 @@
       const p = personZu(d.fz_fahrer), foto = p && fotoVon(p.nr), ini = (d.fz_fahrer || "").split(/\s+/).map((w) => w[0] || "").join("").slice(0, 2).toUpperCase();
       return `<a class="ma-karte fz-karte" href="karte.html${qs({ nr })}">
         <span class="fz-schild"><i>D</i>${esc(d.fz_kennzeichen || "ohne Kennz.")}</span>
-        <span class="ma-text"><b>${esc(d.fz_modell || "Fahrzeug")}</b><small>Fz.-Nr. ${esc(d.fz_nr_intern || String(nr).padStart(3, "0"))}${d.fz_km ? ` · ${esc(Number(d.fz_km).toLocaleString("de-DE"))} km` : ""}</small></span>
+        <span class="ma-text"><b>${esc(d.fz_modell || "Fahrzeug")}</b><small>${d.fz_typ ? `<span class="fz-art">${esc(d.fz_typ)}${d.fz_status ? " · " + esc(d.fz_status) : ""}</span> ` : ""}Fz.-Nr. ${esc(d.fz_nr_intern || String(nr).padStart(3, "0"))}${d.fz_km ? ` · ${esc(Number(d.fz_km).toLocaleString("de-DE"))} km` : ""}</small></span>
         <span class="fz-fahrer">${d.fz_fahrer ? `<span class="ma-foto klein">${foto ? `<img src="${esc(foto)}" alt="">` : `<b>${esc(ini)}</b>`}</span><span>${esc(d.fz_fahrer)}</span>` : `<span class="leise">Kein Fahrer zugewiesen</span>`}</span>
-        <span class="ma-werte">${fristChip("HU / TÜV", d.fz_tuev)}${fristChip("Führerschein bis", d.fz_fs_gueltig)}</span></a>`;
+        <span class="ma-werte">${fristChip("HU / TÜV", d.fz_tuev)}${d.fz_typ === "Anhänger" ? "" : fristChip("Führerschein bis", d.fz_fs_gueltig)}${d.fz_leasing_ende ? fristChip("Leasing-Ende", d.fz_leasing_ende) : ""}</span></a>`;
     }).join("")}</div>` : `<p class="ue-leer">${q ? "Keine Treffer." : "Noch keine Fahrzeuge – „+ Fahrzeug“ anlegen."}</p>`;
   }
   function listeSeite() {
@@ -70,7 +70,7 @@
   /* ---------- Fahrzeugkarte ---------- */
   const JN = ["", "Ja", "Nein"];
   const BLOECKE = [
-    ["Fahrzeug", [["fz_kennzeichen", "Kennzeichen"], ["fz_modell", "Fahrzeugtyp / Modell"], ["fz_nr_intern", "Fahrzeug-Nr. (intern)"], ["fz_km", "Kilometerstand", "number"], ["fz_tuev", "Nächste HU / TÜV", "datum"]]],
+    ["Fahrzeug", [["fz_kennzeichen", "Kennzeichen"], ["fz_modell", "Fahrzeugtyp / Modell"], ["fz_typ", "Art", ["", "Transporter", "PKW", "LKW", "Anhänger"]], ["fz_status", "Leasing / Eigentum", ["", "Leasing", "Eigentum", "Miete"]], ["fz_nr_intern", "Fahrzeug-Nr. (intern)"], ["fz_km", "Kilometerstand", "number"], ["fz_tuev", "Nächste HU / TÜV", "datum"]]],
     ["Fahrer & Zuweisung", [["fz_fahrer", "Fahrer", "fahrer"], ["fz_zuweisung_seit", "Zugewiesen seit", "datum"], ["fz_fuehrerschein", "Führerschein Klasse"], ["fz_fs_gueltig", "Führerschein gültig bis", "datum"], ["fz_privatnutzung", "Privatnutzung erlaubt", JN]]],
     ["Tanken", [["fz_tankkarte", "Tankkarte vorhanden", JN], ["fz_dkv", "DKV-/Tankkarten-Nr."]]],
     ["Leasing & Steuer", [["fz_leasing_nr", "Leasing-Vertragsnr."], ["fz_leasingrate", "Leasingrate / Monat (€)"], ["fz_leasing_ende", "Leasing-Ende", "datum"], ["fz_steuer", "Kfz-Steuer / Jahr (€)"]]],
