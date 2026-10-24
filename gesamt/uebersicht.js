@@ -132,13 +132,9 @@
   }
   function wBereich(b, a, g) {
     if (!a || a.fehler) return leer("Bereich gerade nicht erreichbar.");
-    const f = a.faellig || [], nf = anz(g, 3, 4, 10), nn = anz(g, 0, 3, 8), n = (a.naechstes || []).slice(0, nn);
-    const faellig = `<p class="ue-unter">Fällig${f.length ? ` <em>${f.length}</em>` : ""}</p>
-      ${f.length ? `<ul class="ue-liste dicht">${f.slice(0, nf).map((x) => `<li><a href="${link(b, x.pid)}"><span class="ue-punkt${x.ueber ? " rot" : ""}" aria-hidden="true"></span><span class="ue-zt"><b>${esc(x.text)}</b><small>${esc(x.name)}</small></span>${g === "k" ? "" : `<span class="ue-wann${x.ueber ? " rot" : ""}">${x.ueber ? "überfällig" : esc(tagText(new Date(x.d)))}</span>`}</a></li>`).join("")}</ul>${mehr(f, nf)}` : leer("Nichts fällig.")}`;
-    const naechstes = nn ? `<p class="ue-unter">Als Nächstes</p>
-      ${n.length ? `<ul class="ue-liste dicht">${n.map((x) => `<li><a href="${link(b, x.pid)}"><span class="ue-lv">${zwei(x.phase)}</span><span class="ue-zt"><b>${esc(x.schritt)}</b><small>${esc(x.name)} · ${esc(x.level)}</small></span><span class="ue-wann">${x.fertig}/${x.pflicht}</span></a></li>`).join("")}</ul>` : leer("Keine laufenden Projekte.")}` : "";
-    return `${g === "k" ? `<p class="ue-gross-zahl"><b>${a.laufend}</b><small>laufende Projekte</small></p>` : `<div class="ue-zahlen">${(a.abschnitte || []).map((x) => `<span><b>${x.n}</b><small>${esc(x.titel)}</small></span>`).join("")}</div>`}
-      ${g === "g" ? `<div class="ue-zwei"><div>${faellig}</div><div>${naechstes}</div></div>` : faellig + naechstes}
+    const f = a.faellig || [], nf = anz(g, 3, 6, 14);
+    return `${f.length ? `<ul class="ue-liste${g === "g" ? " zweispaltig" : ""}">${f.slice(0, nf).map((x) => `<li><a href="${link(b, x.pid)}"><span class="ue-punkt${x.ueber ? " rot" : ""}" aria-hidden="true"></span><span class="ue-zt"><b>${esc(x.text)}</b><small>${esc(x.name)}${x.unter && g !== "k" ? " · " + esc(x.unter) : ""}</small></span>${g === "k" ? "" : `<span class="ue-wann${x.ueber ? " rot" : ""}">${x.ueber ? "überfällig" : esc(tagText(new Date(x.d)))}</span>`}</a></li>`).join("")}</ul>${mehr(f, nf)}`
+        : `<p class="ue-alles-gut"><span aria-hidden="true">✓</span> Nichts fällig</p>`}
       <div class="ue-aktion"><a class="btn klein voll" href="${b}/${QS}#/cockpit">${g === "k" ? "Öffnen" : (b === "bad" ? "Bad" : "Heizung") + " öffnen"} →</a>${g === "k" ? "" : `<a class="btn klein still" href="${b}/${QS}#/projekte">Projekte</a>`}</div>`;
   }
   function wBaustellen(A, g) {
@@ -198,10 +194,10 @@
     const inhalt = { kalender: (g) => wKalender(A, g), mail: (g) => wMail(A, g), bad: (g) => wBereich("bad", A.bad, g), heizung: (g) => wBereich("heizung", A.heizung, g), baustellen: (g) => wBaustellen(A, g), kennzahlen: (g) => wKennzahlen(A, g), personal: (g) => wPersonal(A, g), neu: (g) => wNeu(A, g) };
     const reihenfolge = [...lay.reihe, ...STANDARD_REIHE.filter((id) => !lay.reihe.includes(id))].filter((id) => sicht.includes(id));
     const karte = (id, i) => { const w = WIDGETS.find((x) => x.id === id), g = groesseVon(person, id);
-      return `<article class="ue-w g-${g} w-${id}" data-widget="${id}"><header><h2>${esc(w.titel)}</h2>${zaehler[id] ? `<span class="ue-badge">${zaehler[id]}</span>` : ""}
+      return `<article class="ue-w g-${g} w-${id}" data-widget="${id}"${BEARBEITEN ? ' draggable="true"' : ""}><header>${BEARBEITEN ? '<span class="ue-greif" aria-hidden="true" title="Ziehen zum Verschieben">⠿</span>' : ""}<h2>${esc(w.titel)}</h2>${zaehler[id] ? `<span class="ue-badge">${zaehler[id]}</span>` : ""}
         ${BEARBEITEN ? `<span class="ue-bearb"><span class="ue-groesse" role="group" aria-label="Größe ${esc(w.titel)}">${[["k", "K", "klein"], ["m", "M", "mittel"], ["g", "G", "groß"]].map(([v, t, l]) => `<button type="button" class="${g === v ? "an" : ""}" data-aktion="w-groesse" data-id="${id}" data-wert="${v}" title="${l}" aria-pressed="${g === v}">${t}</button>`).join("")}</span>
           <button type="button" class="ue-pfeil" data-aktion="w-schieben" data-id="${id}" data-wert="-1" title="nach vorne" aria-label="${esc(w.titel)} nach vorne"${i === 0 ? " disabled" : ""}>‹</button><button type="button" class="ue-pfeil" data-aktion="w-schieben" data-id="${id}" data-wert="1" title="nach hinten" aria-label="${esc(w.titel)} nach hinten"${i === reihenfolge.length - 1 ? " disabled" : ""}>›</button></span>` : ""}</header>
-        <div class="ue-inhalt">${inhalt[id](g)}</div></article>`; };
+        <div class="ue-inhalt">${inhalt[id](g)}</div>${BEARBEITEN ? `<span class="ue-griff" data-griff="${id}" title="Ziehen: kleiner / größer" aria-hidden="true"></span>` : ""}</article>`; };
     return `<div class="seite uebersicht">
       <header class="ue-kopf">
         <div class="ue-gruss"><p class="eyebrow">${WT[d.getDay()]}, ${d.getDate()}. ${MON[d.getMonth()]} ${d.getFullYear()}</p>
@@ -212,7 +208,7 @@
           <div class="ue-wetter" id="wetter"><p class="leise klein-text">Wetter wird geladen …</p></div>
         </div>
       </header>
-      ${reihenfolge.length ? `<div class="ue-leiste">${BEARBEITEN ? `<span class="leise klein-text">Größe mit K · M · G wählen, mit ‹ › verschieben.</span><button class="btn klein still" data-aktion="w-zuruecksetzen">Zurücksetzen</button><button class="btn klein jetzt" data-aktion="w-bearbeiten">Fertig</button>` : `<button class="btn klein still" data-aktion="w-bearbeiten">Widgets bearbeiten</button>`}</div>
+      ${reihenfolge.length ? `<div class="ue-leiste">${BEARBEITEN ? `<span class="ue-tipp">Widget am <b>⠿</b> ziehen zum Verschieben · am Griff unten rechts ziehen für die Größe (oder K · M · G)</span><button class="btn klein still" data-aktion="w-zuruecksetzen">Zurücksetzen</button><button class="btn jetzt" data-aktion="w-bearbeiten">✓ Fertig</button>` : `<button class="btn" data-aktion="w-bearbeiten">✎ Widgets anpassen</button>`}</div>
         <section class="ue-raster${BEARBEITEN ? " bearbeiten" : ""}">${reihenfolge.map(karte).join("")}</section>`
         : `<div class="panel startfeld"><h2>Noch keine Widgets freigeschaltet</h2><p>Die Geschäftsführung kann unter „Übersicht anpassen“ festlegen, was hier erscheint.</p></div>`}
       ${person.ebene === "geschaeftsfuehrung" ? anpassen(A) : ""}
@@ -224,10 +220,56 @@
     const gap = parseFloat(getComputedStyle(r).rowGap) || 0, zeile = parseFloat(getComputedStyle(r).gridAutoRows) || 8;
     for (const w of $$(".ue-w", r)) { w.style.gridRowEnd = "auto"; const h = w.getBoundingClientRect().height; w.style.gridRowEnd = `span ${Math.ceil((h + gap) / (zeile + gap))}`; }
   }
+  /* ---------- Bearbeiten: Größe am Griff ziehen, Widgets per Drag & Drop verschieben ---------- */
+  function spaltenInfo() {
+    const r = $(".ue-raster"), cs = getComputedStyle(r), spalten = cs.gridTemplateColumns.split(" ").length, gap = parseFloat(cs.columnGap) || 0;
+    return { r, spalten, gap, breite: (r.clientWidth - gap * (spalten - 1)) / spalten };
+  }
+  const spanZuGroesse = (n, spalten) => (n >= spalten && spalten >= 4 ? "g" : n >= 2 ? "m" : "k");
+  function reiheSetzen(id, zielId, davor) {
+    const lay = layoutVon(PERSON), reihe = [...lay.reihe, ...STANDARD_REIHE.filter((x) => !lay.reihe.includes(x))].filter((x) => x !== id);
+    reihe.splice(reihe.indexOf(zielId) + (davor ? 0 : 1), 0, id);
+    lay.reihe = reihe; layoutSpeichern(PERSON, lay);
+  }
+  function bearbeitenAn() {
+    if (!BEARBEITEN || !$(".ue-raster")) return;
+    /* Größe: Griff unten rechts */
+    for (const griff of $$(".ue-griff")) griff.addEventListener("pointerdown", (e) => {
+      e.preventDefault(); e.stopPropagation();
+      const w = griff.closest(".ue-w"), id = w.dataset.widget, info = spaltenInfo(), start = e.clientX, b0 = w.getBoundingClientRect().width;
+      let span = Math.max(1, Math.round((b0 + info.gap) / (info.breite + info.gap)));
+      griff.setPointerCapture(e.pointerId); w.classList.add("zieht-groesse");
+      const bewegen = (ev) => {
+        const n = Math.min(info.spalten, Math.max(1, Math.round((b0 + ev.clientX - start + info.gap) / (info.breite + info.gap))));
+        if (n !== span) { span = n; w.style.gridColumn = `span ${n}`; rasterOrdnen(); }
+      };
+      const ende = () => {
+        griff.removeEventListener("pointermove", bewegen); griff.removeEventListener("pointerup", ende); griff.removeEventListener("pointercancel", ende);
+        const lay = layoutVon(PERSON); lay.groesse = { ...lay.groesse, [id]: spanZuGroesse(span, info.spalten) }; layoutSpeichern(PERSON, lay); zeichnen();
+      };
+      griff.addEventListener("pointermove", bewegen); griff.addEventListener("pointerup", ende); griff.addEventListener("pointercancel", ende);
+    });
+    /* Verschieben: ganzes Widget ziehen */
+    let gezogen = null;
+    for (const w of $$(".ue-w[draggable]")) {
+      w.addEventListener("dragstart", (e) => { gezogen = w.dataset.widget; w.classList.add("zieht"); e.dataTransfer.effectAllowed = "move"; try { e.dataTransfer.setData("text/plain", gezogen); } catch (x) { /* egal */ } });
+      w.addEventListener("dragend", () => { w.classList.remove("zieht"); $$(".ue-w").forEach((x) => x.classList.remove("ziel-vor", "ziel-nach")); });
+      w.addEventListener("dragover", (e) => {
+        if (!gezogen || gezogen === w.dataset.widget) return;
+        e.preventDefault(); const b = w.getBoundingClientRect(), davor = (e.clientY - b.top) / b.height < .5 || (e.clientX - b.left) / b.width < .3;
+        w.classList.toggle("ziel-vor", davor); w.classList.toggle("ziel-nach", !davor);
+      });
+      w.addEventListener("dragleave", () => w.classList.remove("ziel-vor", "ziel-nach"));
+      w.addEventListener("drop", (e) => {
+        if (!gezogen || gezogen === w.dataset.widget) return;
+        e.preventDefault(); reiheSetzen(gezogen, w.dataset.widget, w.classList.contains("ziel-vor")); gezogen = null; zeichnen();
+      });
+    }
+  }
   function zeichnen(offen) {
     $("#main").innerHTML = seite(PERSON, AUSZUEGE);
     if (offen && $("#anpassen")) $("#anpassen").open = true;
-    rasterOrdnen(); wetterLaden();
+    rasterOrdnen(); wetterLaden(); bearbeitenAn();
   }
   window.addEventListener("resize", () => { clearTimeout(rasterOrdnen.t); rasterOrdnen.t = setTimeout(rasterOrdnen, 120); });
 

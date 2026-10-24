@@ -35,7 +35,7 @@
 .ue-w.g-k { grid-column: span 1; }
 .ue-w.g-m { grid-column: span 2; }
 .ue-w.g-g { grid-column: span 4; }
-.ue-leiste { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin: -8px 0 12px; }
+.ue-leiste { display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: 8px; margin: -8px 0 14px; }
 .ue-raster.bearbeiten .ue-w { outline: 2px dashed color-mix(in oklab, var(--tinte) 22%, transparent); outline-offset: 3px; }
 .ue-bearb { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; }
 .ue-w header .ue-badge + .ue-bearb { margin-left: 8px; }
@@ -60,9 +60,15 @@
 .ue-w.g-k .ue-aktion .btn { flex: 1; justify-content: center; }
 .ue-w { background: var(--blatt, #fbf9f4); border-radius: 22px; padding: 16px 18px 14px; box-shadow: 0 1px 0 rgb(4 36 97 / .04), 0 18px 34px -24px rgb(4 36 97 / .35); border: 1px solid rgb(4 36 97 / .06); min-width: 0; display: flex; flex-direction: column; }
 .ue-w > header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-.ue-w h2 { font-family: inherit; font-size: .74rem; font-weight: 700; line-height: 1; letter-spacing: .12em; text-transform: uppercase; color: var(--leise); margin: 0; }
-.ue-w.w-bad h2, .ue-w.w-heizung h2, .ue-w.w-kalender h2 { color: var(--tinte); }
-.ue-w.w-bad > header::before, .ue-w.w-heizung > header::before, .ue-w.w-kalender > header::before, .ue-w.w-mail > header::before { content: ""; width: 10px; height: 10px; border-radius: 3px; background: var(--tinte); }
+.ue-w h2 { font: 400 1.45rem/1.1 var(--serif); letter-spacing: -.005em; text-transform: none; color: var(--tinte); margin: 0; }
+.ue-w.g-k h2 { font-size: 1.2rem; }
+.ue-alles-gut { margin: 4px 0; display: flex; align-items: center; gap: 8px; color: var(--gruen, #2f6b45); font-weight: 600; }
+.ue-alles-gut span { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: color-mix(in oklab, var(--gruen, #2f6b45) 15%, transparent); font-size: .8rem; }
+.ue-w > header::before { content: ""; width: 12px; height: 12px; border-radius: 4px; background: var(--tinte); flex: none; }
+.ue-w.w-baustellen > header::before { background: var(--gruen, #2f6b45); }
+.ue-w.w-neu > header::before { background: #7a5bc4; }
+.ue-w.w-kennzahlen > header::before { background: #1d4f9c; }
+.ue-w.w-personal > header::before { background: #5b6478; }
 .ue-w.w-heizung > header::before { background: #c0392b; }
 .ue-w.w-kalender > header::before { background: var(--akzent); }
 .ue-w.w-mail > header::before { background: #2f6fb8; }
@@ -157,3 +163,21 @@
 .ue-tab { display: block; overflow-x: auto; }
 .ue-w.g-k > header { flex-wrap: wrap; row-gap: 8px; }
 .ue-w.g-k .ue-bearb { order: 9; width: 100%; margin-left: 0; }
+
+/* Bearbeiten: Ziehen wie auf dem iPad */
+.ue-raster.bearbeiten .ue-w { position: relative; cursor: grab; animation: ue-wackeln 1.6s ease-in-out infinite; }
+.ue-raster.bearbeiten .ue-w:nth-child(2n) { animation-delay: -.8s; }
+@keyframes ue-wackeln { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-.25deg); } 75% { transform: rotate(.25deg); } }
+@media (prefers-reduced-motion: reduce) { .ue-raster.bearbeiten .ue-w { animation: none; } }
+.ue-raster.bearbeiten .ue-w a { pointer-events: none; }
+.ue-w.zieht { opacity: .45; }
+.ue-w.zieht-groesse { animation: none; outline-color: var(--akzent); }
+.ue-w.ziel-vor { box-shadow: -6px 0 0 -2px var(--akzent), 0 -6px 0 -2px var(--akzent); }
+.ue-w.ziel-nach { box-shadow: 6px 0 0 -2px var(--akzent), 0 6px 0 -2px var(--akzent); }
+.ue-greif { cursor: grab; color: var(--leise); font-size: 1.1rem; line-height: 1; margin-right: 2px; }
+.ue-griff { position: absolute; right: 8px; bottom: 8px; width: 26px; height: 26px; border-radius: 8px; cursor: ew-resize; touch-action: none;
+  background: var(--tinte) linear-gradient(135deg, transparent 0 46%, #fff 46% 52%, transparent 52% 64%, #fff 64% 70%, transparent 70%); box-shadow: 0 4px 10px -4px rgb(4 36 97 / .5); }
+.ue-griff:hover { background-color: var(--akzent); }
+.ue-tipp { font-size: .84rem; color: var(--leise); margin-right: auto; }
+.ue-tipp b { color: var(--tinte); }
+.ue-leiste { margin-top: -4px; }
