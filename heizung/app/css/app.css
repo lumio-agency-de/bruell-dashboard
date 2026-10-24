@@ -40,9 +40,7 @@
 html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0; font: 400 14.5px/1.5 var(--sans); color: var(--text);
-  background-color: var(--papier);
-  background-image: linear-gradient(var(--fuge) 1px, transparent 1px), linear-gradient(90deg, var(--fuge) 1px, transparent 1px);
-  background-size: 44px 44px; background-position: -1px -1px;
+  background-color: #fff;
   overflow-x: hidden;
 }
 ::selection { background: var(--akzent); color: var(--tinte); }

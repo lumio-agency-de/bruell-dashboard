@@ -33,8 +33,10 @@ var PK_NR = (new URLSearchParams(location.search).get("nr") || "").replace(/\D/g
   /* ---------- Leiste ---------- */
   function leiste() {
     const ini = (PERSON.name || "?").split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
-    const nav = [["../", "Übersicht", "i-cockpit"], ["../bad/", "Bad", "i-projekte"], ["../heizung/", "Heizung", "i-projekte"], ["./", "Personal", "i-konten", true]];
-    $("#rail").innerHTML = `<a class="marke" href="../${QS}"><img class="marke-logo" src="../bad/app/img/logo.svg" alt=""><span class="marke-text"><strong>Brüll GmbH</strong><small>Personal</small></span></a>
+    const hier = document.body.dataset.bereich || "personal";
+    const nav = [["../", "Übersicht", "i-cockpit"], ["../bad/", "Bad", "i-projekte"], ["../heizung/", "Heizung", "i-projekte"],
+      ["../personal/", "Personal", "i-konten", hier === "personal"], ["../fahrzeuge/", "Fahrzeuge", "i-einrichtung", hier === "fahrzeuge"]];
+    $("#rail").innerHTML = `<a class="marke" href="../${QS}"><img class="marke-logo" src="../bad/app/img/logo.svg" alt=""><span class="marke-text"><strong>Brüll GmbH</strong><small>${hier === "fahrzeuge" ? "Fahrzeuge" : "Personal"}</small></span></a>
       <nav class="nav">${nav.map(([h, t, i, an]) => `<a href="${h}${QS}"${an ? ' aria-current="page"' : ""}><span class="nav-i ${i}" aria-hidden="true"></span>${t}</a>`).join("")}</nav>
       <div class="speicher"><div class="ich"><span class="ich-k">${esc(ini)}</span><span><b>${esc(PERSON.name)}</b><small>Geschäftsführung</small></span></div>
         <div class="ich-aktionen"><button class="btn klein hell" type="button" id="abmelden">Abmelden</button></div>
@@ -67,8 +69,23 @@ var PK_NR = (new URLSearchParams(location.search).get("nr") || "").replace(/\D/g
     }
     return true;
   }
+  /* Fahrzeuge aus den Personalkarten anlegen (fz_<Nr>, Format der alten Fahrzeugkarten).
+     Zuordnung Pers.-Nr. → Fahrzeug-Nr. aus den Links „Fahrzeugkarte öffnen“ der alten Karten. */
+  const FZ_ZUORDNUNG = { 34: 1, 2: 2, 31: 3, 46: 4, 21: 5, 50: 6, 51: 7, 37: 8, 1: 9 };
+  const FZ_AUS_PK = [["fz_kennzeichen", "fz_kennzeichen"], ["fz_modell", "fz_modell"], ["fz_seit", "fz_zuweisung_seit"], ["fz_fuehrerschein", "fz_fuehrerschein"],
+    ["fz_fs_gueltig", "fz_fs_gueltig"], ["fz_km", "fz_km"], ["fz_tuev", "fz_tuev"], ["fz_tankkarte", "fz_tankkarte"], ["fz_privatnutzung", "fz_privatnutzung"], ["fz_schaden", "fz_schaeden"]];
+  function fahrzeugeVorladen() {
+    for (const [pnr, vnr] of Object.entries(FZ_ZUORDNUNG)) {
+      if (localStorage.getItem("fz_" + vnr)) continue;
+      const d = lesen("pk_" + pnr, null);
+      if (!d || !d.fz_kennzeichen) continue;
+      const fz = { fz_nr_intern: String(vnr).padStart(3, "0"), fz_fahrer: ((d.vorname || "") + " " + (d.nachname || "")).trim() };
+      for (const [pk, f] of FZ_AUS_PK) if (d[pk]) fz[f] = d[pk];
+      try { localStorage.setItem("fz_" + vnr, JSON.stringify(fz)); } catch (e) { /* voll */ }
+    }
+  }
   function demoAnlegen() {
-    if (mitarbeiterVorladen()) return;
+    if (mitarbeiterVorladen()) return fahrzeugeVorladen();
     if (!DEMO || Object.keys(localStorage).some((k) => /^pk_\d+$/.test(k))) return;
     for (const m of DEMO_MA) {
       const [fach, zuv, team, kund, init] = m.stars, toMin = (v) => { const [h, mi] = v.split(":"); return +h * 60 + +mi; }, s = toMin(m.gz_ist) - toMin(m.gz_soll);
@@ -144,6 +161,14 @@ var PK_NR = (new URLSearchParams(location.search).get("nr") || "").replace(/\D/g
     document.title = "Brüll · Personalkarte · " + name;
     const back = document.querySelector(".back-btn"); if (back) back.href = "./" + QS;
     const img = document.getElementById("photoImg"), f = fotoVon(PK_NR);
+    /* „Fahrzeugkarte öffnen“ → Fahrzeug-Bereich (oder zuweisen, wenn keins da ist) */
+    const fzLink = document.querySelector('.pk-card a[href*="fahrzeuge/"]');
+    if (fzLink) {
+      const n = name.toLowerCase(), key = Object.keys(localStorage).find((k) => /^fz_\d+$/.test(k) && (lesen(k, {}).fz_fahrer || "").trim().toLowerCase() === n);
+      fzLink.removeAttribute("target");
+      fzLink.href = key ? "../fahrzeuge/karte.html" + qs({ nr: key.slice(3) }) : "../fahrzeuge/" + QS;
+      fzLink.textContent = key ? "🚐 Fahrzeugkarte öffnen" : "🚐 Fahrzeug zuweisen";
+    }
     if (img && f && !img.getAttribute("src")) { img.src = f; img.style.display = "block"; const ph = document.getElementById("ph"); if (ph) ph.style.display = "none"; }
   };
 

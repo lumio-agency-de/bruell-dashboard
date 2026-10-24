@@ -107,5 +107,34 @@
 }
 @media print { .rail, .topbar, .tabs, .save-bar { display: none !important; } .tab-content { display: block !important; } .shell { display: block; } .pk-card { box-shadow: none; border: 0; } }
 
-/* Ruhiger Hintergrund statt Karo (wie auf der Übersicht) */
-body { background-image: radial-gradient(1200px 600px at 85% -10%, color-mix(in oklab, var(--akzent, #E99033) 10%, transparent), transparent 60%), radial-gradient(900px 500px at 10% 0%, color-mix(in oklab, var(--tinte, #042461) 7%, transparent), transparent 60%) !important; background-color: #f4f1ea !important; background-size: auto !important; background-attachment: fixed !important; }
+/* Weißer Hintergrund statt Karo */
+body { background: #fff !important; background-image: none !important; }
+
+/* ---------- Fahrzeuge ---------- */
+.fz-karte { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.fz-karte .ma-werte { grid-column: 1; margin-top: 2px; }
+.fz-schild { justify-self: start; display: inline-flex; align-items: stretch; overflow: hidden; border: 2px solid #111; border-radius: 6px; background: #fff; color: #111;
+  font: 700 1.05rem/1 "DIN Alternate", "Arial Narrow", Arial, sans-serif; letter-spacing: .06em; white-space: nowrap; box-shadow: 0 2px 0 rgb(0 0 0 / .08); }
+.fz-schild i { display: grid; place-items: end center; width: 18px; padding: 0 0 3px; background: #003399; color: #fff; font: 700 .62rem/1 Arial, sans-serif; font-style: normal; letter-spacing: 0; }
+.fz-schild { padding-right: 10px; gap: 9px; }
+.fz-schild.gross { font-size: 1.35rem; padding-block: 0; }
+.fz-schild.gross i { width: 22px; padding-bottom: 4px; }
+.fz-schild:not(:has(i)) { padding-left: 10px; }
+.fz-fahrer { display: flex; align-items: center; gap: 10px; font-weight: 600; color: var(--tinte); min-width: 0; }
+.ma-foto.klein { width: 32px; height: 32px; grid-row: auto; flex: none; }
+.ma-foto.klein b { font-size: .8rem; }
+.fz-frist { display: grid; gap: 1px; padding-left: 9px; border-left: 3px solid var(--fuge-stark); }
+.fz-frist em { font-style: normal; font-size: .72rem; font-weight: 700; }
+.fz-frist.rot { border-color: var(--rot); } .fz-frist.rot b, .fz-frist.rot em { color: var(--rot); }
+.fz-frist.gelb { border-color: var(--akzent); } .fz-frist.gelb em { color: #8a4b0b; }
+.fz-frist.gruen { border-color: #2f8a5b; }
+.fz-fristen { display: flex; flex-wrap: wrap; gap: 14px 28px; padding: 16px 28px; border-bottom: 1px solid var(--fuge); background: color-mix(in oklab, var(--tinte) 3%, var(--blatt)); }
+.fz-fristen .fz-frist small, .fz-karte .fz-frist small { font-size: .68rem; color: var(--leise); text-transform: uppercase; letter-spacing: .08em; }
+.fz-kartei .header-position a { color: #fff; }
+.fz-kartei .form-group > span { font-size: .74rem; font-weight: 600; color: var(--leise); }
+.fz-kartei textarea { width: 100%; min-height: 96px; resize: vertical; }
+.fz-seite .topbar { margin-top: 0; }
+@media (max-width: 640px) { .fz-fristen { padding: 14px 18px; } .fz-schild.gross { font-size: 1.05rem; } }
+
+.topbar { background: rgb(255 255 255 / .9); }
+.fz-seite[data-ansicht="karte"] .main { padding-top: 0; }

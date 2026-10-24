@@ -9,7 +9,7 @@
   try {
     const s = JSON.parse(sessionStorage.getItem("bruell:sitzung") || localStorage.getItem("bruell:sitzung") || "null");
     const k = s && (JSON.parse(localStorage.getItem("bruell:konten") || "[]")).find((x) => x.email === s);
-    if (k && k.ebene === "geschaeftsfuehrung") EINTRAEGE.push(["personal", "Personal", "i-konten"]);
+    if (k && k.ebene === "geschaeftsfuehrung") EINTRAEGE.push(["personal", "Personal", "i-konten"], ["fahrzeuge", "Fahrzeuge", "i-einrichtung"]);
   } catch (e) { /* ohne */ }
   function einbauen() {
     const rail = document.querySelector(".rail"), nav = rail && rail.querySelector(".nav");
