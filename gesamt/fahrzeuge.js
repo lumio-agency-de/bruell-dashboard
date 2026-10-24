@@ -23,7 +23,7 @@
     .filter((x) => x.d && (x.d.vorname || x.d.nachname) && !x.d.austritt)
     .map((x) => ({ nr: x.nr, name: ((x.d.vorname || "") + " " + (x.d.nachname || "")).trim() })).sort((a, b) => a.name.localeCompare(b.name, "de"));
   const personZu = (name) => mitarbeiter().find((m) => m.name.toLowerCase() === String(name || "").trim().toLowerCase());
-  const fotoVon = (nr) => localStorage.getItem("ph_" + nr) || (((window.PK_TEAM || {})[nr] || {})._foto ? "../personal/" + window.PK_TEAM[nr]._foto : "");
+  const fotoVon = (nr) => localStorage.getItem("ph_" + nr) || (window.PK_FOTOS || {})[nr] || (((window.PK_TEAM || {})[nr] || {})._foto ? "../personal/" + window.PK_TEAM[nr]._foto : "");
 
   /* Datum TT.MM.JJJJ (oder JJJJ-MM-TT) → Ampel: überfällig / in 60 Tagen / ok */
   function frist(wert) {

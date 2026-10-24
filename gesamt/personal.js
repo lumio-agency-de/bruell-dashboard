@@ -116,7 +116,7 @@ var PK_NR = (new URLSearchParams(location.search).get("nr") || "").replace(/\D/g
       .filter((x) => x.d && (x.d.vorname || x.d.nachname)).sort((a, b) => +a.nr - +b.nr);
   }
   /* Foto: selbst hochgeladen (ph_<Nr>) oder von der Website (personal/fotos) */
-  const fotoVon = (nr) => localStorage.getItem("ph_" + nr) || (((window.PK_TEAM || {})[nr] || {})._foto || "");
+  const fotoVon = (nr) => localStorage.getItem("ph_" + nr) || (window.PK_FOTOS || {})[nr] || (((window.PK_TEAM || {})[nr] || {})._foto || "");
   function resturlaub(d) { try { const u = JSON.parse(d._urlaub || "[]").find((x) => +x.year === jahr); return u ? +u.rest : null; } catch (e) { return null; } }
   function liste() {
     const q = ($("#suche") && $("#suche").value || "").trim().toLowerCase();

@@ -64,6 +64,7 @@ html = f"""<!doctype html>
 </div>
 <script src="team.js"></script>
 <script>document.write('<script src="daten-lokal.js" onerror="this.remove()"><\\/script>')</script>
+<script>document.write('<script src="fotos-lokal.js" onerror="this.remove()"><\\/script>')</script>
 <script src="../gesamt/personal.js?v={VERSION}"></script>
 <script>
 /* ===== Funktionen der Personalkarte (aus der Vorlage übernommen) ===== */

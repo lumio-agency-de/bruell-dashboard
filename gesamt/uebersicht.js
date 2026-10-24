@@ -173,12 +173,12 @@
       ${g === "k" ? "" : `<p class="ue-fuss"><span class="ue-leg b"></span> Bad <span class="ue-leg h"></span> Heizung · laufende Projekte je Person</p>`}
       ${PERSON && PERSON.ebene === "geschaeftsfuehrung" ? `<div class="ue-aktion"><a class="btn klein still" href="personal/${QS}">Personalkarten öffnen</a></div>` : ""}`;
   }
-  /* Foto zum Namen aus personal/team.js (Fotos von der Firmenwebsite) */
+  /* Foto zum Namen: lokaler Foto-Ordner (personal/fotos-lokal.js) oder Website-Foto aus personal/team.js */
   function fotoZu(name) {
     const glatt = (v) => String(v || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
     const n = glatt(name), t = window.PK_TEAM || {};
-    const x = Object.values(t).find((d) => d._foto && n.includes(glatt(d.vorname)) && n.includes(glatt(d.nachname)));
-    return x ? "personal/" + x._foto : "";
+    const x = Object.entries(t).find(([, d]) => n.includes(glatt(d.vorname)) && n.includes(glatt(d.nachname)));
+    return !x ? "" : (window.PK_FOTOS || {})[x[0]] || (x[1]._foto ? "personal/" + x[1]._foto : "");
   }
   function wNeu(A, g) {
     const l = Object.entries(A).flatMap(([b, a]) => ((a && a.neu) || []).map((x) => ({ ...x, b }))), n = anz(g, 3, 6, 20);
