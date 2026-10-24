@@ -1,0 +1,31 @@
+/* Kundenportal — ruhig, groß, fürs Handy gemacht */
+body.portal { background-size: 32px 32px; }
+.portal-seite { max-width: 620px; margin: 0 auto; padding: 18px 16px 48px; }
+.portal-laedt { color: var(--leise); text-align: center; padding: 30vh 0; }
+.portal-kopf { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: var(--tinte); color: #fff; border-radius: var(--radius); }
+.portal-logo { width: 40px; height: 42px; object-fit: contain; background: #fff; padding: 3px; border-radius: var(--radius); }
+.portal-kopf strong { display: block; font: 400 1.05rem/1.2 var(--serif); }
+.portal-kopf span { font-size: .78rem; opacity: .75; }
+.portal-intro { padding: 26px 4px 18px; }
+.portal-intro h1 { font-size: clamp(1.6rem, 6vw, 2.1rem); line-height: 1.1; margin-bottom: 10px; }
+.portal-intro p { margin: 0; color: var(--text); font-size: 1rem; line-height: 1.55; }
+.portal-karte { background: var(--blatt); border: 1px solid var(--fuge-stark); border-radius: var(--radius); box-shadow: var(--schatten); padding: 16px; margin-bottom: 12px; border-left: 4px solid var(--akzent); }
+.portal-karte.hat { border-left-color: var(--gruen); }
+.pk-kopf { display: grid; grid-template-columns: 30px 1fr; gap: 12px; align-items: start; margin-bottom: 12px; }
+.pk-status { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--akzent); display: grid; place-items: center; font-weight: 700; color: #fff; }
+.hat .pk-status { background: var(--gruen); border-color: var(--gruen); }
+.pk-kopf h2 { font: 600 1.05rem/1.3 var(--sans); color: var(--tinte); }
+.pk-kopf p { margin: 4px 0 0; font-size: .9rem; color: var(--leise); }
+.pk-liste, .pk-laufend { list-style: none; margin: 0 0 12px 42px; padding: 0; font-size: .86rem; }
+.pk-laufend:empty { display: none; }
+.pk-liste li, .pk-laufend li { padding: 4px 0 4px 22px; position: relative; overflow-wrap: anywhere; }
+.pk-liste li::before, .pk-laufend li.fertig::before { content: "✓"; position: absolute; left: 0; color: var(--gruen); font-weight: 700; }
+.pk-laufend li.laedt::before { content: ""; position: absolute; left: 2px; top: 8px; width: 10px; height: 10px; border: 2px solid var(--akzent); border-right-color: transparent; border-radius: 50%; animation: dreh 800ms linear infinite; }
+.pk-laufend li.fehler { color: var(--rot); }
+.pk-laufend li.fehler::before { content: "!"; position: absolute; left: 4px; font-weight: 700; }
+.pk-knopf { width: 100%; justify-content: center; white-space: normal; text-align: center; }
+.portal-fuss { margin-top: 26px; font-size: .86rem; color: var(--leise); text-align: center; }
+.portal-fuss p { margin: 4px 0; }
+.portal-fuss .klein { font-size: .76rem; margin-top: 12px; }
+.portal-fuss a { color: var(--tinte); }
+@media (prefers-reduced-motion: reduce) { .pk-laufend li.laedt::before { animation: none; } }
