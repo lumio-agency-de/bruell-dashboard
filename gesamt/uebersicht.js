@@ -183,7 +183,14 @@
   const STANDARD_GROESSE = { neu: "k", baustellen: "m" };
   const layoutVon = (p) => { const l = lesen("bruell:layout", {})[p.id] || {}; return { reihe: Array.isArray(l.reihe) ? l.reihe : STANDARD_REIHE, groesse: l.groesse || {} }; };
   const layoutSpeichern = (p, l) => { const alle = lesen("bruell:layout", {}); alle[p.id] = l; schreiben("bruell:layout", alle); };
-  const groesseVon = (p, id) => layoutVon(p).groesse[id] || STANDARD_GROESSE[id] || "m";
+  /* Größe je Widget: Breite in Vierteln (1–4) und Höhe in px (leer = so hoch wie der Inhalt) */
+  const masseVon = (p, id) => {
+    const v = layoutVon(p).groesse[id] || STANDARD_GROESSE[id] || "m";
+    if (typeof v === "string") return { s: { k: 1, m: 2, g: 4 }[v] || 2, h: null };   // ältere Einstellung
+    return { s: Math.min(4, Math.max(1, v.s || 2)), h: v.h || null };
+  };
+  const dichteVon = (s) => (s <= 1 ? "k" : s >= 4 ? "g" : "m");
+  const groesseVon = (p, id) => dichteVon(masseVon(p, id).s);
   let BEARBEITEN = false;
 
   /* ---------- Seite ---------- */
@@ -193,11 +200,11 @@
     const zaehler = { mail: Object.values(A).reduce((x, a) => x + ((a && a.mails) || []).length, 0), bad: (A.bad && A.bad.faellig || []).length, heizung: (A.heizung && A.heizung.faellig || []).length };
     const inhalt = { kalender: (g) => wKalender(A, g), mail: (g) => wMail(A, g), bad: (g) => wBereich("bad", A.bad, g), heizung: (g) => wBereich("heizung", A.heizung, g), baustellen: (g) => wBaustellen(A, g), kennzahlen: (g) => wKennzahlen(A, g), personal: (g) => wPersonal(A, g), neu: (g) => wNeu(A, g) };
     const reihenfolge = [...lay.reihe, ...STANDARD_REIHE.filter((id) => !lay.reihe.includes(id))].filter((id) => sicht.includes(id));
-    const karte = (id, i) => { const w = WIDGETS.find((x) => x.id === id), g = groesseVon(person, id);
-      return `<article class="ue-w g-${g} w-${id}" data-widget="${id}"${BEARBEITEN ? ' draggable="true"' : ""}><header>${BEARBEITEN ? '<span class="ue-greif" aria-hidden="true" title="Ziehen zum Verschieben">⠿</span>' : ""}<h2>${esc(w.titel)}</h2>${zaehler[id] ? `<span class="ue-badge">${zaehler[id]}</span>` : ""}
-        ${BEARBEITEN ? `<span class="ue-bearb"><span class="ue-groesse" role="group" aria-label="Größe ${esc(w.titel)}">${[["k", "K", "klein"], ["m", "M", "mittel"], ["g", "G", "groß"]].map(([v, t, l]) => `<button type="button" class="${g === v ? "an" : ""}" data-aktion="w-groesse" data-id="${id}" data-wert="${v}" title="${l}" aria-pressed="${g === v}">${t}</button>`).join("")}</span>
+    const karte = (id, i) => { const w = WIDGETS.find((x) => x.id === id), m = masseVon(person, id), g = dichteVon(m.s);
+      return `<article class="ue-w g-${g} s-${m.s} w-${id}${m.h ? " feste-hoehe" : ""}" data-widget="${id}"${m.h ? ` style="height:${m.h}px"` : ""}${BEARBEITEN ? ' draggable="true"' : ""}><header>${BEARBEITEN ? '<span class="ue-greif" aria-hidden="true" title="Ziehen zum Verschieben">⠿</span>' : ""}<h2>${esc(w.titel)}</h2>${zaehler[id] ? `<span class="ue-badge">${zaehler[id]}</span>` : ""}
+        ${BEARBEITEN ? `<span class="ue-bearb"><span class="ue-groesse" role="group" aria-label="Größe ${esc(w.titel)}">${[[1, "¼"], [2, "½"], [3, "¾"], [4, "1"]].map(([v, t]) => `<button type="button" class="${m.s === v ? "an" : ""}" data-aktion="w-groesse" data-id="${id}" data-wert="${v}" title="${t} Breite" aria-pressed="${m.s === v}">${t}</button>`).join("")}</span>
           <button type="button" class="ue-pfeil" data-aktion="w-schieben" data-id="${id}" data-wert="-1" title="nach vorne" aria-label="${esc(w.titel)} nach vorne"${i === 0 ? " disabled" : ""}>‹</button><button type="button" class="ue-pfeil" data-aktion="w-schieben" data-id="${id}" data-wert="1" title="nach hinten" aria-label="${esc(w.titel)} nach hinten"${i === reihenfolge.length - 1 ? " disabled" : ""}>›</button></span>` : ""}</header>
-        <div class="ue-inhalt">${inhalt[id](g)}</div>${BEARBEITEN ? `<span class="ue-griff" data-griff="${id}" title="Ziehen: kleiner / größer" aria-hidden="true"></span>` : ""}</article>`; };
+        <div class="ue-inhalt">${inhalt[id](g)}</div>${BEARBEITEN ? `<span class="ue-griff" data-griff="${id}" title="Ziehen: Breite und Höhe ändern · Doppelklick: Höhe automatisch" aria-hidden="true"></span>` : ""}</article>`; };
     return `<div class="seite uebersicht">
       <header class="ue-kopf">
         <div class="ue-gruss"><p class="eyebrow">${WT[d.getDay()]}, ${d.getDate()}. ${MON[d.getMonth()]} ${d.getFullYear()}</p>
@@ -208,7 +215,7 @@
           <div class="ue-wetter" id="wetter"><p class="leise klein-text">Wetter wird geladen …</p></div>
         </div>
       </header>
-      ${reihenfolge.length ? `<div class="ue-leiste">${BEARBEITEN ? `<span class="ue-tipp">Widget am <b>⠿</b> ziehen zum Verschieben · am Griff unten rechts ziehen für die Größe (oder K · M · G)</span><button class="btn klein still" data-aktion="w-zuruecksetzen">Zurücksetzen</button><button class="btn jetzt" data-aktion="w-bearbeiten">✓ Fertig</button>` : `<button class="btn" data-aktion="w-bearbeiten">✎ Widgets anpassen</button>`}</div>
+      ${reihenfolge.length ? `<div class="ue-leiste">${BEARBEITEN ? `<span class="ue-tipp">Am <b>⠿</b> ziehen zum Verschieben · am Griff unten rechts ziehen für Breite und Höhe (Doppelklick: Höhe automatisch)</span><button class="btn klein still" data-aktion="w-zuruecksetzen">Zurücksetzen</button><button class="btn jetzt" data-aktion="w-bearbeiten">✓ Fertig</button>` : `<button class="btn" data-aktion="w-bearbeiten">✎ Widgets anpassen</button>`}</div>
         <section class="ue-raster${BEARBEITEN ? " bearbeiten" : ""}">${reihenfolge.map(karte).join("")}</section>`
         : `<div class="panel startfeld"><h2>Noch keine Widgets freigeschaltet</h2><p>Die Geschäftsführung kann unter „Übersicht anpassen“ festlegen, was hier erscheint.</p></div>`}
       ${person.ebene === "geschaeftsfuehrung" ? anpassen(A) : ""}
@@ -225,30 +232,42 @@
     const r = $(".ue-raster"), cs = getComputedStyle(r), spalten = cs.gridTemplateColumns.split(" ").length, gap = parseFloat(cs.columnGap) || 0;
     return { r, spalten, gap, breite: (r.clientWidth - gap * (spalten - 1)) / spalten };
   }
-  const spanZuGroesse = (n, spalten) => (n >= spalten && spalten >= 4 ? "g" : n >= 2 ? "m" : "k");
   function reiheSetzen(id, zielId, davor) {
     const lay = layoutVon(PERSON), reihe = [...lay.reihe, ...STANDARD_REIHE.filter((x) => !lay.reihe.includes(x))].filter((x) => x !== id);
     reihe.splice(reihe.indexOf(zielId) + (davor ? 0 : 1), 0, id);
     lay.reihe = reihe; layoutSpeichern(PERSON, lay);
   }
+  let letzterTipp = {};
   function bearbeitenAn() {
     if (!BEARBEITEN || !$(".ue-raster")) return;
-    /* Größe: Griff unten rechts */
-    for (const griff of $$(".ue-griff")) griff.addEventListener("pointerdown", (e) => {
-      e.preventDefault(); e.stopPropagation();
-      const w = griff.closest(".ue-w"), id = w.dataset.widget, info = spaltenInfo(), start = e.clientX, b0 = w.getBoundingClientRect().width;
-      let span = Math.max(1, Math.round((b0 + info.gap) / (info.breite + info.gap)));
-      griff.setPointerCapture(e.pointerId); w.classList.add("zieht-groesse");
-      const bewegen = (ev) => {
-        const n = Math.min(info.spalten, Math.max(1, Math.round((b0 + ev.clientX - start + info.gap) / (info.breite + info.gap))));
-        if (n !== span) { span = n; w.style.gridColumn = `span ${n}`; rasterOrdnen(); }
-      };
-      const ende = () => {
-        griff.removeEventListener("pointermove", bewegen); griff.removeEventListener("pointerup", ende); griff.removeEventListener("pointercancel", ende);
-        const lay = layoutVon(PERSON); lay.groesse = { ...lay.groesse, [id]: spanZuGroesse(span, info.spalten) }; layoutSpeichern(PERSON, lay); zeichnen();
-      };
-      griff.addEventListener("pointermove", bewegen); griff.addEventListener("pointerup", ende); griff.addEventListener("pointercancel", ende);
-    });
+    /* Größe: Griff unten rechts – Breite rastet in Vierteln ein, Höhe frei */
+    for (const griff of $$(".ue-griff")) {
+      griff.addEventListener("pointerdown", (e) => {
+        e.preventDefault(); e.stopPropagation();
+        const w = griff.closest(".ue-w"), id = w.dataset.widget, info = spaltenInfo(), x0 = e.clientX, y0 = e.clientY, r0 = w.getBoundingClientRect();
+        let span = Math.max(1, Math.round((r0.width + info.gap) / (info.breite + info.gap))), hoehe = null;
+        griff.setPointerCapture(e.pointerId); w.classList.add("zieht-groesse");
+        const bewegen = (ev) => {
+          const n = Math.min(info.spalten, Math.max(1, Math.round((r0.width + ev.clientX - x0 + info.gap) / (info.breite + info.gap))));
+          if (n !== span) { w.classList.remove("s-" + span); span = n; w.classList.add("s-" + n); }
+          hoehe = Math.max(130, Math.round(r0.height + ev.clientY - y0));
+          if (Math.abs(ev.clientY - y0) > 6) { w.style.height = hoehe + "px"; w.classList.add("feste-hoehe"); }
+          rasterOrdnen();
+        };
+        const ende = (ev) => {
+          griff.removeEventListener("pointermove", bewegen); griff.removeEventListener("pointerup", ende); griff.removeEventListener("pointercancel", ende);
+          if (Math.abs(ev.clientX - x0) < 4 && Math.abs(ev.clientY - y0) < 4) {          /* nur angetippt: Doppeltipp = Höhe automatisch */
+            w.classList.remove("zieht-groesse");
+            const jetzt = Date.now();
+            if (letzterTipp.id === id && jetzt - letzterTipp.t < 450) { const lay = layoutVon(PERSON); lay.groesse = { ...lay.groesse, [id]: { s: masseVon(PERSON, id).s, h: null } }; layoutSpeichern(PERSON, lay); letzterTipp = {}; return zeichnen(); }
+            letzterTipp = { id, t: jetzt }; return;
+          }
+          const alt = masseVon(PERSON, id), h = Math.abs(ev.clientY - y0) > 6 ? hoehe : alt.h;
+          const lay = layoutVon(PERSON); lay.groesse = { ...lay.groesse, [id]: { s: Math.min(4, span * (4 / info.spalten) | 0 || span), h } }; layoutSpeichern(PERSON, lay); zeichnen();
+        };
+        griff.addEventListener("pointermove", bewegen); griff.addEventListener("pointerup", ende); griff.addEventListener("pointercancel", ende);
+      });
+    }
     /* Verschieben: ganzes Widget ziehen */
     let gezogen = null;
     for (const w of $$(".ue-w[draggable]")) {
@@ -321,7 +340,7 @@
     if (akt === "w-bearbeiten") { BEARBEITEN = !BEARBEITEN; return zeichnen(); }
     if (akt === "w-groesse" || akt === "w-schieben" || akt === "w-zuruecksetzen") {
       const lay = layoutVon(PERSON), id = a.dataset.id;
-      if (akt === "w-groesse") lay.groesse = { ...lay.groesse, [id]: a.dataset.wert };
+      if (akt === "w-groesse") lay.groesse = { ...lay.groesse, [id]: { s: Number(a.dataset.wert), h: masseVon(PERSON, id).h } };
       if (akt === "w-schieben") {
         const sicht = widgetsFuer(PERSON), reihe = [...lay.reihe, ...STANDARD_REIHE.filter((x) => !lay.reihe.includes(x))];
         const sichtbar = reihe.filter((x) => sicht.includes(x)), i = sichtbar.indexOf(id), j = i + Number(a.dataset.wert);
