@@ -1,0 +1,46 @@
+/* ==========================================================================
+   Brüll Dashboard – Dunkel-Modus (Schwarz/Grau), umschaltbar oben rechts.
+   Farb-Variablen hier, Ausnahmen für Navy-Flächen/Weiß automatisch in dunkel-auto.css.
+   ========================================================================== */
+html[data-thema="dunkel"] {
+  --tinte: #e6e6ea !important;               /* Firmen-Navy wird zur hellen Schrift */
+  --papier: #111113; --papier-2: #19191c; --blatt: #1c1c1f;
+  --text: #e8e8ec; --leise: #9b9ba3;
+  --fuge: rgb(255 255 255 / .08); --fuge-stark: rgb(255 255 255 / .16);
+  --akzent-text: #f2b071; --rot: #ef7c63; --gruen: #6cc08b;
+  --flaeche-stark: #3a3a40;                  /* statt Navy-Flächen (Knöpfe, Balken, aktive Chips) */
+  --feld: #151518; --feld-warm: #2a2620;     /* statt fest Weiß / warmem Weiß */
+  --text-auf-flaeche: #f2f2f4;
+  --schatten: 0 1px 0 var(--fuge), 0 12px 26px -18px rgb(0 0 0 / .7);
+  color-scheme: dark;
+}
+html[data-thema="dunkel"] body { background: var(--papier) !important; background-image: none !important; }
+html[data-thema="dunkel"] .rail { background: #0b0b0d !important; border-right: 1px solid var(--fuge); }
+html[data-thema="dunkel"] .marke-logo { background: #fff !important; }
+html[data-thema="dunkel"] .btn.voll:hover, html[data-thema="dunkel"] .btn.voll:focus-visible { background: #4a4a51 !important; }
+
+/* Feinschliff einzelner Bausteine */
+html[data-thema="dunkel"] .i-einrichtung { box-shadow: inset 0 0 0 3.5px #0b0b0d, inset 0 0 0 6px currentColor; }
+html[data-thema="dunkel"] .al-balken span, html[data-thema="dunkel"] .hb-balken, html[data-thema="dunkel"] .vb-balken, html[data-thema="dunkel"] .ue-last .b,
+html[data-thema="dunkel"] .fs-balken span, html[data-thema="dunkel"] .ziel-ist, html[data-thema="dunkel"] .ue-leg.b { background: #b9b9c2 !important; }
+html[data-thema="dunkel"] .card-header { background: radial-gradient(120% 140% at 100% 0%, #34343b 0%, transparent 55%), #222226 !important; border-bottom: 1px solid var(--fuge); }
+html[data-thema="dunkel"] .topbar { background: rgb(17 17 19 / .9) !important; }
+html[data-thema="dunkel"] .ma-foto { background: linear-gradient(150deg, #3a3a40, #26262b) !important; }
+html[data-thema="dunkel"] .fz-schild { background: #fff !important; color: #111 !important; }
+html[data-thema="dunkel"] .fz-kartei .header-position a { color: #fff; }
+
+/* ---------- Umschalter oben rechts ---------- */
+.thema-knopf { position: fixed; top: 12px; right: 14px; z-index: 80; width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center;
+  border: 1px solid var(--fuge-stark); background: color-mix(in oklab, var(--blatt) 88%, transparent); color: var(--tinte); cursor: pointer;
+  backdrop-filter: blur(8px); box-shadow: 0 6px 18px -10px rgb(0 0 0 / .45); transition: transform 160ms var(--ease-out, ease), background-color 160ms ease; }
+.thema-knopf:hover { transform: rotate(-14deg) scale(1.06); }
+.thema-knopf:focus-visible { outline: 2px solid var(--akzent); outline-offset: 2px; }
+.thema-knopf svg { width: 18px; height: 18px; }
+.thema-knopf .sonne { display: none; }
+html[data-thema="dunkel"] .thema-knopf .mond { display: none; }
+html[data-thema="dunkel"] .thema-knopf .sonne { display: block; }
+.topbar { padding-right: 64px !important; }               /* Personalkarte/Fahrzeugkarte: Speichern nicht verdecken */
+@media print { .thema-knopf { display: none; } }
+html[data-thema="dunkel"] .tb-nr { color: var(--akzent-text); background: color-mix(in oklab, var(--akzent) 18%, transparent); }
+@media (max-width: 760px) { .thema-knopf { top: 9px; right: 8px; width: 34px; height: 34px; background: var(--blatt); box-shadow: -14px 0 12px -2px var(--blatt); } .rail { padding-right: 52px !important; } .topbar { padding-right: 52px !important; } }
+html[data-thema="dunkel"] [style*="color:#1a3c6e"] { color: #9cc0f5 !important; }

@@ -1,0 +1,76 @@
+/* Automatisch erzeugt von werkzeuge/dunkel_css.py – nicht von Hand ändern. */
+html[data-thema="dunkel"] body { background: var(--feld) !important; }
+html[data-thema="dunkel"] ::selection { color: #18181b !important; }
+html[data-thema="dunkel"] .rail { background: var(--flaeche-stark) !important; }
+html[data-thema="dunkel"] .marke-logo { background: var(--feld) !important; }
+html[data-thema="dunkel"] .panel-titel .zahl { color: #18181b !important; }
+html[data-thema="dunkel"] .btn.voll { background: var(--flaeche-stark) !important; }
+html[data-thema="dunkel"] .btn.jetzt { color: #18181b !important; }
+html[data-thema="dunkel"] .eingabe { background: var(--feld) !important; }
+html[data-thema="dunkel"] .chip { background: var(--feld) !important; }
+html[data-thema="dunkel"] .chip.an { background: var(--flaeche-stark) !important; }
+html[data-thema="dunkel"] .seg { background: var(--feld) !important; }
+html[data-thema="dunkel"] .seg-k.an { background: var(--flaeche-stark) !important; }
+html[data-thema="dunkel"] .fliese.fertig { background: var(--flaeche-stark) !important; }
+html[data-thema="dunkel"] .marker.termin { background: var(--flaeche-stark) !important; }
+html[data-thema="dunkel"] .status-chip.neu { color: #18181b !important; }
+html[data-thema="dunkel"] .lv.fertig::before, html[data-thema="dunkel"] .lv.jetzt::before { background: var(--flaeche-stark) !important; }
+html[data-thema="dunkel"] .lv.fertig .lv-knoten { background: var(--flaeche-stark) !important; }
+html[data-thema="dunkel"] .lv.jetzt .lv-knoten { color: #18181b !important; }
+html[data-thema="dunkel"] .vergangen .fs-balken span { background: var(--flaeche-stark) !important; }
+html[data-thema="dunkel"] .vom-kunden { background: var(--flaeche-stark) !important; }
+html[data-thema="dunkel"] .thumb.neu::after { color: #18181b !important; }
+html[data-thema="dunkel"] .drop { background: var(--feld) !important; }
+html[data-thema="dunkel"] .drop-icon { background: var(--flaeche-stark) !important; }
+html[data-thema="dunkel"] .badge { color: #18181b !important; }
+html[data-thema="dunkel"] .ff-tab td .eingabe:hover { background: var(--feld) !important; }
+html[data-thema="dunkel"] .ff-tab td .eingabe:focus { background: var(--feld) !important; }
+html[data-thema="dunkel"] .haken-k { background: var(--feld) !important; }
+html[data-thema="dunkel"] .haken-k.an { background: var(--flaeche-stark) !important; }
+html[data-thema="dunkel"] .sign { background: var(--feld) !important; }
+html[data-thema="dunkel"] .farbe input[type=color] { background: var(--feld) !important; }
+html[data-thema="dunkel"] .dlg-inhalt.vorschau iframe { background: var(--feld) !important; }
+html[data-thema="dunkel"] .toast { background: var(--flaeche-stark) !important; }
+html[data-thema="dunkel"] .levelup { background: var(--flaeche-stark) !important; }
+html[data-thema="dunkel"] .lu-nr { color: #18181b !important; }
+html[data-thema="dunkel"] .ansicht-als option, html[data-thema="dunkel"] .ansicht-als optgroup { background: var(--feld) !important; }
+html[data-thema="dunkel"] .vom-kunden.partner { color: #18181b !important; }
+html[data-thema="dunkel"] .al-balken span { background: var(--flaeche-stark) !important; }
+html[data-thema="dunkel"] .einsatz-docs .d-seite { background: var(--feld) !important; }
+html[data-thema="dunkel"] .ebene { background: var(--feld) !important; }
+html[data-thema="dunkel"] .hb-balken { background: var(--flaeche-stark) !important; }
+html[data-thema="dunkel"] .vb-balken { background: var(--flaeche-stark) !important; }
+html[data-thema="dunkel"] .ziel-ist { background: var(--flaeche-stark) !important; }
+html[data-thema="dunkel"] .ziel-legende i.ist { background: var(--flaeche-stark) !important; }
+html[data-thema="dunkel"] .kap td a { background: var(--flaeche-stark) !important; }
+html[data-thema="dunkel"] .demo-k { background: var(--feld) !important; }
+html[data-thema="dunkel"] .ich-k { color: #18181b !important; }
+html[data-thema="dunkel"] .timer { background: var(--flaeche-stark) !important; }
+html[data-thema="dunkel"] .slide-pfeil:hover { background: var(--flaeche-stark) !important; }
+html[data-thema="dunkel"] .bl-werkzeug .btn.an { background: var(--flaeche-stark) !important; }
+html[data-thema="dunkel"] .blatt { background: var(--feld) !important; }
+html[data-thema="dunkel"] .bl-tab tbody tr[data-ff-wahl]:hover td { background: var(--feld-warm) !important; }
+html[data-thema="dunkel"] .bl-tab tbody tr.an td { background: var(--feld-warm) !important; }
+html[data-thema="dunkel"] .bl-eingabe:focus { background: var(--feld-warm) !important; }
+html[data-thema="dunkel"] .ff-tab td .eingabe { background: var(--feld) !important; }
+html[data-thema="dunkel"] .ao-mini:nth-child(1) { background: var(--flaeche-stark) !important; }
+html[data-thema="dunkel"] .zugewiesen > li { background: var(--feld) !important; }
+html[data-thema="dunkel"] .adr-karte { background: var(--feld) !important; }
+html[data-thema="dunkel"] .regler::-webkit-slider-thumb { background: var(--feld) !important; }
+html[data-thema="dunkel"] .regler::-moz-range-thumb { background: var(--feld) !important; }
+html[data-thema="dunkel"] .sig-mini { background: var(--feld) !important; }
+html[data-thema="dunkel"] .sig-vorschau img { background: var(--feld) !important; }
+html[data-thema="dunkel"] .dlg-erledigt { background: var(--feld) !important; }
+html[data-thema="dunkel"] .mehrwahl-liste { background: var(--feld) !important; }
+html[data-thema="dunkel"] .ue-groesse button.an { background: var(--flaeche-stark) !important; }
+html[data-thema="dunkel"] .ue-w > header::before { background: var(--flaeche-stark) !important; }
+html[data-thema="dunkel"] .ue-badge { color: #18181b !important; }
+html[data-thema="dunkel"] .ue-woche .heute { background: var(--flaeche-stark) !important; }
+html[data-thema="dunkel"] .ue-last .b { background: var(--flaeche-stark) !important; }
+html[data-thema="dunkel"] .ue-leg.b { background: var(--flaeche-stark) !important; }
+html[data-thema="dunkel"] body.uebersicht-seite { background: var(--feld) !important; }
+html[data-thema="dunkel"] .pk-card input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), html[data-thema="dunkel"] .pk-card select, html[data-thema="dunkel"] .pk-card textarea { background: var(--feld) !important; }
+html[data-thema="dunkel"] .abt-chip-label { background: var(--feld) !important; }
+html[data-thema="dunkel"] .abt-chip-label[class*="checked-"] { background: var(--flaeche-stark) !important; }
+html[data-thema="dunkel"] .abt-chip-label.checked-inhaber, html[data-thema="dunkel"] .abt-chip-label.checked-meister { color: #18181b !important; }
+html[data-thema="dunkel"] .fz-schild { background: var(--feld) !important; }

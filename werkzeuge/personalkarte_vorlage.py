@@ -56,6 +56,9 @@ html = f"""<!doctype html>
 <link rel="icon" href="../bad/app/img/logo.svg">
 <link rel="stylesheet" href="../bad/app/css/app.css?v={VERSION}">
 <link rel="stylesheet" href="../gesamt/personal.css?v={VERSION}">
+<link rel="stylesheet" href="../gesamt/dunkel-auto.css?v={VERSION}">
+<link rel="stylesheet" href="../gesamt/thema.css?v={VERSION}">
+<script src="../gesamt/thema.js?v={VERSION}"></script>
 </head>
 <body class="personal-seite karte-seite">
 <div class="shell">
