@@ -86,13 +86,15 @@ var PK_NR = (new URLSearchParams(location.search).get("nr") || "").replace(/\D/g
     return Object.keys(localStorage).filter((k) => /^pk_\d+$/.test(k)).map((k) => ({ nr: k.slice(3), d: lesen(k, {}) }))
       .filter((x) => x.d && (x.d.vorname || x.d.nachname)).sort((a, b) => +a.nr - +b.nr);
   }
+  /* Foto: selbst hochgeladen (ph_<Nr>) oder von der Website (personal/fotos) */
+  const fotoVon = (nr) => localStorage.getItem("ph_" + nr) || (((window.PK_TEAM || {})[nr] || {})._foto || "");
   function resturlaub(d) { try { const u = JSON.parse(d._urlaub || "[]").find((x) => +x.year === jahr); return u ? +u.rest : null; } catch (e) { return null; } }
   function liste() {
     const q = ($("#suche") && $("#suche").value || "").trim().toLowerCase();
     const l = alle().filter((x) => !q || [x.nr, x.d.vorname, x.d.nachname, x.d.position, x.d.kuerzel].join(" ").toLowerCase().includes(q));
     const aktiv = l.filter((x) => !x.d.austritt), weg = l.filter((x) => x.d.austritt);
     const karte = (x) => {
-      const d = x.d, foto = localStorage.getItem("ph_" + x.nr), ini = ((d.vorname || "")[0] || "") + ((d.nachname || "")[0] || "");
+      const d = x.d, foto = fotoVon(x.nr), ini = ((d.vorname || "")[0] || "") + ((d.nachname || "")[0] || "");
       let abt = []; try { abt = JSON.parse(d.abteilung_multi || "[]"); } catch (e) { /* alt */ }
       const ru = resturlaub(d), saldo = d.gz_saldo || "";
       return `<a class="ma-karte${d.austritt ? " ausgetreten" : ""}" href="karte.html${qs({ nr: x.nr })}">
@@ -141,6 +143,8 @@ var PK_NR = (new URLSearchParams(location.search).get("nr") || "").replace(/\D/g
     setz(".photo-initials", ((v("vorname")[0] || "") + (v("nachname")[0] || "")).toUpperCase() || "?");
     document.title = "Brüll · Personalkarte · " + name;
     const back = document.querySelector(".back-btn"); if (back) back.href = "./" + QS;
+    const img = document.getElementById("photoImg"), f = fotoVon(PK_NR);
+    if (img && f && !img.getAttribute("src")) { img.src = f; img.style.display = "block"; const ph = document.getElementById("ph"); if (ph) ph.style.display = "none"; }
   };
 
   /* ---------- Start ---------- */

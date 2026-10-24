@@ -18,6 +18,7 @@
      {<termin>.kurz}        → 14.10.
      {bzaNr} {bzdNr}        KfW-Nummern aus der Projektakte (Level 6 / 11)
      {firma.name} {firma.adresse} {firma.mapsLink} {firma.website}
+     {firma.telefon} {firma.heizungsrechner}  (Link steht in firma.js)
      {berater} {heizungsexperte}
      {uploadLink}           persönlicher Link, über den der Kunde Dateien
                             direkt in sein Projekt hochlädt
@@ -69,6 +70,34 @@ Geplanter Baustart: {baustart.wochentag}, {baustart.datum}
 Bitte geben Sie uns kurz Bescheid, ob Sie den Termin übernehmen können, und senden Sie uns Ihr Angebot.
 
 Vielen Dank und freundliche Grüße`,
+  },
+
+  /* Level 1 „Kosten unklar“: Kunde bekommt den Link zum Heizungsrechner auf der Website */
+  {
+    id: "heizungsrechner",
+    phase: 1,
+    titel: "Link zum Heizungsrechner",
+    datei: "",
+    anhaenge: [],
+    anredeStil: "formell",
+    optionen: [],
+    betreff: "Was kostet Ihre neue Heizung? Hier können Sie es selbst berechnen",
+    text:
+`{anrede}
+
+vielen Dank für Ihren Anruf und Ihr Interesse an einer neuen Heizung!
+
+Wie besprochen schicken wir Ihnen den Link zu unserem Heizungsrechner. Mit ein paar Angaben zu Ihrem Haus und Ihrer jetzigen Heizung bekommen Sie dort eine erste Einschätzung, mit welchen Kosten Sie für Ihre neue Heizung rechnen können – unverbindlich und kostenlos:
+
+👉 Zum Heizungsrechner: {firma.heizungsrechner}
+
+Auf unserer Website finden Sie außerdem Informationen zu Wärmepumpe, Pelletheizung, Solar sowie zu Förderung und Finanzierung.
+
+Wenn Sie sich ein Bild gemacht haben oder Fragen auftauchen, melden Sie sich gerne bei uns – telefonisch unter {firma.telefon} oder einfach per Antwort auf diese E-Mail. Dann vereinbaren wir ein persönliches Beratungsgespräch in unserer Ausstellung und finden gemeinsam die passende Lösung für Ihr Haus.
+
+Wir freuen uns, von Ihnen zu hören.
+
+Mit freundlichen Grüßen`,
   },
 
   {

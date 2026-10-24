@@ -1,4 +1,4 @@
-/* Mitarbeiter der Brüll GmbH – NUR Name, Position, Abteilungen, Kürzel (öffentlich unbedenklich).
+/* Mitarbeiter der Brüll GmbH – NUR Name, Position, Abteilungen, Kürzel und Foto (Fotos von daniel-bruell.de/uber-uns) (öffentlich unbedenklich).
    Alle weiteren Personaldaten liegen ausschließlich lokal (personal/daten-lokal.js, nicht im Repo) bzw. später in der Datenbank. */
 window.PK_TEAM = {
  "1": {
@@ -7,7 +7,8 @@ window.PK_TEAM = {
   "position": "Inhaber",
   "kuerzel": "DB",
   "abteilung": "inhaber",
-  "abteilung_multi": "[\"inhaber\",\"bad_sanitaer\",\"heizung\"]"
+  "abteilung_multi": "[\"inhaber\",\"bad_sanitaer\",\"heizung\"]",
+  "_foto": "fotos/1.jpg"
  },
  "2": {
   "vorname": "Steven",
@@ -15,7 +16,8 @@ window.PK_TEAM = {
   "position": "Meister – Bad",
   "kuerzel": "SW",
   "abteilung": "bad_sanitaer",
-  "abteilung_multi": "[\"bad_sanitaer\",\"meister\"]"
+  "abteilung_multi": "[\"bad_sanitaer\",\"meister\"]",
+  "_foto": "fotos/2.jpg"
  },
  "21": {
   "vorname": "Jens",
@@ -47,7 +49,8 @@ window.PK_TEAM = {
   "position": "Büro – Meister – Heizung",
   "kuerzel": "AW",
   "abteilung": "heizung",
-  "abteilung_multi": "[\"heizung\",\"buero\",\"meister\"]"
+  "abteilung_multi": "[\"heizung\",\"buero\",\"meister\"]",
+  "_foto": "fotos/37.jpg"
  },
  "46": {
   "vorname": "Carmelo",
@@ -79,7 +82,8 @@ window.PK_TEAM = {
   "position": "Büro – Buchhaltung – Heizung",
   "kuerzel": "AJ",
   "abteilung": "heizung",
-  "abteilung_multi": "[\"heizung\",\"buero\",\"buchhaltung\"]"
+  "abteilung_multi": "[\"heizung\",\"buero\",\"buchhaltung\"]",
+  "_foto": "fotos/52.jpg"
  },
  "55": {
   "vorname": "Judith",
@@ -87,7 +91,8 @@ window.PK_TEAM = {
   "position": "Büro – Bad",
   "kuerzel": "JD",
   "abteilung": "bad_sanitaer",
-  "abteilung_multi": "[\"bad_sanitaer\",\"buero\"]"
+  "abteilung_multi": "[\"bad_sanitaer\",\"buero\"]",
+  "_foto": "fotos/55.jpg"
  },
  "102": {
   "vorname": "Karin",
@@ -95,7 +100,8 @@ window.PK_TEAM = {
   "position": "Büro – Bad",
   "kuerzel": "KK",
   "abteilung": "bad_sanitaer",
-  "abteilung_multi": "[\"bad_sanitaer\",\"buero\"]"
+  "abteilung_multi": "[\"bad_sanitaer\",\"buero\"]",
+  "_foto": "fotos/102.jpg"
  },
  "104": {
   "vorname": "Cornelia",

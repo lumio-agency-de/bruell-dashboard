@@ -23,6 +23,7 @@
      unterschrift  Unterschriftenfeld (Maus, Finger, Stift)
      tabelle     { spalten: [{ id, titel, typ }], zeilen: ["Armatur", …] }
                  ohne zeilen → Zeilen frei hinzufügen
+                 summe: { spalte, einheit, label } → Spalte unter der Tabelle zusammenzählen
      checkliste  { punkte: [{ id, label, optional }], modus: "haken" | "janein" | "pruefung" }
                  Tabellen mit festen Zeilen bekommen automatisch „+ Eigene Zeile“
 
@@ -244,11 +245,16 @@
           { id: "parken", label: "Bilder Parkmöglichkeiten" },
           { id: "vormauerung", label: "Bilder Öltankraum (Vormauerung)", optional: true },
           { id: "zaehlerschrank", label: "Bilder Zählerschrank" },
+          { id: "lager", label: "Bilder Lagermöglichkeiten", optional: true },
           { id: "garten", label: "Bilder Garten", optional: true },
           { id: "hausverwaltung", label: "Info Hausverwaltung", optional: true },
         ] },
         { id: "weitereText", typ: "text", label: "Sonstiges" },
         { id: "fotos", typ: "dateien", kategorie: "baustelle", label: "Fotos von der Besichtigung", pflicht: true },
+        { typ: "abschnitt", titel: "Lagermöglichkeiten" },
+        { id: "lagerJN", typ: JN, label: "Lagermöglichkeit für Material", breite: "drittel", start: 1 },
+        { id: "lager", typ: "mehrfach", label: "Lager – wo?", optionen: ["Garage", "Keller"], breite: "drittel", wenn: { feld: "lagerJN", wert: "ja" } },
+        { id: "lagerText", typ: "text", label: "Lager – Hinweise", breite: "drittel", wenn: { feld: "lagerJN", wert: "ja" } },
         { typ: "abschnitt", titel: "Fremdgewerke – wer macht das?" },
         { id: "elektriker", typ: JN, label: "Elektriker", pflicht: true, breite: "drittel", start: 1 },
         { id: "elektrikerWer", typ: "wer", gewerk: "Elektro", label: "Elektriker – wer?", breite: "drittel", wenn: { feld: "elektriker", wert: "ja" } },
@@ -262,10 +268,13 @@
         { id: "kamin", typ: JN, label: "Kamin / Abgasanlage (Fremdfirma)", pflicht: true, breite: "drittel", start: 1 },
         { id: "kaminWer", typ: "wer", gewerk: "Kaminbau", label: "Kamin – wer?", breite: "drittel", wenn: { feld: "kamin", wert: "ja" } },
         { id: "kaminWann", typ: "liste", label: "Kamin – wann?", optionen: Array.from({ length: 10 }, (_, i) => `Tag ${i + 1}`), breite: "drittel", wenn: { feld: "kamin", wert: "ja" } },
-        { typ: "abschnitt", titel: "Lagermöglichkeit · Folgetermin" },
-        { id: "lager", typ: "mehrfach", label: "Lagermöglichkeiten für Material", optionen: ["Garage", "Keller"] },
-        { id: "lagerText", typ: "text", label: "Lager – Hinweise" },
-        { id: "folgetermin", typ: "text", label: "Folgetermin", breite: "halb" },
+        { typ: "abschnitt", titel: "Stundeneinschätzung" },
+        { id: "stunden", typ: "tabelle", label: "Geschätzte Stunden je Arbeitsablauf",
+          zeilen: ["Staubschutz", "Demontage und Entsorgung Altanlage", "Tank leer pumpen / Tankdemontage", "Gerüst stellen", "Montage Heizungsanlage", "Abgasanlage / Kamin",
+            "Elektroanschluss", "Externe Elektroinstallationsarbeiten", "Isolierungsarbeiten", "Heizkörper Ventile tauschen", "Gartenarbeit",
+            "Befüllen, Spülen & Inbetriebnahme", "Einweisung Kunde", "Aufräumen & Abschluss Baustelle"],
+          spalten: [{ id: "monteure", titel: "Monteure", typ: "zahl" }, { id: "std", titel: "Stunden", typ: "zahl" }, { id: "notiz", titel: "Notiz" }],
+          summe: { spalte: "std", einheit: "Std.", label: "Gesamt" } },
         { typ: "abschnitt", titel: "Sonstige Notizen" },
         { id: "skizze", typ: "dateien", kategorie: "skizzen", auchAus: ["grundriss"], label: "Skizze Heizraum mit Bemaßung" },
         { id: "notizen", typ: "textarea", label: "Notizen Baustellenbesichtigung" },

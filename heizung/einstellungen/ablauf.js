@@ -20,7 +20,8 @@
      abschluss    Knopf „Projekt abschließen & archivieren“ (letztes Level)
      frueher: n   Schritt lag früher in Level n – bisheriger Stand wird übernommen
      feld         ein Projektfeld ausfüllen                 { feld: "projektnr" | "zustaendig" | "bzaNr" … }, mehrzeilig: true → Notizfeld,
-                  optionen: [...] → Dropdown, platzhalter: "…" → Hinweis im leeren Feld
+                  optionen: [...] → Dropdown, platzhalter: "…" → Hinweis im leeren Feld,
+                  mehrere: true → Mitarbeiter-Mehrfachauswahl (rolle: wer oben steht)
      team         Monteure & Partner dem Projekt zuweisen
 
    portal: [...]    → Ordner, in die der Kunde in diesem Level über seinen Link hochladen kann
@@ -82,6 +83,7 @@ window.ABSCHNITTE = [
             { id: "rechner", label: "Kosten unklar – auf den {programm.heizungsrechner} verwiesen", status: "pausiert", wiedervorlage: 14, weiter: false },
             { id: "nein", label: "Kein Interesse", status: "verloren", weiter: false },
           ] },
+        { id: "mail-rechner", typ: "mail", mail: "heizungsrechner", titel: "Mail mit Link zum Heizungsrechner senden", wenn: { schritt: "termin-ok", wert: "rechner" } },
         { id: "eg-termin", typ: "termin", termin: "erstgespraech", titel: "Termin Erstgespräch eintragen", wenn: { schritt: "termin-ok", wert: "ja" } },
         { id: "berater", typ: "feld", feld: "zustaendig", titel: "Heizungsexperte(n) fürs Erstgespräch", wenn: { schritt: "termin-ok", wert: "ja" },
           hinweis: "Einen oder mehrere Mitarbeiter auswählen – sie führen das Gespräch und sind im Projekt als Heizungsexperte zuständig." },
@@ -136,19 +138,21 @@ window.ABSCHNITTE = [
         { id: "unterschrift", typ: "dateien", kategorie: "auftrag", kundenlink: true, titel: "Unterschriebenes Angebot einscannen / hochladen", wenn: { schritt: "ergebnis", wert: "auftrag" } },
         { id: "angebot-notiz", typ: "feld", feld: "angebotNotiz", mehrzeilig: true, pflicht: false, titel: "Notizen zum Angebot",
           platzhalter: "z. B. Änderungswünsche, Rabatt (Fotorabatt?), offene Fragen, was nachgereicht wird …" },
-        { id: "bb-termin", typ: "termin", termin: "baustellenbesichtigung", titel: "Heizlastberechnung & Baustellenbesichtigung bei {baustellenleiter} eintragen", wenn: { schritt: "ergebnis", wert: "auftrag" } },
       ],
     },
     {
       nr: 5, titel: "Baustellenbesichtigung", abschnitt: "auftrag",
       ziel: "Vor Ort aufmessen, Heizlast ermitteln und alles für die Monteure festhalten.",
       schritte: [
+        { id: "bb-termin", typ: "termin", termin: "baustellenbesichtigung", titel: "Termin Heizlastberechnung & Baustellenbesichtigung eintragen" },
+        { id: "besichtiger", typ: "feld", feld: "besichtiger", mehrere: true, rolle: "baustellenleiter", titel: "Wer macht die Baustellenbesichtigung?",
+          hinweis: "Einen oder mehrere Mitarbeiter auswählen – sie fahren zur Besichtigung. Ausgewählte Monteure bekommen automatisch Zugriff aufs Projekt." },
         { id: "checkliste", typ: "formular", formular: "baustellenbesichtigung", titel: "Baustellenbesichtigung", ebene: ["planung", "monteur"] },
         { id: "tank", typ: "formular", formular: "tankdemontage", titel: "Checkliste Tankdemontage", ebene: ["planung", "monteur"],
           wenn: [{ formular: "baustellenbesichtigung", feld: "weitere", wert: "Tankdemontage" }, { formular: "baustellenbesichtigung", feld: "weitere", wert: "Tank leer pumpen" }] },
         { id: "heizlast", typ: "dateien", kategorie: "planung", titel: "Heizlastberechnung ablegen",
           ersatz: "Keine Heizlastberechnung nötig" },
-        { id: "uebergabe", typ: "erledigt", titel: "{projektleiter} hat die Baustelle mit {baustellenleiter} besprochen" },
+        { id: "uebergabe", typ: "erledigt", titel: "{besichtigerHat} die Baustelle mit Baustellenleiter besprochen" },
       ],
     },
     {

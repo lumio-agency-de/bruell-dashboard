@@ -106,3 +106,6 @@
   .topbar { flex-wrap: wrap; } .ma-raster { grid-template-columns: minmax(0, 1fr); } .ma-seite #suche { min-width: 0; width: 100%; }
 }
 @media print { .rail, .topbar, .tabs, .save-bar { display: none !important; } .tab-content { display: block !important; } .shell { display: block; } .pk-card { box-shadow: none; border: 0; } }
+
+/* Ruhiger Hintergrund statt Karo (wie auf der Übersicht) */
+body { background-image: radial-gradient(1200px 600px at 85% -10%, color-mix(in oklab, var(--akzent, #E99033) 10%, transparent), transparent 60%), radial-gradient(900px 500px at 10% 0%, color-mix(in oklab, var(--tinte, #042461) 7%, transparent), transparent 60%) !important; background-color: #f4f1ea !important; background-size: auto !important; background-attachment: fixed !important; }

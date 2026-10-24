@@ -168,10 +168,17 @@
     const max = Math.max(1, ...l.map((x) => x.bad + x.heizung)), n = anz(g, 3, 8, 30);
     if (!l.length) return leer("Noch keine Mitarbeiter eingetragen.");
     return `${g === "k" ? `<p class="ue-gross-zahl"><b>${l.filter((x) => x.timer).length}</b><small>arbeiten gerade an Projekten</small></p>` : ""}
-      <ul class="ue-team${g === "g" ? " zweispaltig" : ""}">${l.slice(0, n).map((x) => `<li><span class="kuerzel klein">${esc(x.kuerzel)}</span><span class="ue-zt"><b>${esc(g === "k" ? vorname(x.name) : x.name)}</b>${g === "k" ? "" : `<small>${x.timer ? `<span class="ue-live">▶ ${esc(x.timer.name)} seit ${esc(new Date(x.timer.seit).toTimeString().slice(0, 5))}</span>` : esc(x.funktion)}</small>`}</span>
+      <ul class="ue-team${g === "g" ? " zweispaltig" : ""}">${l.slice(0, n).map((x) => `<li>${fotoZu(x.name) ? `<img class="ue-foto" src="${esc(fotoZu(x.name))}" alt="">` : `<span class="kuerzel klein">${esc(x.kuerzel)}</span>`}<span class="ue-zt"><b>${esc(g === "k" ? vorname(x.name) : x.name)}</b>${g === "k" ? "" : `<small>${x.timer ? `<span class="ue-live">▶ ${esc(x.timer.name)} seit ${esc(new Date(x.timer.seit).toTimeString().slice(0, 5))}</span>` : esc(x.funktion)}</small>`}</span>
         ${g === "k" ? "" : `<span class="ue-last" title="${x.bad} Bad · ${x.heizung} Heizung"><span class="b" style="width:${(x.bad / max) * 100}%"></span><span class="h" style="width:${(x.heizung / max) * 100}%"></span></span>`}<span class="ue-wann">${g === "g" ? `${x.bad} Bad · ${x.heizung} Hz.` : x.bad + x.heizung}</span></li>`).join("")}</ul>
       ${g === "k" ? "" : `<p class="ue-fuss"><span class="ue-leg b"></span> Bad <span class="ue-leg h"></span> Heizung · laufende Projekte je Person</p>`}
       ${PERSON && PERSON.ebene === "geschaeftsfuehrung" ? `<div class="ue-aktion"><a class="btn klein still" href="personal/${QS}">Personalkarten öffnen</a></div>` : ""}`;
+  }
+  /* Foto zum Namen aus personal/team.js (Fotos von der Firmenwebsite) */
+  function fotoZu(name) {
+    const glatt = (v) => String(v || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    const n = glatt(name), t = window.PK_TEAM || {};
+    const x = Object.values(t).find((d) => d._foto && n.includes(glatt(d.vorname)) && n.includes(glatt(d.nachname)));
+    return x ? "personal/" + x._foto : "";
   }
   function wNeu(A, g) {
     const l = Object.entries(A).flatMap(([b, a]) => ((a && a.neu) || []).map((x) => ({ ...x, b }))), n = anz(g, 3, 6, 20);

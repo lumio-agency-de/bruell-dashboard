@@ -190,3 +190,4 @@
 /* Übersicht: ruhiger Hintergrund statt Karo */
 body.uebersicht-seite { background-image: radial-gradient(1200px 600px at 85% -10%, color-mix(in oklab, var(--akzent) 10%, transparent), transparent 60%), radial-gradient(900px 500px at 10% 0%, color-mix(in oklab, var(--tinte) 7%, transparent), transparent 60%); background-color: #f4f1ea; background-size: auto; background-attachment: fixed; }
 .ue-groesse button { min-width: 24px; font-size: .78rem; }
+.ue-foto { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex: none; }

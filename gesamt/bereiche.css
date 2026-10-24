@@ -5,3 +5,6 @@
 .bereich-nav a.hier { background: color-mix(in oklab, #fff 8%, transparent); color: #fff; box-shadow: inset 3px 0 0 var(--akzent, #E99033); }
 .bereich-nav a.hier .nav-i { color: var(--akzent, #E99033); }
 .bereich-titel { margin: 12px 10px 0; font-size: .66rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--akzent, #E99033); }
+
+/* Ruhiger Hintergrund statt Karo (wie auf der Übersicht) */
+body { background-image: radial-gradient(1200px 600px at 85% -10%, color-mix(in oklab, var(--akzent, #E99033) 10%, transparent), transparent 60%), radial-gradient(900px 500px at 10% 0%, color-mix(in oklab, var(--tinte, #042461) 7%, transparent), transparent 60%) !important; background-color: #f4f1ea !important; background-size: auto !important; background-attachment: fixed !important; }

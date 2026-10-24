@@ -27,6 +27,7 @@ window.FIRMA = {
   telefon: "07056 / 9329666",
   email: "info@daniel-bruell.de",
   website: "www.daniel-bruell.de",
+  heizungsrechner: "https://daniel-bruell.de/heizungsbau/#heizungsrechner",
 
   /* Postfach, aus dem Kundenmails rausgehen (Terminbestätigung etc.) */
   kundenPostfach: "sparsameheizung@daniel-bruell.de",
