@@ -62,6 +62,8 @@ html = f"""<!doctype html>
   <aside class="rail" aria-label="Hauptnavigation" id="rail"></aside>
   {str(main).replace('<main class="main">', '<main class="main pk-main" id="main">', 1)}
 </div>
+<script src="team.js"></script>
+<script>document.write('<script src="daten-lokal.js" onerror="this.remove()"><\\/script>')</script>
 <script src="../gesamt/personal.js?v={VERSION}"></script>
 <script>
 /* ===== Funktionen der Personalkarte (aus der Vorlage übernommen) ===== */

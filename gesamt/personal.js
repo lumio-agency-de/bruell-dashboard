@@ -54,7 +54,21 @@ var PK_NR = (new URLSearchParams(location.search).get("nr") || "").replace(/\D/g
     { nr: 903, vorname: "Tom", nachname: "Vorlage", position: "Heizungsbauer", abt: ["heizung", "kundendienst"], kuerzel: "TV", gz_soll: "40:00", gz_ist: "38:00", gen: 22, einstellung: "01.09.2016", stars: [5, 4, 4, 4, 5] },
     { nr: 904, vorname: "Lena", nachname: "Probe", position: "Auszubildende", abt: ["ausbildung", "bad_sanitaer"], kuerzel: "LP", gz_soll: "40:00", gz_ist: "40:00", gen: 9, einstellung: "01.09.2025", stars: [3, 4, 5, 4, 4] },
   ];
+  /* Echte Mitarbeiter vorladen: vollständig aus personal/daten-lokal.js (nur auf dem eigenen Rechner),
+     sonst Name/Position/Abteilung aus personal/team.js. Vorhandene Karten werden nie überschrieben. */
+  function mitarbeiterVorladen() {
+    const quelle = window.PK_VOLL || window.PK_TEAM;
+    if (!quelle) return false;
+    for (const nr of ["901", "902", "903", "904"]) { const d = lesen("pk_" + nr, null); if (d && /@beispiel\.de$/.test(d.email || "")) localStorage.removeItem("pk_" + nr); }   // erfundene Demo-Mitarbeiter weg
+    for (const [nr, d] of Object.entries(quelle)) {
+      const alt = lesen("pk_" + nr, null);
+      if (!alt) { try { localStorage.setItem("pk_" + nr, JSON.stringify(d)); } catch (e) { /* voll */ } }
+      else if (window.PK_VOLL && Object.keys(alt).length < Object.keys(d).length) { try { localStorage.setItem("pk_" + nr, JSON.stringify({ ...d, ...alt })); } catch (e) { /* voll */ } }  // Teil-Karte aus team.js mit allen Daten ergänzen
+    }
+    return true;
+  }
   function demoAnlegen() {
+    if (mitarbeiterVorladen()) return;
     if (!DEMO || Object.keys(localStorage).some((k) => /^pk_\d+$/.test(k))) return;
     for (const m of DEMO_MA) {
       const [fach, zuv, team, kund, init] = m.stars, toMin = (v) => { const [h, mi] = v.split(":"); return +h * 60 + +mi; }, s = toMin(m.gz_ist) - toMin(m.gz_soll);
