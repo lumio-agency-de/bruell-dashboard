@@ -1345,7 +1345,7 @@
       if (!(Array.isArray(v) ? v.includes(q.wenn.wert) : v === q.wenn.wert)) continue;
       const firma = q.wer && pu[q.wer] ? Formular.werName(pu[q.wer], cfg()) : "";
       const [tf, tk] = (q.termin || "").split("."), termin = tf ? Formular.werteVon(p, tf)[tk] : "";
-      const tText = termin ? fDatum(new Date(termin + "T00:00")) : "";
+      const tText = q.wann && pu[q.wann] ? pu[q.wann] : termin ? fDatum(new Date(termin + "T00:00")) : "";
       let r = rows.find((x) => x.gewerk === q.gewerk);
       if (!r) { rows.push((r = { gewerk: q.gewerk, _auto: 1 })); geaendert = true; }
       if (!r.firma && firma) { r.firma = firma; geaendert = true; }

@@ -5,6 +5,12 @@
   const akt = document.currentScript && document.currentScript.dataset.bereich;
   const QS = location.search;
   const EINTRAEGE = [["", "Übersicht", "i-cockpit"], ["bad", "Bad", "i-projekte"], ["heizung", "Heizung", "i-projekte"]];
+  /* Personal nur für die Geschäftsführung */
+  try {
+    const s = JSON.parse(sessionStorage.getItem("bruell:sitzung") || localStorage.getItem("bruell:sitzung") || "null");
+    const k = s && (JSON.parse(localStorage.getItem("bruell:konten") || "[]")).find((x) => x.email === s);
+    if (k && k.ebene === "geschaeftsfuehrung") EINTRAEGE.push(["personal", "Personal", "i-konten"]);
+  } catch (e) { /* ohne */ }
   function einbauen() {
     const rail = document.querySelector(".rail"), nav = rail && rail.querySelector(".nav");
     if (!nav || rail.querySelector(".bereich-nav")) return;

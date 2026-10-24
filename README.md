@@ -38,3 +38,18 @@ Das Skript kopiert beide Einzelversionen und ändert in den Kopien nur zwei Ding
 - Gemeinsame Konten-, Adressbuch- und Einrichtungsseite (heute je Bereich)
 - Rechte je Person und Bereich (wer arbeitet nur im Bad, wer nur in der Heizung)
 - Cloud-Betrieb auf dem Mac mini: eine Datenbank mit getrennten Tabellen je Bereich
+
+## Personal (nur Geschäftsführung)
+
+`personal/` – Mitarbeiter-Übersicht und Personalkarte (`karte.html?nr=<Pers.-Nr.>`) mit den Funktionen der
+bisherigen Personalkarten: Pers. Daten, Gleitzeit, Urlaub, Bewertung, Sonstiges, Arbeitskleidung, Werkzeug,
+Fahrzeug. Gleiches Speicherformat (`pk_<Nr>`, Foto `ph_<Nr>`, Abgleich mit Fahrzeugkarten `fz_…`).
+
+- **Echte Personaldaten gehören nie ins Repo** (öffentlich!). Der Ordner `Personalkarten/` ist in `.gitignore`.
+- `karte.html` ist eine leere Vorlage, erzeugt mit `werkzeuge/personalkarte_vorlage.py` aus einer alten Karte
+  (alle Werte, Namen und Fotos werden entfernt).
+- Echte Daten: in der Mitarbeiter-Übersicht „Alte Personalkarten importieren“ und die HTML-Dateien wählen –
+  sie werden nur im Browser gelesen (im Betrieb: Datenbank auf dem Mac mini). Der Import repariert dabei zwei
+  Fehler der alten Dateien (Zeilenumbruch in einer Meldung, doppelte Zeile bei „Kleidung“), durch die dort
+  Speichern und Reiter nicht funktionierten.
+- Demo (`?demo=1`): vier erfundene Mitarbeiter.

@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Brüll · Personal</title>
+  <link rel="icon" href="../bad/app/img/logo.svg">
+  <link rel="stylesheet" href="../bad/app/css/app.css?v=202610241700">
+  <link rel="stylesheet" href="../gesamt/personal.css?v=202610241700">
+</head>
+<body class="personal-seite">
+  <div class="shell">
+    <aside class="rail" aria-label="Hauptnavigation" id="rail"></aside>
+    <main class="main" id="main" tabindex="-1">
+      <div class="seite ma-seite">
+        <header class="kopf"><div><p class="eyebrow">Personal · vertraulich</p><h1>Mitarbeiter</h1><p class="unter leise" id="anzahl"></p></div>
+          <div class="kopf-aktionen">
+            <input class="eingabe" type="search" id="suche" placeholder="Name, Nr., Position …" aria-label="Mitarbeiter suchen">
+            <label class="btn still">⬆ Alte Personalkarten importieren<input type="file" id="import" accept=".html,text/html" multiple hidden></label>
+            <button class="btn jetzt" type="button" id="neu">+ Mitarbeiter</button>
+          </div></header>
+        <p class="leise klein-text" id="import-status" aria-live="polite"></p>
+        <div id="liste"></div>
+      </div>
+    </main>
+  </div>
+  <script src="../gesamt/personal.js?v=202610241700"></script>
+</body>
+</html>

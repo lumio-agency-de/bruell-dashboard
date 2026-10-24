@@ -6,30 +6,58 @@
 .uebersicht { max-width: 1480px; }
 
 /* Kopf */
-.ue-kopf { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 18px 28px; align-items: end; margin: 6px 0 26px; }
+.ue-kopf { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 18px 28px; align-items: end; margin: 6px 0 26px; }
 .ue-gruss h1 { font: 400 clamp(2rem, 3.4vw, 2.9rem)/1.05 var(--serif); color: var(--tinte); margin: 4px 0 8px; letter-spacing: -.01em; }
 .ue-lage { margin: 0; color: var(--leise); font-size: 1rem; }
 .ue-lage b { color: var(--tinte); }
+
+/* Uhrzeit und Wetter: gleiche Größe, gleiche Schrift, eine Linie */
+.ue-zeitwetter { --gross: clamp(2.4rem, 4vw, 3.4rem); display: flex; align-items: flex-start; gap: clamp(16px, 2vw, 28px); }
 .ue-uhr { text-align: right; line-height: 1; }
-.ue-uhr b { font: 400 clamp(2.4rem, 4vw, 3.4rem)/1 var(--serif); color: var(--tinte); letter-spacing: -.02em; }
-.ue-uhr small { display: block; color: var(--leise); font-size: .78rem; margin-top: 4px; letter-spacing: .1em; text-transform: uppercase; }
-.ue-wetter { min-width: 290px; padding: 14px 16px; border-radius: 20px; color: #fff;
-  background: linear-gradient(160deg, #2f6fb8, #1c4a87 70%); box-shadow: 0 14px 30px -18px rgb(4 36 97 / .55); }
-.ue-wetter .leise { color: rgb(255 255 255 / .75); }
-.wt-jetzt { display: flex; align-items: center; gap: 10px; }
-.wt-sym { font-size: 2rem; line-height: 1; }
-.wt-jetzt b { display: block; font: 400 1.9rem/1 var(--serif); }
-.wt-jetzt small { color: rgb(255 255 255 / .82); font-size: .78rem; }
-.wt-tage { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgb(255 255 255 / .2); text-align: center; }
-.wt-tage span { display: grid; gap: 1px; }
-.wt-tage small { font-size: .7rem; color: rgb(255 255 255 / .8); }
-.wt-tage i { font-style: normal; font-size: 1.15rem; }
-.wt-tage b { font-size: .95rem; }
+.ue-uhr b { display: block; font: 400 var(--gross)/1 var(--serif); color: var(--tinte); letter-spacing: -.02em; }
+.ue-uhr small, .wt-text { display: block; color: var(--leise); font-size: .78rem; margin-top: 6px; letter-spacing: .1em; text-transform: uppercase; }
+.ue-wetter { min-width: 0; padding-left: clamp(16px, 2vw, 28px); border-left: 1px solid var(--fuge-stark); }
+.ue-wetter .leise { color: var(--leise); }
+.wt-jetzt { display: flex; align-items: flex-start; gap: 10px; line-height: 1; }
+.wt-sym { font-size: calc(var(--gross) * .74); line-height: 1; margin-top: calc(var(--gross) * .04); }
+.wt-temp { font: 400 var(--gross)/1 var(--serif); color: var(--tinte); letter-spacing: -.02em; }
+.wt-text { text-transform: none; letter-spacing: 0; font-size: .82rem; }
+.wt-tage { display: flex; gap: 14px; margin-top: 8px; }
+.wt-tage span { display: flex; align-items: baseline; gap: 4px; white-space: nowrap; }
+.wt-tage small { font-size: .74rem; color: var(--leise); }
+.wt-tage i { font-style: normal; font-size: .95rem; }
+.wt-tage b { font-size: .86rem; color: var(--tinte); font-weight: 600; }
 
 /* Raster */
 /* Spalten ohne Lücken (wie Widgets auf dem iPad): Widgets laufen von oben nach unten */
-.ue-raster { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; }
-.ue-spalte { display: grid; gap: 18px; min-width: 0; }
+/* 4 Spalten; klein = 1, mittel = 2, groß = 4. Zeilen à 8 px – die Höhe je Karte setzt rasterOrdnen() (keine Lücken) */
+.ue-raster { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: 8px; grid-auto-flow: row dense; column-gap: 18px; row-gap: 18px; align-items: start; }
+.ue-w.g-k { grid-column: span 1; }
+.ue-w.g-m { grid-column: span 2; }
+.ue-w.g-g { grid-column: span 4; }
+.ue-leiste { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin: -8px 0 12px; }
+.ue-raster.bearbeiten .ue-w { outline: 2px dashed color-mix(in oklab, var(--tinte) 22%, transparent); outline-offset: 3px; }
+.ue-bearb { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; }
+.ue-w header .ue-badge + .ue-bearb { margin-left: 8px; }
+.ue-groesse { display: inline-flex; padding: 2px; border-radius: 9px; background: color-mix(in oklab, var(--tinte) 8%, transparent); }
+.ue-groesse button, .ue-pfeil { all: unset; cursor: pointer; min-width: 26px; height: 24px; display: grid; place-items: center; border-radius: 7px; font-size: .74rem; font-weight: 700; color: var(--tinte); }
+.ue-groesse button.an { background: var(--tinte); color: #fff; }
+.ue-pfeil { font-size: 1rem; background: color-mix(in oklab, var(--tinte) 8%, transparent); }
+.ue-pfeil[disabled] { opacity: .3; cursor: default; }
+.ue-groesse button:focus-visible, .ue-pfeil:focus-visible { outline: 2px solid var(--akzent); }
+/* Inhalt je Größe */
+.ue-gross-zahl { margin: 0; display: grid; gap: 2px; }
+.ue-gross-zahl b { font: 400 2.4rem/1 var(--serif); color: var(--tinte); }
+.ue-gross-zahl small { color: var(--leise); font-size: .8rem; }
+.ue-zwei { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 26px; }
+.ue-liste.zweispaltig, .ue-team.zweispaltig { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 26px; }
+.ue-liste.zweispaltig li + li { border-top: 0; }
+.ue-liste.zweispaltig li { border-bottom: 1px solid var(--fuge); }
+.ue-kz.vier { grid-template-columns: repeat(4, 1fr); }
+.ue-tab { width: 100%; border-collapse: collapse; font-size: .84rem; margin-top: 4px; }
+.ue-tab th { text-align: left; font-size: .66rem; letter-spacing: .08em; text-transform: uppercase; color: var(--leise); padding: 6px 8px; border-bottom: 1.5px solid var(--tinte); }
+.ue-tab td { padding: 7px 8px; border-bottom: 1px solid var(--fuge); }
+.ue-w.g-k .ue-aktion .btn { flex: 1; justify-content: center; }
 .ue-w { background: var(--blatt, #fbf9f4); border-radius: 22px; padding: 16px 18px 14px; box-shadow: 0 1px 0 rgb(4 36 97 / .04), 0 18px 34px -24px rgb(4 36 97 / .35); border: 1px solid rgb(4 36 97 / .06); min-width: 0; display: flex; flex-direction: column; }
 .ue-w > header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
 .ue-w h2 { font-family: inherit; font-size: .74rem; font-weight: 700; line-height: 1; letter-spacing: .12em; text-transform: uppercase; color: var(--leise); margin: 0; }
@@ -119,9 +147,13 @@
 .ue-matrix th:first-child { text-align: left; }
 .ue-matrix input { width: 18px; height: 18px; accent-color: var(--tinte); }
 
-@media (max-width: 1000px) { .ue-raster { grid-template-columns: minmax(0, 1fr); } }
-@media (max-width: 900px) { .ue-kopf { grid-template-columns: 1fr auto; } .ue-wetter { grid-column: 1 / -1; } }
+@media (max-width: 1100px) { .ue-raster { grid-template-columns: repeat(2, minmax(0, 1fr)); } .ue-w.g-g { grid-column: span 2; } .ue-kz.vier { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 900px) { .ue-kopf { grid-template-columns: 1fr; } .ue-zeitwetter { justify-content: flex-start; } }
 @media (max-width: 640px) {
-  .ue-raster { grid-template-columns: minmax(0, 1fr); }
-  .ue-kopf { grid-template-columns: 1fr; } .ue-uhr { text-align: left; } .ue-wetter { min-width: 0; }
+  .ue-raster { grid-template-columns: minmax(0, 1fr); } .ue-w.g-k, .ue-w.g-m, .ue-w.g-g { grid-column: auto; } .ue-zwei, .ue-liste.zweispaltig, .ue-team.zweispaltig { grid-template-columns: minmax(0, 1fr); }
+  .ue-uhr { text-align: left; } .wt-tage { flex-wrap: wrap; gap: 6px 12px; }
 }
+.ue-zwei > div, .ue-inhalt { min-width: 0; }
+.ue-tab { display: block; overflow-x: auto; }
+.ue-w.g-k > header { flex-wrap: wrap; row-gap: 8px; }
+.ue-w.g-k .ue-bearb { order: 9; width: 100%; margin-left: 0; }

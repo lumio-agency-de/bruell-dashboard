@@ -1,0 +1,649 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Brüll · Personalkarte</title>
+<link rel="icon" href="../bad/app/img/logo.svg">
+<link rel="stylesheet" href="../bad/app/css/app.css?v=202610241401">
+<link rel="stylesheet" href="../gesamt/personal.css?v=202610241401">
+</head>
+<body class="personal-seite karte-seite">
+<div class="shell">
+  <aside class="rail" aria-label="Hauptnavigation" id="rail"></aside>
+  <main class="main pk-main" id="main">
+<header class="topbar">
+<div class="topbar-left">
+<a class="back-btn" href="./">← Personal</a>
+<div class="tb-title"></div>
+<span class="tb-nr"></span>
+</div>
+<button class="btn btn-g" onclick="window.print()">🖨️ Drucken</button>
+<button class="btn jetzt btn-save" onclick="saveData()">💾 Speichern</button>
+</header>
+<div class="content"><div class="pk-card">
+<div class="card-header">
+<div>
+<div class="header-logo">Brüll GmbH · Personalakte</div>
+<div class="header-name"></div>
+<div class="header-position"></div>
+<div class="header-nr"></div>
+</div>
+<div class="photo-slot" onclick="document.getElementById('photoInput').click()" title="Foto hochladen">
+<img alt="Foto" id="photoImg" onerror="this.style.display='none';document.getElementById('ph').style.display='flex';" src="" style="display:none"/><div class="photo-placeholder" id="ph" style="display:flex"><div class="photo-initials"></div><div class="photo-hint">📷 Foto<br/>hochladen</div></div>
+</div>
+<input accept="image/*" id="photoInput" onchange="loadPhoto(event)" type="file"/>
+</div>
+<div class="tabs">
+<button class="tab-btn active" onclick="showTab('pd',this)">👤 Pers. Daten</button>
+<button class="tab-btn" onclick="showTab('gz',this)">⏱ Gleitzeit</button>
+<button class="tab-btn" onclick="showTab('url',this)">📅 Urlaub</button>
+<button class="tab-btn" onclick="showTab('bew',this)">⭐ Bewertung</button>
+<button class="tab-btn" onclick="showTab('son',this)">📋 Sonstiges</button>
+<button class="tab-btn" onclick="showTab('ak',this)">👕 Arbeitskleidung</button>
+<button class="tab-btn" onclick="showTab('wz',this)">🔧 Werkzeug</button>
+<button class="tab-btn" onclick="showTab('fz',this)">🚐 Fahrzeug</button>
+</div>
+<!-- PERS. DATEN -->
+<div class="tab-content active" id="tab-pd">
+<div class="sec">Stammdaten</div>
+<div class="form-grid">
+<div class="form-group"><label>Vorname</label><input id="vorname" type="text"/></div>
+<div class="form-group"><label>Nachname</label><input id="nachname" type="text"/></div>
+<div class="form-group"><label>Geburtsdatum</label><input id="geburt" type="text"/></div>
+<div class="form-group"><label>Familienstand</label><select id="familienstand"><option value="">– bitte wählen –</option><option value="ledig">Ledig</option><option value="verheiratet">Verheiratet</option><option value="geschieden">Geschieden</option><option value="verwitwet">Verwitwet</option><option value="eingetragene_lebenspartnerschaft">Eingetr. Lebenspartnerschaft</option></select></div>
+<div class="form-group full"><label>Kinder</label><div id="kinderListe" style="display:flex;flex-direction:column;gap:8px;margin-top:4px;"></div><button onclick="addKind()" style="margin-top:8px;background:#e8f0fe;color:#1a3c6e;border:1px solid #c5d5f5;border-radius:8px;padding:7px 14px;font-size:13px;cursor:pointer;font-weight:600;width:fit-content;font-family:inherit;" type="button">+ Kind hinzufügen</button></div>
+<div class="form-group"><label>Steuerklasse</label><select id="steuerklasse"><option value="">– bitte wählen –</option><option value="1">Klasse I</option><option value="2">Klasse II</option><option value="3">Klasse III</option><option value="4">Klasse IV</option><option value="5">Klasse V</option><option value="6">Klasse VI</option></select></div>
+<div class="form-group"><label>E-Mail</label><input id="email" type="email"/></div>
+<div class="form-group"><label>Bank</label><input id="bank" type="text"/></div>
+<div class="form-group"><label>IBAN</label><input id="iban" type="text"/></div>
+<div class="form-group"><label>BIC / Bankleitzahl</label><input id="bic" type="text"/></div>
+<div class="form-group"><label>Telefon / Mobil</label><input id="telefon" type="text"/></div>
+<div class="form-group"><label>Adresse</label><input id="adresse" type="text"/></div>
+</div>
+<div class="sec" style="margin-top:28px;">Beschäftigung</div>
+<div class="form-grid">
+<div class="form-group"><label>Einstellungsdatum</label><input id="einstellung" type="text"/></div>
+<div class="form-group"><label>Austrittsdatum</label><input id="austritt" type="text"/></div>
+<div class="form-group"><label>Position</label><input id="position" type="text"/></div>
+<div class="form-group" style="grid-column:1/-1"><label>Abteilung(en)</label><div class="abt-picker-wrap" id="abt-picker">
+<label class="abt-chip-label" data-val="inhaber"><input name="abt" onchange="toggleAbt(this)" type="checkbox" value="inhaber"/>👑 Inhaber</label>
+<label class="abt-chip-label" data-val="bad_sanitaer"><input name="abt" onchange="toggleAbt(this)" type="checkbox" value="bad_sanitaer"/>🛁 Bad / Sanitär</label>
+<label class="abt-chip-label" data-val="heizung"><input name="abt" onchange="toggleAbt(this)" type="checkbox" value="heizung"/>🔥 Heizung</label>
+<label class="abt-chip-label" data-val="buero"><input name="abt" onchange="toggleAbt(this)" type="checkbox" value="buero"/>📁 Büro</label>
+<label class="abt-chip-label" data-val="kundendienst"><input name="abt" onchange="toggleAbt(this)" type="checkbox" value="kundendienst"/>🔧 Kundendienst</label>
+<label class="abt-chip-label" data-val="ausbildung"><input name="abt" onchange="toggleAbt(this)" type="checkbox" value="ausbildung"/>🎓 Ausbildung</label>
+<label class="abt-chip-label" data-val="meister"><input name="abt" onchange="toggleAbt(this)" type="checkbox" value="meister"/>⭐ Meister</label>
+<label class="abt-chip-label" data-val="buchhaltung"><input name="abt" onchange="toggleAbt(this)" type="checkbox" value="buchhaltung"/>💰 Buchhaltung</label>
+<label class="abt-chip-label" data-val="fliesen"><input name="abt" onchange="toggleAbt(this)" type="checkbox" value="fliesen"/>🪟 Fliesen</label>
+</div></div>
+<div class="form-group"><label>Stammlohnart</label><select id="stammlohnart"><option value="normalstunden">(1) Normalstunden</option><option value="teilzeit">Teilzeit</option><option value="aushilfe">Aushilfe</option><option value="azubi">Azubi</option></select></div>
+<div class="form-group"><label>Regelarbeitszeit</label><select id="regelarbeitszeit"><option value="40std">40 Std. Woche</option><option value="20std">20 Std. Woche</option><option value="23std">23 Std. Woche</option><option value="teilzeit">Teilzeit / variabel</option></select></div>
+<div class="form-group"><label>Sozialversicherungsnr.</label><input id="svnr" type="text"/></div>
+<div class="form-group"><label>Kürzel</label><input id="kuerzel" type="text"/></div>
+<div class="form-group full"><div class="cb-group"><input id="unproduktiv" type="checkbox"/><label for="unproduktiv">Unproduktiv (keine Berücksichtigung in Mittellohnberechnung)</label></div></div>
+</div>
+</div>
+<!-- GLEITZEIT -->
+<div class="tab-content" id="tab-gz">
+<div class="sec">Gleitzeit-Konto</div>
+<div class="gz-grid">
+<div class="gz-card"><div class="gz-label">Soll-Std / Woche</div><input id="gz_soll" type="text"/></div>
+<div class="gz-card"><div class="gz-label">Ist-Stunden aktuell</div><input id="gz_ist" type="text"/></div>
+<div class="gz-card"><div class="gz-label">Saldo (±)</div><input id="gz_saldo" type="text"/></div>
+<div class="gz-card"><div class="gz-label">Überstunden gesamt</div><input id="gz_ueber" type="text"/></div>
+<div class="gz-card"><div class="gz-label">Abgebaut (Std.)</div><input id="gz_abbau" type="text"/></div>
+<div class="gz-card"><div class="gz-label">Verbleibend</div><input id="gz_rest" type="text"/></div>
+</div>
+<div style="margin-top:24px;"><div class="sec">Notizen</div><textarea id="gz_notiz" placeholder="Besonderheiten, Vereinbarungen …"></textarea></div>
+</div>
+<!-- URLAUB -->
+<div class="tab-content" id="tab-url">
+<div class="sec">Urlaubsübersicht</div>
+<table class="dt"><thead><tr><th>Jahr</th><th>Anspruch (Tage)</th><th>Genommen</th><th>Resturlaub</th><th>Übertrag</th><th>Bemerkung</th></tr></thead><tbody id="urlaubBody"></tbody></table>
+<div style="margin-top:20px;"><div class="sec">Abwesenheiten</div><div class="form-grid"><div class="form-group"><label>Krankheitstage (lfd. Jahr)</label><input id="krank" min="0" type="number"/></div><div class="form-group"><label>Sonderurlaub (Tage)</label><input id="sonderurlaub" min="0" type="number"/></div></div></div>
+</div>
+<!-- BEWERTUNG -->
+<div class="tab-content" id="tab-bew">
+<div class="sec">Mitarbeiterbeurteilung</div>
+<div style="display:flex;flex-direction:column;gap:16px;margin-bottom:20px;">
+<div class="form-group"><label>Fachkompetenz</label><div class="stars" data-key="fach"><span class="star" data-val="1">★</span><span class="star" data-val="2">★</span><span class="star" data-val="3">★</span><span class="star" data-val="4">★</span><span class="star" data-val="5">★</span></div></div>
+<div class="form-group"><label>Zuverlässigkeit</label><div class="stars" data-key="zuv"><span class="star" data-val="1">★</span><span class="star" data-val="2">★</span><span class="star" data-val="3">★</span><span class="star" data-val="4">★</span><span class="star" data-val="5">★</span></div></div>
+<div class="form-group"><label>Teamverhalten</label><div class="stars" data-key="team"><span class="star" data-val="1">★</span><span class="star" data-val="2">★</span><span class="star" data-val="3">★</span><span class="star" data-val="4">★</span><span class="star" data-val="5">★</span></div></div>
+<div class="form-group"><label>Kundenkontakt / Auftreten</label><div class="stars" data-key="kund"><span class="star" data-val="1">★</span><span class="star" data-val="2">★</span><span class="star" data-val="3">★</span><span class="star" data-val="4">★</span><span class="star" data-val="5">★</span></div></div>
+<div class="form-group"><label>Eigeninitiative</label><div class="stars" data-key="init"><span class="star" data-val="1">★</span><span class="star" data-val="2">★</span><span class="star" data-val="3">★</span><span class="star" data-val="4">★</span><span class="star" data-val="5">★</span></div></div>
+</div>
+<div class="form-group"><label>Gesamtnotiz / Beurteilung</label><textarea id="bew_notiz" placeholder="Freitext …" style="min-height:120px;"></textarea></div>
+<div class="form-group" style="margin-top:14px;"><label>Letztes Gespräch am</label><input id="bew_datum" placeholder="TT.MM.JJJJ" type="text"/></div>
+</div>
+<!-- SONSTIGES -->
+<div class="tab-content" id="tab-son">
+<div class="sec">Dokumente &amp; Nachweise</div>
+<div class="form-grid">
+<div class="form-group"><div class="cb-group"><input id="dok1" type="checkbox"/><label for="dok1">Arbeitsvertrag vorhanden</label></div></div>
+<div class="form-group"><div class="cb-group"><input id="dok2" type="checkbox"/><label for="dok2">Lohnsteuerkarte / ELSTAM aktiv</label></div></div>
+<div class="form-group"><div class="cb-group"><input id="dok3" type="checkbox"/><label for="dok3">Gesundheitszeugnis vorhanden</label></div></div>
+<div class="form-group"><div class="cb-group"><input id="dok4" type="checkbox"/><label for="dok4">Führerschein Kl. B geprüft</label></div></div>
+<div class="form-group"><div class="cb-group"><input id="dok5" type="checkbox"/><label for="dok5">Erste-Hilfe-Kurs aktuell</label></div></div>
+<div class="form-group"><div class="cb-group"><input id="dok6" type="checkbox"/><label for="dok6">Gasprüfung / Zertifikate aktuell</label></div></div>
+</div>
+<div style="margin-top:22px;"><div class="sec">Weiterbildungen</div><textarea id="weiterbildung" placeholder="Schulungen, Kurse, Zertifikate …"></textarea></div>
+<div style="margin-top:16px;"><div class="sec">Sonstige Notizen</div><textarea id="sonstnotiz" placeholder="Interne Vermerke, Besonderheiten …"></textarea></div>
+</div>
+<!-- ARBEITSKLEIDUNG -->
+<div class="tab-content" id="tab-ak">
+<div class="sec">Kleidungsliste</div>
+<div style="margin-bottom:10px">
+<button onclick="addAkRow()" style="background:#e8f0fe;color:#1a3c6e;border:1px solid #c5d5f5;border-radius:6px;padding:5px 14px;cursor:pointer;font-size:13px;font-family:inherit" type="button">+ Zeile hinzufügen</button>
+</div>
+<div style="overflow-x:auto">
+<table class="dt"><thead><tr>
+<th>Beschreibung</th>
+<th style="width:80px">Art.-Nr.</th>
+<th style="width:130px">Farbe</th>
+<th style="width:65px">Größe</th>
+<th style="width:65px">Anzahl</th>
+<th style="width:28px"></th>
+</tr></thead><tbody id="ak-tbody"></tbody></table>
+</div>
+<div style="margin-top:16px;"><div class="sec">Notizen</div><textarea id="ak_notiz" placeholder="Besonderheiten …"></textarea></div>
+<div style="margin-top:20px;"><div class="sec">Nachbestellung</div>
+<div class="form-group" style="margin-bottom:12px;"><div class="cb-group"><input id="ak_bestellung_offen" type="checkbox"/><label for="ak_bestellung_offen" style="font-size:13px;font-weight:600;color:#c2410c;">⚠ Bestellung ausstehend</label></div></div>
+<div style="font-size:12px;font-weight:700;color:#1a3c6e;margin-bottom:6px;margin-top:4px;">Vorhandene Kleidung nachbestellen</div>
+<table class="dt"><thead><tr><th>Artikel (aus Kleidungsliste)</th><th style="width:100px">Größe</th><th style="width:70px">Menge</th><th style="width:32px"></th></tr></thead><tbody id="bestell-tbody"></tbody></table>
+<button onclick="addBestellDropRow()" style="margin-top:6px;background:#e8f0fe;color:#1a3c6e;border:1px solid #c5d5f5;border-radius:6px;padding:5px 14px;cursor:pointer;font-size:12px;font-family:inherit" type="button">+ Artikel hinzufügen</button>
+<div style="font-size:12px;font-weight:700;color:#1a3c6e;margin:16px 0 6px;">Neuer Artikel (noch nicht vorhanden)</div>
+<table class="dt"><thead><tr><th>Artikel</th><th style="width:70px">Menge</th><th>Größe / Bemerkung</th><th style="width:32px"></th></tr></thead><tbody id="bestell-neu-tbody"></tbody></table>
+<button onclick="addBestellNeuRow()" style="margin-top:6px;background:#e8f0fe;color:#1a3c6e;border:1px solid #c5d5f5;border-radius:6px;padding:5px 14px;cursor:pointer;font-size:12px;font-family:inherit" type="button">+ Neuer Artikel</button>
+</div>
+</div>
+<!-- WERKZEUG -->
+<div class="tab-content" id="tab-wz">
+<div class="sec">Ausgegebenes Werkzeug &amp; Geräte</div>
+<table class="dt"><thead><tr><th>Bezeichnung</th><th>Serien-Nr.</th><th>Ausgabe</th><th>Rückgabe</th><th>Zustand</th></tr></thead><tbody id="wz-tbody"></tbody></table>
+<div style="margin-top:16px;"><div class="sec">Schlüssel &amp; Zugänge</div>
+<div class="form-grid">
+<div class="form-group"><div class="cb-group"><input id="key_buero" type="checkbox"/><label for="key_buero">Büroschlüssel ausgegeben</label></div></div>
+<div class="form-group"><div class="cb-group"><input id="key_lager" type="checkbox"/><label for="key_lager">Lagerschlüssel ausgegeben</label></div></div>
+<div class="form-group"><div class="cb-group"><input id="key_fahrzeug" type="checkbox"/><label for="key_fahrzeug">Fahrzeugschlüssel ausgegeben</label></div></div>
+<div class="form-group"><div class="cb-group"><input id="key_alarm" type="checkbox"/><label for="key_alarm">Alarmcode / Zugangscode erhalten</label></div></div>
+</div></div>
+<div style="margin-top:16px;"><div class="sec">Notizen</div><textarea id="wz_notiz" placeholder="Besonderheiten, Reparaturen …"></textarea></div>
+</div>
+<!-- FAHRZEUG -->
+<div class="tab-content" id="tab-fz">
+<div class="sec">Zugewiesenes Fahrzeug</div>
+<div style="margin-bottom:14px;">
+<a href="../fahrzeuge/002_Wagner_BBDB2655.html" onmouseout="this.style.background='#0d9488'" onmouseover="this.style.background='#0f766e'" style="display:inline-flex;align-items:center;gap:7px;padding:8px 18px;background:#0d9488;color:#fff;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;transition:background .15s;" target="_blank">🚐 Fahrzeugkarte öffnen</a>
+</div>
+<div class="form-grid">
+<div class="form-group"><label>Kennzeichen</label><input id="fz_kennzeichen" placeholder="BB-BG 123" type="text"/></div>
+<div class="form-group"><label>Fahrzeugtyp / Modell</label><input id="fz_modell" placeholder="VW Transporter T6" type="text"/></div>
+<div class="form-group"><label>Fahrzeug-Nr. (intern)</label><input id="fz_nr" placeholder="FZ-03" type="text"/></div>
+<div class="form-group"><label>Zuweisung seit</label><input id="fz_seit" placeholder="TT.MM.JJJJ" type="text"/></div>
+<div class="form-group"><label>Führerschein Klasse</label><input id="fz_fuehrerschein" placeholder="B, BE" type="text"/></div>
+<div class="form-group"><label>Führerschein gültig bis</label><input id="fz_fs_gueltig" placeholder="TT.MM.JJJJ" type="text"/></div>
+</div>
+<div class="sec" style="margin-top:24px;">Fahrzeugzustand</div>
+<div class="form-grid">
+<div class="form-group"><label>Kilometerstand (Übergabe)</label><input id="fz_km" placeholder="km" type="number"/></div>
+<div class="form-group"><label>Nächste HU / TÜV</label><input id="fz_tuev" placeholder="MM.JJJJ" type="text"/></div>
+<div class="form-group"><label>Tankkarte vorhanden</label><select id="fz_tankkarte"><option value="">– bitte wählen –</option><option>Ja</option><option>Nein</option></select></div>
+<div class="form-group"><label>Privatnutzung erlaubt</label><select id="fz_privatnutzung"><option value="">– bitte wählen –</option><option>Ja</option><option>Nein</option></select></div>
+</div>
+<div style="margin-top:16px;"><div class="sec">Schäden / Bemerkungen</div><textarea id="fz_schaden" placeholder="Bekannte Schäden …"></textarea></div>
+</div>
+<div class="save-bar">
+<button class="btn-print" onclick="window.print()">🖨 Drucken</button>
+<button class="btn jetzt btn-save" onclick="saveData()">💾 Speichern</button>
+</div>
+</div></div>
+</main>
+</div>
+<script src="../gesamt/personal.js?v=202610241401"></script>
+<script>
+/* ===== Funktionen der Personalkarte (aus der Vorlage übernommen) ===== */
+function applyPendingQty() {}
+
+
+const SK = 'pk_' + PK_NR;
+const _NR = PK_NR;
+
+// ── Tabs ─────────────────────────────────────────────────────────────────
+function showTab(id,btn){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── Foto ─────────────────────────────────────────────────────────────────
+function loadPhoto(e){
+  const f=e.target.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    const raw=ev.target.result;
+    const tmp=new Image();
+    tmp.onload=()=>{
+      const c=document.createElement('canvas');
+      const s=Math.min(1,400/tmp.naturalWidth);
+      c.width=Math.round(tmp.naturalWidth*s);
+      c.height=Math.round(tmp.naturalHeight*s);
+      c.getContext('2d').drawImage(tmp,0,0,c.width,c.height);
+      const comp=c.toDataURL('image/jpeg',0.65);
+      const img=document.getElementById('photoImg');
+      img.src=comp; img.style.display='block';
+      document.getElementById('ph').style.display='none';
+      const nr=SK.replace('pk_','');
+      try{localStorage.setItem('ph_'+nr,comp);}catch(x){}
+      if(window.BrüllStore)BrüllStore.setPhoto(nr,comp);
+    };
+    tmp.src=raw;
+  };
+  r.readAsDataURL(f);
+}
+
+// ── Abteilung Multi-Chips ─────────────────────────────────────────────────
+// onchange auf der Checkbox aufgerufen – kein Doppel-Toggle
+function toggleAbt(cb){
+  const lbl=cb.closest('label'); if(!lbl)return;
+  if(cb.checked) lbl.classList.add('checked-'+cb.value);
+  else           lbl.classList.remove('checked-'+cb.value);
+}
+
+// ── Sterne-Bewertung ─────────────────────────────────────────────────────
+document.querySelectorAll('.stars').forEach(c=>{
+  const ss=c.querySelectorAll('.star');
+  let saved=0;
+  ss.forEach(s=>{
+    s.addEventListener('click',()=>{
+      saved=parseInt(s.dataset.val);
+      ss.forEach(x=>x.classList.toggle('active',parseInt(x.dataset.val)<=saved));
+    });
+    s.addEventListener('mouseover',()=>{
+      const v=parseInt(s.dataset.val);
+      ss.forEach(x=>x.classList.toggle('active',parseInt(x.dataset.val)<=v));
+    });
+  });
+  c.addEventListener('mouseleave',()=>{
+    ss.forEach(x=>x.classList.toggle('active',parseInt(x.dataset.val)<=saved));
+  });
+});
+
+// ── Urlaubs-Tabelle aufbauen ──────────────────────────────────────────────
+const cy=new Date().getFullYear();
+const ub=document.getElementById('urlaubBody');
+for(let y=cy-3;y<=cy+1;y++){
+  const tr=document.createElement('tr');
+  tr.dataset.year=y;
+  tr.innerHTML=
+    `<td><strong>${y}</strong></td>`+
+    `<td><input type="number" class="url-anspruch" value="30" min="0" style="width:60px"></td>`+
+    `<td><input type="number" class="url-genommen" value="0"  min="0" style="width:60px"></td>`+
+    `<td><input type="number" class="url-rest"     value="30" min="0" style="width:60px;background:#f0f7ff;font-weight:600" readonly></td>`+
+    `<td><input type="number" class="url-uebertrag" value="0" min="0" style="width:60px"></td>`+
+    `<td><input type="text"   class="url-bemerk"   placeholder="–"    style="width:150px"></td>`;
+  ub.appendChild(tr);
+}
+// Auto-Berechnung Resturlaub
+ub.addEventListener('input',e=>{
+  const tr=e.target.closest('tr'); if(!tr)return;
+  const a=parseInt(tr.querySelector('.url-anspruch')?.value)||0;
+  const g=parseInt(tr.querySelector('.url-genommen')?.value)||0;
+  const u=parseInt(tr.querySelector('.url-uebertrag')?.value)||0;
+  const re=tr.querySelector('.url-rest');
+  if(re) re.value=Math.max(0,a-g+u);
+});
+
+// ── Gleitzeit Saldo auto ──────────────────────────────────────────────────
+function calcGzSaldo(){
+  const toMin=v=>{const p=(v||'0:00').split(':');return parseInt(p[0]||0)*60+parseInt(p[1]||0);};
+  const toH=m=>{const neg=m<0;const a=Math.abs(m);return (neg?'-':'')+Math.floor(a/60)+':'+String(a%60).padStart(2,'0');};
+  const soll=toMin(document.getElementById('gz_soll')?.value);
+  const ist =toMin(document.getElementById('gz_ist')?.value);
+  const el  =document.getElementById('gz_saldo');
+  if(el) el.value=toH(ist-soll);
+}
+['gz_soll','gz_ist'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',calcGzSaldo);});
+
+// ── Kleidung-Tabelle – Zeile hinzufügen ──────────────────────────────────
+function addAkRow(){
+  const tb=document.getElementById('ak-tbody'); if(!tb)return;
+  const tr=document.createElement('tr');
+  tr.innerHTML=
+    `<td><input type="text"></td>`+
+    `<td><input type="text" style="width:72px"></td>`+
+    `<td><input type="text" style="width:120px"></td>`+
+    `<td><input type="text" style="width:57px"></td>`+
+    `<td><input type="number" min="0" style="width:57px"></td>`+
+    `<td><button type="button" onclick="this.closest('tr').remove()" style="background:none;border:none;color:#c0392b;font-size:17px;cursor:pointer;line-height:1">×</button></td>`;
+  tb.appendChild(tr);
+}
+
+// ── Werkzeug-Tabelle – Zeile hinzufügen ──────────────────────────────────
+function buildAkDropdown(selectedVal){
+  const opts=Array.from(document.querySelectorAll('#ak-tbody tr')).map(tr=>{
+    const ins=tr.querySelectorAll('input');
+    const desc=(ins[0]?.value||'').trim();
+    const nr=(ins[1]?.value||'').trim();
+    const groesse=(ins[3]?.value||'').trim();
+    if(!desc)return null;
+    const label=desc+(nr?' ('+nr+')':'');
+    return{label,groesse};
+  }).filter(Boolean);
+  let html='<option value="">– Artikel wählen –</option>';
+  opts.forEach(o=>{
+    const sel=o.label===selectedVal?' selected':'';
+    html+=`<option value="${o.label}" data-groesse="${o.groesse}"${sel}>${o.label}</option>`;
+  });
+  return html;
+}
+function addBestellDropRow(selectedVal,groesse,menge){
+  selectedVal=selectedVal||'';groesse=groesse||'';menge=menge||'1';
+  const tb=document.getElementById('bestell-tbody');if(!tb)return;
+  const tr=document.createElement('tr');
+  const selHtml=buildAkDropdown(selectedVal);
+  tr.innerHTML=`<td><select class="bst-select" style="width:100%;border:1px solid #dde1e9;border-radius:5px;padding:5px 8px;font-size:13px;font-family:inherit;background:#fff">${selHtml}</select></td><td><input type="text" class="bst-groesse" value="${groesse}" style="width:90px;background:#f8f9fb" readonly></td><td><input type="number" class="bst-menge" value="${menge}" min="1" style="width:55px"></td><td><button type="button" onclick="this.closest('tr').remove()" style="background:none;border:none;color:#c0392b;font-size:18px;cursor:pointer;line-height:1">&times;</button></td>`;
+  const sel=tr.querySelector('select');
+  sel.addEventListener('change',function(){
+    const opt=this.selectedOptions[0];
+    tr.querySelector('.bst-groesse').value=opt?.dataset?.groesse||'';
+  });
+  if(selectedVal){
+    tr.querySelectorAll('option').forEach(opt=>{
+      if(opt.value===selectedVal&&!groesse)tr.querySelector('.bst-groesse').value=opt.dataset.groesse||'';
+    });
+  }
+  tb.appendChild(tr);
+}
+function addBestellNeuRow(artikel,menge,groesse){
+  artikel=artikel||'';menge=menge||'1';groesse=groesse||'';
+  const tb=document.getElementById('bestell-neu-tbody');if(!tb)return;
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td><input type="text" value="${artikel.replace(/"/g,'&quot;')}" placeholder="z. B. Arbeitsjacke"></td><td><input type="number" value="${menge}" min="1" style="width:55px"></td><td><input type="text" value="${groesse.replace(/"/g,'&quot;')}" placeholder="Größe oder Hinweis"></td><td><button type="button" onclick="this.closest('tr').remove()" style="background:none;border:none;color:#c0392b;font-size:18px;cursor:pointer;line-height:1">&times;</button></td>`;
+  tb.appendChild(tr);
+}
+function addWzRow(){
+  const tb=document.getElementById('wz-tbody'); if(!tb)return;
+  const tr=document.createElement('tr');
+  tr.innerHTML=
+    `<td><input type="text" placeholder="Bezeichnung"></td>`+
+    `<td><input type="text" placeholder="Serien-Nr."></td>`+
+    `<td><input type="text" placeholder="TT.MM.JJ"></td>`+
+    `<td><input type="text" placeholder="TT.MM.JJ"></td>`+
+    `<td style="display:flex;align-items:center;gap:4px">`+
+      `<input type="text" placeholder="gut/defekt" style="flex:1">`+
+      `<button type="button" onclick="this.closest('tr').remove()" style="background:none;border:none;color:#c0392b;font-size:18px;cursor:pointer;padding:0 2px">×</button>`+
+    `</td>`;
+  tb.appendChild(tr);
+}
+
+// ── Kind hinzufügen ───────────────────────────────────────────────────────
+let kc=0;
+function addKind(n='',g=''){
+  kc++;
+  const id=kc;
+  const div=document.createElement('div');
+  div.id='kind_'+id;
+  div.style.cssText='display:flex;gap:10px;align-items:center;background:#f7f8fa;border-radius:8px;padding:8px 10px;border:1px solid #e8eaf0;';
+  div.innerHTML=
+    `<span style="font-size:12px;color:#888;min-width:20px;font-weight:600">${id}.</span>`+
+    `<input type="text" placeholder="Vorname" value="${n}" style="flex:1;border:1px solid #dde1e9;border-radius:6px;padding:7px 9px;font-size:13px">`+
+    `<input type="text" placeholder="Geburtsdatum" value="${g}" style="flex:1;border:1px solid #dde1e9;border-radius:6px;padding:7px 9px;font-size:13px">`+
+    `<button type="button" onclick="document.getElementById('kind_${id}').remove()" style="background:none;border:none;color:#c0392b;font-size:20px;cursor:pointer;padding:0 4px">×</button>`;
+  document.getElementById('kinderListe').appendChild(div);
+}
+
+// ── Speichern ─────────────────────────────────────────────────────────────
+function saveData(){
+  const d={};
+
+  // Felder mit ID
+  document.querySelectorAll('input[id],select[id],textarea[id]').forEach(el=>{
+    if(el.id) d[el.id]=el.type==='checkbox'?el.checked:el.value;
+  });
+
+  // Sterne
+  document.querySelectorAll('.stars').forEach(c=>{
+    d['stars_'+c.dataset.key]=c.querySelectorAll('.star.active').length;
+  });
+
+  // Abteilung Multi
+  const abtVals=Array.from(document.querySelectorAll('input[name="abt"]:checked')).map(c=>c.value);
+  d['abteilung_multi']=JSON.stringify(abtVals);
+  d['abteilung']=abtVals[0]||'';
+
+  // Kinder
+  const kinder=[];
+  document.querySelectorAll('#kinderListe > div').forEach(div=>{
+    const ins=div.querySelectorAll('input');
+    kinder.push({n:ins[0]?.value||'',g:ins[1]?.value||''});
+  });
+  d['_kinder']=JSON.stringify(kinder);
+
+  // Urlaubs-Tabelle
+  const urlaubData=[];
+  document.querySelectorAll('#urlaubBody tr').forEach(tr=>{
+    urlaubData.push({
+      year:     tr.dataset.year,
+      anspruch: tr.querySelector('.url-anspruch')?.value||'30',
+      genommen: tr.querySelector('.url-genommen')?.value||'0',
+      rest:     tr.querySelector('.url-rest')?.value||'30',
+      uebertrag:tr.querySelector('.url-uebertrag')?.value||'0',
+      bemerk:   tr.querySelector('.url-bemerk')?.value||'',
+    });
+  });
+  d['_urlaub']=JSON.stringify(urlaubData);
+
+  // Kleidungs-Tabelle
+  const akData=[];
+  document.querySelectorAll('#ak-tbody tr').forEach(tr=>{
+    akData.push(Array.from(tr.querySelectorAll('input')).map(i=>i.value));
+  });
+  d['_ak_table']=JSON.stringify(akData);
+
+  // Nachbestellung (vorhandene + neue Artikel)
+  const bst=[];
+  document.querySelectorAll('#bestell-tbody tr').forEach(tr=>{
+    const sel=tr.querySelector('select.bst-select');
+    const label=sel?.value||'';
+    const groesse=tr.querySelector('.bst-groesse')?.value||'';
+    const menge=tr.querySelector('.bst-menge')?.value||'1';
+    if(label.trim())bst.push([label,menge,groesse,'existing']);
+  });
+  document.querySelectorAll('#bestell-neu-tbody tr').forEach(tr=>{
+    const ins=tr.querySelectorAll('input');
+    const artikel=(ins[0]?.value||'').trim();
+    const menge=ins[1]?.value||'1';
+    const groesse=ins[2]?.value||'';
+    if(artikel)bst.push([artikel,menge,groesse,'new']);
+  });
+  d['_ak_bestellung_rows']=JSON.stringify(bst);
+
+  // Werkzeug-Tabelle
+  const wzData=[];
+  document.querySelectorAll('#wz-tbody tr').forEach(tr=>{
+    wzData.push(Array.from(tr.querySelectorAll('input')).map(i=>i.value));
+  });
+  d['_wz_table']=JSON.stringify(wzData);
+
+  // Speichern
+  try{localStorage.setItem(SK,JSON.stringify(d));}catch(e){alert('Speichern fehlgeschlagen: Browser-Speicher voll.\nBitte öffne speicher_aufraumen.html und klicke auf Aufräumen.');}
+  if(window.BrüllStore) BrüllStore.set('mitarbeiter',_NR,d);
+  try{new BroadcastChannel('bruell_sw').postMessage({type:'pk_saved',nr:PK_NR});}catch(e){}
+
+  // Header live aktualisieren
+  const hn=document.querySelector('.header-name');
+  const hp=document.querySelector('.header-position');
+  if(hn) hn.textContent=((d.vorname||'')+' '+(d.nachname||'')).trim();
+  if(hp) hp.textContent=d.position||'';
+
+  const btn=document.querySelector('.btn-save');
+  btn.textContent='✓ Gespeichert'; btn.style.background='#16a34a';
+  setTimeout(()=>{btn.textContent='💾 Speichern';btn.style.background='';},2000);
+}
+
+// ── Laden ─────────────────────────────────────────────────────────────────
+function loadData(){
+  const raw=localStorage.getItem(SK);
+  let d={};
+  if(raw){ try{d=JSON.parse(raw);}catch(e){} }
+
+  // Felder mit ID
+  Object.entries(d).forEach(([id,val])=>{
+    if(id.startsWith('_')||id.startsWith('stars_')||id.startsWith('fz_')) return;
+    const el=document.getElementById(id); if(!el)return;
+    if(el.type==='checkbox') el.checked=val; else if(val!==''||el.defaultValue==='') el.value=val;
+  });
+
+  // Sterne
+  document.querySelectorAll('.stars').forEach(c=>{
+    const val=d['stars_'+c.dataset.key]||0;
+    c.querySelectorAll('.star').forEach(s=>s.classList.toggle('active',parseInt(s.dataset.val)<=val));
+  });
+
+  // Abteilung Multi
+  if(d.abteilung_multi){
+    try{
+      const av=JSON.parse(d.abteilung_multi);
+      document.querySelectorAll('input[name="abt"]').forEach(cb=>{
+        cb.checked=av.includes(cb.value);
+        const lbl=cb.closest('label');
+        if(lbl){
+          if(cb.checked) lbl.classList.add('checked-'+cb.value);
+          else           lbl.classList.remove('checked-'+cb.value);
+        }
+      });
+    }catch(e){}
+  }
+
+  // Kinder
+  if(d._kinder){
+    try{
+      document.getElementById('kinderListe').innerHTML=''; kc=0;
+      JSON.parse(d._kinder).forEach(k=>addKind(k.n,k.g));
+    }catch(e){}
+  }
+
+  // Urlaubs-Tabelle
+  if(d._urlaub){
+    try{
+      const ud=JSON.parse(d._urlaub);
+      document.querySelectorAll('#urlaubBody tr').forEach((tr,i)=>{
+        const u=ud[i]; if(!u)return;
+        if(tr.querySelector('.url-anspruch'))  tr.querySelector('.url-anspruch').value =u.anspruch;
+        if(tr.querySelector('.url-genommen'))  tr.querySelector('.url-genommen').value =u.genommen;
+        if(tr.querySelector('.url-rest'))      tr.querySelector('.url-rest').value     =u.rest;
+        if(tr.querySelector('.url-uebertrag')) tr.querySelector('.url-uebertrag').value=u.uebertrag;
+        if(tr.querySelector('.url-bemerk'))    tr.querySelector('.url-bemerk').value   =u.bemerk;
+      });
+    }catch(e){}
+  }
+
+  // Kleidungs-Tabelle
+  if(d._ak_table){
+    try{
+      const ak=JSON.parse(d._ak_table);
+      if(ak.length){
+        document.getElementById('ak-tbody').innerHTML='';
+        ak.forEach(row=>{
+          addAkRow();
+          const ins=document.querySelectorAll('#ak-tbody tr:last-child input');
+          row.forEach((v,j)=>{if(ins[j])ins[j].value=v;});
+        });
+      }
+    }catch(e){}
+  }
+
+  // Werkzeug-Tabelle
+  if(d._wz_table){
+    try{
+      const wz=JSON.parse(d._wz_table);
+      const rows=document.querySelectorAll('#wz-tbody tr');
+      wz.forEach((row,i)=>{
+        let tr=rows[i];
+        if(!tr){addWzRow();tr=document.querySelectorAll('#wz-tbody tr')[i];}
+        const ins=tr.querySelectorAll('input');
+        row.forEach((v,j)=>{if(ins[j])ins[j].value=v;});
+      });
+    }catch(e){}
+  }
+
+  // Foto
+  // Nachbestellung
+  if(d._ak_bestellung_rows){try{const bst=JSON.parse(d._ak_bestellung_rows);bst.forEach(row=>{if(row[3]==='existing'){addBestellDropRow(row[0]||'',row[2]||'',row[1]||'1');}else{addBestellNeuRow(row[0]||'',row[1]||'1',row[2]||'');}});}catch(e){}}
+const ph=(window.BrüllStore?BrüllStore.getPhoto(_NR):null)||localStorage.getItem('ph_'+PK_NR);
+  if(ph){
+    document.getElementById('photoImg').src=ph;
+    document.getElementById('photoImg').style.display='block';
+    document.getElementById('ph').style.display='none';
+  }
+}
+loadData();
+applyPendingQty(SK);
+
+
+// ── Fahrzeugkarte-Sync (dynamisch via fz_fahrer) ────────────────────────────────
+const FZ_FELDER=[
+  ['fz_kennzeichen','fz_kennzeichen'],['fz_modell','fz_modell'],
+  ['fz_nr','fz_nr_intern'],['fz_seit','fz_zuweisung_seit'],
+  ['fz_fahrer','fz_fahrer'],['fz_fuehrerschein','fz_fuehrerschein'],
+  ['fz_fs_gueltig','fz_fs_gueltig'],['fz_leasingrate','fz_leasingrate'],
+  ['fz_steuer','fz_steuer'],['fz_leasing_nr','fz_leasing_nr'],
+  ['fz_leasing_ende','fz_leasing_ende'],['fz_vers_beitrag','fz_vers_beitrag'],
+  ['fz_vers_nr','fz_vers_nr'],['fz_versicherungsgeber','fz_versicherungsgeber'],
+  ['fz_km','fz_km'],['fz_tuev','fz_tuev'],['fz_dkv','fz_dkv'],
+  ['fz_privatnutzung','fz_privatnutzung'],['fz_schaden','fz_schaeden'],
+];
+function _getFkSk(){
+  const v=(document.getElementById('vorname')?.value||'').trim();
+  const n=(document.getElementById('nachname')?.value||'').trim();
+  const name=(v+' '+n).trim().toLowerCase();
+  if(!name)return null;
+  for(let i=0;i<localStorage.length;i++){
+    const key=localStorage.key(i);
+    if(!key||!key.startsWith('fz_'))continue;
+    try{
+      const fz=JSON.parse(localStorage.getItem(key)||'{}');
+      if((fz.fz_fahrer||'').trim().toLowerCase()===name)return key;
+    }catch(e){}
+  }
+  return null;
+}
+function _loadFzIntoPage(){
+  const fkSk=_getFkSk();if(!fkSk)return;
+  try{
+    const fzD=JSON.parse(localStorage.getItem(fkSk)||'{}');
+    FZ_FELDER.forEach(([pkId,fkId])=>{
+      const v=fzD[fkId];
+      if(v===undefined||v==='')return;
+      const el=document.getElementById(pkId);if(el)el.value=v;
+    });
+  }catch(e){}
+}
+_loadFzIntoPage();
+(function(){
+  var _pkOrigSave=saveData;
+  saveData=function(){
+    _pkOrigSave();
+    const fkSk=_getFkSk();if(!fkSk)return;
+    try{
+      const d=JSON.parse(localStorage.getItem(SK)||'{}');
+      const fzD=JSON.parse(localStorage.getItem(fkSk)||'{}');
+      FZ_FELDER.forEach(([pkId,fkId])=>{if(d[pkId]!==undefined)fzD[fkId]=d[pkId];});
+      localStorage.setItem(fkSk,JSON.stringify(fzD));
+      try{new BroadcastChannel('bruell_fz').postMessage({type:'fz_saved',nr:fkSk.replace('fz_','')});}catch(e){}
+    }catch(e){}
+  };
+})()
+try{new BroadcastChannel('bruell_fz').onmessage=e=>{
+  if(!e.data||e.data.type!=='fz_saved')return;
+  const fkSk=_getFkSk();
+  if(fkSk&&('fz_'+e.data.nr)===fkSk)_loadFzIntoPage();
+};}catch(e){}
+
+pkKopfAktualisieren();
+</script>
+</body>
+</html>
