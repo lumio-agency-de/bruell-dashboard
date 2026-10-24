@@ -1194,7 +1194,9 @@
           ? `<div class="q-aktion q-notiz"><textarea class="eingabe" data-pfeld="${s.feld}" rows="4" aria-label="${esc(titel)}" placeholder="${esc(s.platzhalter || "eintragen")}">${esc(v)}</textarea></div>`
           : s.feld === "zustaendig"
           ? expertenAuswahl(p)
-          : `<div class="q-aktion"><input class="eingabe auto" data-pfeld="${s.feld}" value="${esc(v)}" aria-label="${esc(titel)}" placeholder="eintragen"></div>`;
+          : s.optionen
+          ? `<div class="q-aktion"><select class="eingabe auto" data-pfeld="${s.feld}" aria-label="${esc(titel)}"><option value="">– bitte wählen –</option>${s.optionen.map((o) => `<option${v === o ? " selected" : ""}>${esc(o)}</option>`).join("")}</select></div>`
+          : `<div class="q-aktion"><input class="eingabe ${s.platzhalter ? "breit" : "auto"}" data-pfeld="${s.feld}" value="${esc(v)}" aria-label="${esc(titel)}" placeholder="${esc(s.platzhalter || "eintragen")}"></div>`;
         break;
       }
     }
@@ -2618,7 +2620,7 @@
     }
     if (el.dataset.pfeld && p) {
       const k = el.dataset.pfeld;
-      aendern(p, (x) => { x[k] = el.value.trim(); if (k === "zustaendig") x.experten = x[k] ? [x[k], ...experten(p).filter((e) => e !== x[k])] : []; }, k === "angebotNotiz" ? "Notizen zum Angebot geändert" : k === "status" ? `Status: ${STATUS.find((s) => s.id === el.value)?.label}` : k === "projektnr" ? `Projektnummer: ${el.value.trim()}` : k === "bzaNr" ? `BZA-Nummer: ${el.value.trim()}` : k === "bzdNr" ? `BZD-Nummer: ${el.value.trim()}` : k === "downloadCode" ? `Download-Code: ${el.value.trim()}` : null);
+      aendern(p, (x) => { x[k] = el.value.trim(); if (k === "zustaendig") x.experten = x[k] ? [x[k], ...experten(p).filter((e) => e !== x[k])] : []; }, k === "angebotNotiz" ? "Notizen zum Angebot geändert" : k === "status" ? `Status: ${STATUS.find((s) => s.id === el.value)?.label}` : k === "projektnr" ? `Projektnummer: ${el.value.trim()}` : k === "bzaNr" ? `BZA-Nummer: ${el.value.trim()}` : k === "bzdNr" ? `BZD-Nummer: ${el.value.trim()}` : k === "anzahlung" ? `Anzahlung: ${el.value}` : k === "wunschtermin" ? `Wunschtermin: ${el.value.trim()}` : k === "downloadCode" ? `Download-Code: ${el.value.trim()}` : null);
       kopfNeu(p); return teilRendern(p);
     }
     if ((el.dataset.nk || el.dataset.nkTab) && p && istGF()) {

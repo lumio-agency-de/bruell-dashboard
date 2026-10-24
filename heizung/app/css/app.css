@@ -123,6 +123,7 @@ code { font-size: .85em; background: var(--tinte-weich); padding: 1px 5px; borde
 /* ---------- Eingaben ---------- */
 .eingabe { width: 100%; padding: 7px 10px; border: 1px solid var(--fuge-stark); border-radius: var(--radius); background: #fff; transition: border-color 150ms ease, box-shadow 150ms ease; }
 .eingabe.auto { width: auto; }
+.eingabe.breit { width: min(100%, 26rem); }
 .eingabe.kurz { max-width: 80px; }
 .eingabe:hover { border-color: color-mix(in oklab, var(--tinte) 40%, transparent); }
 .eingabe:focus { outline: none; border-color: var(--tinte); box-shadow: 0 0 0 3px color-mix(in oklab, var(--akzent) 32%, transparent); }
