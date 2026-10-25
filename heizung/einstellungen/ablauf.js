@@ -196,10 +196,13 @@ window.ABSCHNITTE = [
     },
     {
       nr: 8, titel: "Baustelle planen", abschnitt: "vorber",
-      ziel: "Termin festlegen, Schornsteinfeger informieren, Subunternehmer und Abschlag – und wer mitarbeitet.",
+      ziel: "Subunternehmer anfragen, Termin festlegen und bestätigen, Abschlag, Schornsteinfeger informieren – und wer mitarbeitet.",
       schritte: [
+        { id: "plan", typ: "formular", formular: "baustellenplan", titel: "Subunternehmer & Ablauf",
+          hinweis: "Alle Fremdgewerke aus der Baustellenbesichtigung sind schon eingetragen – Firma aus dem Adressbuch wählen." },
         { id: "baustart", typ: "termin", termin: "baustart", titel: "Umsetzungstermin (Baustart)" },
         { id: "mail-umsetzung", typ: "mail", mail: "umsetzung", titel: "Umsetzungstermin per Mail bestätigen" },
+        { id: "abschlag", typ: "formular", formular: "abschlag", titel: "Abschlagsrechnung" },
         { id: "taf", typ: "formular", formular: "taf", titel: "Technische Angaben (TAF) an den Bezirksschornsteinfeger",
           hinweis: "Mindestens 10 Tage vor Baubeginn vorlegen.",
           vorlage: [
@@ -210,9 +213,6 @@ window.ABSCHNITTE = [
             { titel: "TAF Pellet · Außenwandkamin", datei: "vorlagen/08-baustelle-planen/TAF-Pellet-Aussenwandkamin.pdf" },
           ],
           wenn: neuIst(FEUER) },
-        { id: "plan", typ: "formular", formular: "baustellenplan", titel: "Subunternehmer & Ablauf",
-          hinweis: "Alle Fremdgewerke aus der Baustellenbesichtigung sind schon eingetragen – Firma aus dem Adressbuch wählen." },
-        { id: "abschlag", typ: "formular", formular: "abschlag", titel: "Abschlagsrechnung" },
         { id: "schema", typ: "dateien", kategorie: "planung", titel: "Skizzen & Hydraulikschema für die Monteure",
           hinweis: "Was hier liegt, sehen die Monteure in ihrem Zugang (ersetzt den Baustellenordner auf MOMO3)." },
         { id: "team", typ: "team", titel: "Monteure & Partner zuweisen",
