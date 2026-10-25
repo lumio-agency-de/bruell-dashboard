@@ -20,10 +20,19 @@ baue() {   # $1 = Quelle, $2 = Zielordner (bad|heizung), $3 = alter Speicher-Pr�
   <link rel=\"stylesheet\" href=\"../gesamt/thema.css?v=$V\">\\
   <script src=\"../gesamt/thema.js?v=$V\"></script>\\
 </head>#" "$z/index.html"
+  # Eine Software für die Brüll GmbH: kein „Bad-/Heizungs-Dashboard“ bei Anmeldung, Titel und Zugangsdaten
+  local alt; [ "$2" = bad ] && alt="Bad-Dashboard" || alt="Heizungs-Dashboard"
+  sed -i '' -e "s/loginKopf(\"$alt · Anmeldung\")/loginKopf(\"Brüll Dashboard · Anmeldung\")/" \
+            -e "s/Zugang zum $alt/Zugang zum Brüll Dashboard/" \
+            -e "s/\`\${c.kurzname || c.name} · $alt\`;/\`Brüll Dashboard · $( [ "$2" = bad ] && echo Bad || echo Heizung )\`;/" "$z/app/js/app.js"
+  sed -i '' -e "s#<title>$alt</title>#<title>Brüll Dashboard</title>#" -e "s#<strong id=\"marke-name\">$alt</strong>#<strong id=\"marke-name\">Brüll GmbH</strong>#" "$z/index.html"
+  # Cache-Versionen neu: die Gesamt-Fassung weicht von der Einzelversion ab (sonst laden Handys alte Dateien)
+  sed -i '' -E "s/\?v=[0-9]{12}/?v=$V/g" "$z/index.html" "$z/kunde.html"
   # Bereichs-Umschalter einbinden
   sed -i '' -e "s#</body>#  <link rel=\"stylesheet\" href=\"../gesamt/bereiche.css?v=$V\">\\
   <link rel=\"stylesheet\" href=\"../gesamt/mobil.css?v=$V\">\\
   <script src=\"../gesamt/bereiche.js?v=$V\" data-bereich=\"$2\"></script>\\
+  <script src=\"../gesamt/tabs.js?v=$V\"></script>\\
 </body>#" "$z/index.html"
   echo "✓ $2 ← $(cd "$q" && git log -1 --format='%h %s' 2>/dev/null | cut -c1-70)"
 }

@@ -4,43 +4,35 @@
    wie bei einer App, oben nur Logo + Menü des Bereichs + Abmelden. Gilt für Übersicht, Personal,
    Fahrzeuge und die eingebundenen Bereiche Bad/Heizung (bereiche.js).
    ========================================================================== */
+.tabbar-mobil { display: none; }
 @media (max-width: 760px) {
   :root { --tabbar-h: 60px; }
   body { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px)) !important; }
 
-  /* ---------- Tab-Leiste unten ---------- */
-  .rail .bereich-nav,
-  body.oben-leiste .rail > .nav,
-  body.personal-seite .rail > .nav {
+  /* ---------- Tab-Leiste unten (gesamt/tabs.js) ---------- */
+  .tabbar-mobil {
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; margin: 0; border: 0;
     display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; gap: 0; align-items: stretch;
     padding: 4px max(4px, env(safe-area-inset-left, 0px)) calc(4px + env(safe-area-inset-bottom, 0px)) max(4px, env(safe-area-inset-right, 0px));
     background: var(--tinte); border-top: 1px solid rgb(255 255 255 / .1); box-shadow: 0 -10px 26px -18px rgb(0 0 0 / .55);
   }
-  .rail .bereich-nav a,
-  body.oben-leiste .rail > .nav a,
-  body.personal-seite .rail > .nav a {
+  .tabbar-mobil a {
     flex: 1 1 0; min-width: 0; min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
     padding: 6px 2px !important; border-radius: 12px !important; background: none !important; box-shadow: none !important;
     font-size: .68rem; font-weight: 600; letter-spacing: .01em; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     color: color-mix(in oklab, #fff 66%, var(--tinte)); -webkit-tap-highlight-color: transparent; position: relative;
   }
-  .rail .bereich-nav a .nav-i,
-  body.oben-leiste .rail > .nav a .nav-i,
-  body.personal-seite .rail > .nav a .nav-i { display: grid !important; width: 18px; height: 18px; }
-  .rail .bereich-nav a.hier,
-  body.oben-leiste .rail > .nav a[aria-current="page"],
-  body.personal-seite .rail > .nav a[aria-current="page"] { color: #fff; }
-  .rail .bereich-nav a.hier .nav-i,
-  body.oben-leiste .rail > .nav a[aria-current="page"] .nav-i,
-  body.personal-seite .rail > .nav a[aria-current="page"] .nav-i { color: var(--akzent, #E99033); }
-  .rail .bereich-nav a.hier::before,
-  body.oben-leiste .rail > .nav a[aria-current="page"]::before,
-  body.personal-seite .rail > .nav a[aria-current="page"]::before {
+  .tabbar-mobil a .nav-i { display: grid !important; width: 18px; height: 18px; }
+  .tabbar-mobil a[aria-current="page"] { color: #fff; }
+  .tabbar-mobil a[aria-current="page"] .nav-i { color: var(--akzent, #E99033); }
+  .tabbar-mobil a[aria-current="page"]::before {
     content: ""; position: absolute; top: 0; left: 30%; right: 30%; height: 3px; border-radius: 0 0 3px 3px; background: var(--akzent, #E99033);
   }
-  .rail .bereich-nav a:active, body.oben-leiste .rail > .nav a:active, body.personal-seite .rail > .nav a:active { background: rgb(255 255 255 / .08) !important; }
+  .tabbar-mobil a:active { background: rgb(255 255 255 / .08) !important; }
   .rail .bereich-titel { display: none; }
+  /* Die Menüs in der Leiste werden am Handy durch die eigene Tab-Leiste (gesamt/tabs.js) ersetzt */
+  .rail .bereich-nav, body.oben-leiste .rail > .nav, body.personal-seite .rail > .nav { display: none !important; }
+  .tabbar-mobil { display: flex !important; }
 
   /* ---------- Kopfleiste oben: Logo · Bereichs-Menü (wischen) · Abmelden ---------- */
   .rail { gap: 8px !important; scrollbar-width: none; }
@@ -90,30 +82,16 @@
 
 /* Tab-Leiste: eigene Symbole (Übersicht · Bad · Heizung · Personal · Fahrzeuge · Konten) */
 @media (max-width: 760px) {
-  .rail .bereich-nav .nav-i,
-  body.oben-leiste .rail > .nav .nav-i,
-  body.personal-seite .rail > .nav .nav-i { width: 22px !important; height: 22px !important; border: 0 !important; box-shadow: none !important; background: currentColor !important; -webkit-mask: var(--ico) center / contain no-repeat; mask: var(--ico) center / contain no-repeat; }
-  .rail .bereich-nav .nav-i::before, .rail .bereich-nav .nav-i::after, .rail .bereich-nav .nav-i > *,
-  body.oben-leiste .rail > .nav .nav-i::before, body.oben-leiste .rail > .nav .nav-i::after, body.oben-leiste .rail > .nav .nav-i > *,
-  body.personal-seite .rail > .nav .nav-i::before, body.personal-seite .rail > .nav .nav-i::after, body.personal-seite .rail > .nav .nav-i > * { display: none !important; }
-  .rail .bereich-nav a:nth-child(1) .nav-i,
-  body.oben-leiste .rail > .nav a:nth-child(1) .nav-i,
-  body.personal-seite .rail > .nav a:nth-child(1) .nav-i { --ico: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%223.5%22%20y%3D%223.5%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221.8%22/%3E%3Crect%20x%3D%2213.5%22%20y%3D%223.5%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221.8%22/%3E%3Crect%20x%3D%223.5%22%20y%3D%2213.5%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221.8%22/%3E%3Crect%20x%3D%2213.5%22%20y%3D%2213.5%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221.8%22/%3E%3C/svg%3E"); }
-  .rail .bereich-nav a:nth-child(2) .nav-i,
-  body.oben-leiste .rail > .nav a:nth-child(2) .nav-i,
-  body.personal-seite .rail > .nav a:nth-child(2) .nav-i { --ico: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M3%2012h18v2.5A5.5%205.5%200%200%201%2015.5%2020h-7A5.5%205.5%200%200%201%203%2014.5z%22/%3E%3Cpath%20d%3D%22M6%2012V6.5a2.5%202.5%200%200%201%205%200%22/%3E%3Cpath%20d%3D%22M7%2020l-1%201.5M17%2020l1%201.5%22/%3E%3C/svg%3E"); }
-  .rail .bereich-nav a:nth-child(3) .nav-i,
-  body.oben-leiste .rail > .nav a:nth-child(3) .nav-i,
-  body.personal-seite .rail > .nav a:nth-child(3) .nav-i { --ico: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%202.5c.8%203.6%205.5%205.6%205.5%2011a5.5%205.5%200%200%201-11%200c0-2.8%201.6-4.2%202.6-5.6.4%201.6%201.4%202.4%202.4%202.6-.9-2.7-.6-5.4.5-8z%22/%3E%3C/svg%3E"); }
-  .rail .bereich-nav a:nth-child(4) .nav-i,
-  body.oben-leiste .rail > .nav a:nth-child(4) .nav-i,
-  body.personal-seite .rail > .nav a:nth-child(4) .nav-i { --ico: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%229%22%20cy%3D%228%22%20r%3D%223.2%22/%3E%3Cpath%20d%3D%22M3%2020a6%206%200%200%201%2012%200%22/%3E%3Ccircle%20cx%3D%2217%22%20cy%3D%229%22%20r%3D%222.6%22/%3E%3Cpath%20d%3D%22M15.8%2014.2A5%205%200%200%201%2021%2019.5%22/%3E%3C/svg%3E"); }
-  .rail .bereich-nav a:nth-child(5) .nav-i,
-  body.oben-leiste .rail > .nav a:nth-child(5) .nav-i,
-  body.personal-seite .rail > .nav a:nth-child(5) .nav-i { --ico: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M2.5%2016.5V8a1.5%201.5%200%200%201%201.5-1.5h10l4%204.5h2a1.5%201.5%200%200%201%201.5%201.5v4h-2%22/%3E%3Cpath%20d%3D%22M5.5%2016.5h7%22/%3E%3Ccircle%20cx%3D%228%22%20cy%3D%2217%22%20r%3D%222%22/%3E%3Ccircle%20cx%3D%2216.5%22%20cy%3D%2217%22%20r%3D%222%22/%3E%3C/svg%3E"); }
-  .rail .bereich-nav a:nth-child(6) .nav-i,
-  body.oben-leiste .rail > .nav a:nth-child(6) .nav-i,
-  body.personal-seite .rail > .nav a:nth-child(6) .nav-i { --ico: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%223%22/%3E%3Cpath%20d%3D%22M12%202.5v3M12%2018.5v3M2.5%2012h3M18.5%2012h3M5.3%205.3l2.1%202.1M16.6%2016.6l2.1%202.1M5.3%2018.7l2.1-2.1M16.6%207.4l2.1-2.1%22/%3E%3C/svg%3E"); }
+  .tabbar-mobil .nav-i { width: 22px !important; height: 22px !important; border: 0 !important; box-shadow: none !important; background: currentColor !important; -webkit-mask: var(--ico) center / contain no-repeat; mask: var(--ico) center / contain no-repeat; }
+  .tabbar-mobil .nav-i::before,
+  .tabbar-mobil .nav-i::after,
+  .tabbar-mobil .nav-i > * { display: none !important; }
+  .tabbar-mobil a:nth-child(1) .nav-i { --ico: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%223.5%22%20y%3D%223.5%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221.8%22/%3E%3Crect%20x%3D%2213.5%22%20y%3D%223.5%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221.8%22/%3E%3Crect%20x%3D%223.5%22%20y%3D%2213.5%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221.8%22/%3E%3Crect%20x%3D%2213.5%22%20y%3D%2213.5%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221.8%22/%3E%3C/svg%3E"); }
+  .tabbar-mobil a:nth-child(2) .nav-i { --ico: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M3%2012h18v2.5A5.5%205.5%200%200%201%2015.5%2020h-7A5.5%205.5%200%200%201%203%2014.5z%22/%3E%3Cpath%20d%3D%22M6%2012V6.5a2.5%202.5%200%200%201%205%200%22/%3E%3Cpath%20d%3D%22M7%2020l-1%201.5M17%2020l1%201.5%22/%3E%3C/svg%3E"); }
+  .tabbar-mobil a:nth-child(3) .nav-i { --ico: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%202.5c.8%203.6%205.5%205.6%205.5%2011a5.5%205.5%200%200%201-11%200c0-2.8%201.6-4.2%202.6-5.6.4%201.6%201.4%202.4%202.4%202.6-.9-2.7-.6-5.4.5-8z%22/%3E%3C/svg%3E"); }
+  .tabbar-mobil a:nth-child(4) .nav-i { --ico: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%229%22%20cy%3D%228%22%20r%3D%223.2%22/%3E%3Cpath%20d%3D%22M3%2020a6%206%200%200%201%2012%200%22/%3E%3Ccircle%20cx%3D%2217%22%20cy%3D%229%22%20r%3D%222.6%22/%3E%3Cpath%20d%3D%22M15.8%2014.2A5%205%200%200%201%2021%2019.5%22/%3E%3C/svg%3E"); }
+  .tabbar-mobil a:nth-child(5) .nav-i { --ico: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M2.5%2016.5V8a1.5%201.5%200%200%201%201.5-1.5h10l4%204.5h2a1.5%201.5%200%200%201%201.5%201.5v4h-2%22/%3E%3Cpath%20d%3D%22M5.5%2016.5h7%22/%3E%3Ccircle%20cx%3D%228%22%20cy%3D%2217%22%20r%3D%222%22/%3E%3Ccircle%20cx%3D%2216.5%22%20cy%3D%2217%22%20r%3D%222%22/%3E%3C/svg%3E"); }
+  .tabbar-mobil a:nth-child(6) .nav-i { --ico: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%223%22/%3E%3Cpath%20d%3D%22M12%202.5v3M12%2018.5v3M2.5%2012h3M18.5%2012h3M5.3%205.3l2.1%202.1M16.6%2016.6l2.1%202.1M5.3%2018.7l2.1-2.1M16.6%207.4l2.1-2.1%22/%3E%3C/svg%3E"); }
 }
 /* Personal-/Fahrzeugkarte: Speichern-Leiste klebt unter der Kopfleiste, Name steht schon in der Karte */
 @media (max-width: 760px) {
@@ -130,13 +108,7 @@
 }
 /* Dunkel-Modus: Tab-Leiste wie die Seitenleiste */
 @media (max-width: 760px) {
-  html[data-thema="dunkel"] .rail .bereich-nav,
-  html[data-thema="dunkel"] body.oben-leiste .rail > .nav,
-  html[data-thema="dunkel"] body.personal-seite .rail > .nav { background: #0b0b0d !important; border-top-color: rgb(255 255 255 / .08); }
-  html[data-thema="dunkel"] .rail .bereich-nav a,
-  html[data-thema="dunkel"] body.oben-leiste .rail > .nav a,
-  html[data-thema="dunkel"] body.personal-seite .rail > .nav a { color: #9b9ba3; }
-  html[data-thema="dunkel"] .rail .bereich-nav a.hier,
-  html[data-thema="dunkel"] body.oben-leiste .rail > .nav a[aria-current="page"],
-  html[data-thema="dunkel"] body.personal-seite .rail > .nav a[aria-current="page"] { color: #fff; }
+  html[data-thema="dunkel"] .tabbar-mobil { background: #0b0b0d !important; border-top-color: rgb(255 255 255 / .08); }
+  html[data-thema="dunkel"] .tabbar-mobil a { color: #9b9ba3; }
+  html[data-thema="dunkel"] .tabbar-mobil a[aria-current="page"] { color: #fff; }
 }

@@ -135,7 +135,7 @@
     $("#marke-name").textContent = c.name;
     $("#marke-bereich").textContent = c.bereich;
     $("#marke-logo").src = c.logo;
-    document.title = `${c.kurzname || c.name} · Bad-Dashboard`;
+    document.title = `Brüll Dashboard · Bad`;
   }
 
   /* ---------- Ebenen & Rechte ---------- */
@@ -2053,7 +2053,7 @@
   const benutzerVorschlag = (name) => String(name || "").trim().split(/\s+/)[0].toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/ß/g, "ss").replace(/[^a-z0-9.-]/g, "") || "mitarbeiter";
   function zugangErgebnis(dlg, name, benutzer, pw) {
     const url = location.origin + location.pathname;
-    const text = `Zugang zum Bad-Dashboard\nAdresse: ${url}\nBenutzername: ${benutzer}\nStartpasswort: ${pw}\nBeim ersten Anmelden bitte ein eigenes Passwort festlegen.`;
+    const text = `Zugang zum Brüll Dashboard\nAdresse: ${url}\nBenutzername: ${benutzer}\nStartpasswort: ${pw}\nBeim ersten Anmelden bitte ein eigenes Passwort festlegen.`;
     dlg.innerHTML = `<div class="dlg-kopf"><div><p class="eyebrow">${esc(name)}</p><h2>Zugang bereit</h2><p>Bitte persönlich weitergeben. Das Startpasswort wird nur jetzt angezeigt; beim ersten Anmelden vergibt ${esc(name.split(" ")[0])} ein eigenes.</p></div><button class="btn still" data-aktion="dlg-zu" aria-label="Schließen">✕</button></div>
       <div class="dlg-inhalt"><dl class="infos gross"><dt>Adresse</dt><dd>${esc(url)}</dd><dt>Benutzername</dt><dd><b>${esc(benutzer)}</b></dd><dt>Startpasswort</dt><dd><code class="pw">${esc(pw)}</code></dd></dl></div>
       <div class="dlg-fuss"><button class="btn" data-dlg="kopieren">Zugangsdaten kopieren</button><button class="btn jetzt" data-aktion="dlg-zu">Fertig</button></div>`;
@@ -2269,7 +2269,7 @@
      ================================================================ */
   function ansichtLogin(fehler) {
     const demo = istDemo() && Daten.modus === "lokal";
-    return `<div class="login"><div class="login-spalte"><form class="panel login-karte" id="login-form">${loginKopf("Bad-Dashboard · Anmeldung")}
+    return `<div class="login"><div class="login-spalte"><form class="panel login-karte" id="login-form">${loginKopf("Brüll Dashboard · Anmeldung")}
       ${fehler ? `<p class="luecken">${esc(fehler)}</p>` : ""}
       <div class="feld"><label for="l-b">Benutzername</label><input class="eingabe" id="l-b" autocomplete="username" autocapitalize="none" spellcheck="false" required></div>
       <div class="feld"><label for="l-pw">Passwort</label><input class="eingabe" id="l-pw" type="password" autocomplete="current-password" required></div>
