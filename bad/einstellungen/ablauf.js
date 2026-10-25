@@ -33,7 +33,7 @@
                       { formular: "id", feld: "feld", wert: "ja" }
 
    Platzhalter in Texten: {badberater} {badplanung} {projektleiter}
-   {badexperten} → in Level 1 fürs Erstgespräch ausgewählte Mitarbeiter (sonst „dem Badexperten“)
+   {badexperten} → in Level 1 fürs Erstgespräch ausgewählte Mitarbeiter (sonst Badberater)
    {besichtiger} → in Level 6 für die Baustellenbesichtigung ausgewählte Mitarbeiter (sonst Projektleiter)
    {programm.erp} {programm.cad} … (siehe firma.js)
    ========================================================================== */
@@ -96,7 +96,7 @@ window.ABLAUF = [
       { id: "fotos", typ: "dateien", kategorie: "bilder-alt", kundenlink: true, titel: "Fotos & Maße vom Kunden",
         hinweis: "Kommt über den Kundenlink automatisch hier an. Kurz vor dem Termin ggf. anrufen und erinnern.",
         ersatz: "Kunde bringt Unterlagen zum Termin mit" },
-      { id: "grundriss", typ: "dateien", kategorie: "grundriss", pflicht: false, titel: "Bemaßter Grundriss aus {programm.cad} für {badberater}",
+      { id: "grundriss", typ: "dateien", kategorie: "grundriss", pflicht: false, titel: "Bemaßter Grundriss aus {programm.cad} für {badexperten}",
         hinweis: "Zum Skizzieren im Erstgespräch – ausdrucken und bereitlegen." },
     ],
   },
@@ -115,12 +115,12 @@ window.ABLAUF = [
     nr: 4, titel: "Angebot & Planung erstellen", abschnitt: "planung",
     ziel: "3D-Planung rendern und das Angebot aus dem Musterangebot ableiten.",
     schritte: [
-      { id: "pruefslot", typ: "erledigt", titel: "Prüftermin „Angebot & Planung prüfen“ bei {badberater} im Kalender eingetragen" },
+      { id: "pruefslot", typ: "erledigt", titel: "Prüftermin „Angebot & Planung prüfen“ bei {badexperten} im Kalender eingetragen" },
       { id: "planung", typ: "dateien", kategorie: "planung", titel: "Planung aus {programm.cad} (Renderings) hochladen" },
       { id: "kwp-projekt", typ: "erledigt", titel: "Projekt in {programm.erp} angelegt",
         hinweis: "Titel „Realisierung Ihres Traumbades“, Abteilung Bad/Sanitär, rote Farbe. Musterangebot Titel für Titel anpassen." },
       { id: "projektnr", typ: "feld", feld: "projektnr", titel: "Projektnummer aus {programm.erp}" },
-      { id: "freigabe-intern", typ: "erledigt", titel: "{badberater} hat Angebot & Planung geprüft", ebene: ["geschaeftsfuehrung"] },
+      { id: "freigabe-intern", typ: "erledigt", titel: "Angebot & Planung von {badexperten} geprüft", ebene: ["geschaeftsfuehrung"] },
       { id: "angebot", typ: "dateien", kategorie: "angebot", titel: "Angebot als PDF ablegen" },
     ],
   },
@@ -151,7 +151,7 @@ window.ABLAUF = [
       { id: "bb-termin", typ: "termin", termin: "baustellenbesichtigung", titel: "Baustellenbesichtigung mit {besichtiger} vereinbaren" },
       { id: "checkliste", typ: "formular", formular: "baustellenbesichtigung", titel: "Checkliste Baustellenbesichtigung", ebene: ["planung", "monteur"] },
       { id: "masse", typ: "erledigt", titel: "Raummaße in {programm.cad} übernommen, Planung angepasst" },
-      { id: "ma-termin", typ: "termin", termin: "materialauswahl", titel: "Termin Materialauswahl in der Ausstellung" },
+      { id: "ma-termin", typ: "termin", termin: "materialauswahl", titel: "Termin Materialauswahl mit {badexperten} in der Ausstellung" },
     ],
   },
   {

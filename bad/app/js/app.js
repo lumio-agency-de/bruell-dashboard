@@ -19,7 +19,7 @@
     { key: "erstgespraech",          label: "Erstgespräch",           typ: "datetime-local", mit: "badexperten" },
     { key: "angebotsbesprechung",    label: "Angebotsbesprechung",    typ: "datetime-local", mit: "badexperten" },
     { key: "baustellenbesichtigung", label: "Baustellenbesichtigung", typ: "datetime-local", mit: "besichtiger" },
-    { key: "materialauswahl",        label: "Materialauswahl",        typ: "datetime-local" },
+    { key: "materialauswahl",        label: "Materialauswahl",        typ: "datetime-local", mit: "badexperten" },
     { key: "baustart",               label: "Baustart",               typ: "date" },
     { key: "abnahme",                label: "Abnahme",                typ: "datetime-local" },
   ];
@@ -116,8 +116,8 @@
     return String(text).replace(/\{([a-zA-Z0-9.]+)\}/g, (m, key) => {
       /* {besichtiger}: wer in Level 6 für die Baustellenbesichtigung ausgewählt ist (sonst der Projektleiter) */
       if (key === "besichtiger") return aufzaehlen(((p && p.besichtiger) || []).map((k) => mitgliedZu(k)?.name || k)) || namen("projektleiter");
-      /* {badexperten}: wer in Level 1 fürs Erstgespräch ausgewählt ist (sonst „dem Badexperten“) */
-      if (key === "badexperten") return aufzaehlen(((p && p.badexperten) || []).map((k) => mitgliedZu(k)?.name || k)) || "dem Badexperten";
+      /* {badexperten}: wer in Level 1 fürs Erstgespräch ausgewählt ist (sonst die Badberater) */
+      if (key === "badexperten") return aufzaehlen(((p && p.badexperten) || []).map((k) => mitgliedZu(k)?.name || k)) || namen("badberater");
       if (key.startsWith("programm.")) return c.programme[key.slice(9)] ?? m;
       if (c.team.some((t) => t.rolle === key)) return namen(key);
       return m;
@@ -1220,9 +1220,9 @@
       case "termin": {
         const def = TERMINE.find((t) => t.key === s.termin);
         const v = (p.termine || {})[s.termin] || "";
-        const mit = terminMit(p, def);
+        const mit = terminMit(p, def), mitImTitel = def.mit && String(s.titel).includes(`{${def.mit}}`);   // Name steht schon im Titel → nicht doppelt
         meta = v ? fTermin(v) : "noch kein Termin";
-        inhalt = `<div class="q-aktion"><input class="eingabe auto" type="${def.typ}" data-termin="${s.termin}" value="${esc(v)}" aria-label="${esc(def.label)}">${def.mit ? (mit ? `<span class="termin-mit">mit <b>${esc(mit)}</b></span>` : (def.mit === "badexperten" ? `<span class="termin-mit leise">Badexperte noch nicht gewählt (Level 1)</span>` : "")) : ""}${v ? `<button class="btn klein" data-aktion="ics" data-termin-key="${s.termin}" title="Termin als Kalendereintrag für Outlook">📅 In Outlook-Kalender</button>` : ""}</div>`;
+        inhalt = `<div class="q-aktion"><input class="eingabe auto" type="${def.typ}" data-termin="${s.termin}" value="${esc(v)}" aria-label="${esc(def.label)}">${def.mit && !mitImTitel ? (mit ? `<span class="termin-mit">mit <b>${esc(mit)}</b></span>` : (def.mit === "badexperten" ? `<span class="termin-mit leise">Badexperte noch nicht gewählt (Level 1)</span>` : "")) : ""}${v ? `<button class="btn klein" data-aktion="ics" data-termin-key="${s.termin}" title="Termin als Kalendereintrag für Outlook">📅 In Outlook-Kalender</button>` : ""}</div>`;
         break;
       }
       case "mail": {
