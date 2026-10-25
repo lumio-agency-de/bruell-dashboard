@@ -937,3 +937,4 @@ small.gut { color: var(--gruen); font-weight: 600; } small.schlecht { color: var
 .dlg-erledigt input { width: 20px; height: 20px; accent-color: var(--gruen, #2f6b45); }
 .anhang-wahl a { font-weight: 600; }
 .termin-mit { font-size: 15px; }
+.schritt-info { font-size: 15px; margin-left: 4px; }

@@ -1144,7 +1144,8 @@
         const fs = Formular.status(s.formular, p, dateienVon(p.id));
         meta = fs.vollstaendig ? "vollständig" : fs.begonnen ? `${fs.ok} von ${fs.gesamt} Pflichtfeldern` : "noch nicht begonnen";
         inhalt = `<div class="q-aktion"><a class="btn ${x.erledigt ? "" : "voll"}" href="#/projekt/${p.id}/formular/${s.formular}">${fs.begonnen ? "Formular bearbeiten" : "Formular ausfüllen"} <span class="pfeil">→</span></a>
-          ${fs.begonnen ? `<button class="btn still" data-aktion="drucken" data-formular="${s.formular}">Drucken</button>` : ""}</div>`;
+          ${fs.begonnen ? `<button class="btn still" data-aktion="drucken" data-formular="${s.formular}">Drucken</button>` : ""}
+          ${s.info ? `<span class="schritt-info">${esc(s.info.label)}: ${p[s.info.feld] ? `<b>${esc(p[s.info.feld])}</b>` : `<span class="leise">noch nicht angegeben</span>`}</span>` : ""}</div>`;
         break;
       }
       case "dateien": {

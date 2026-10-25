@@ -28,6 +28,7 @@
                       Die Geschäftsführung darf immer alles.
      team         Monteure & Partner dem Projekt zuweisen
    pflicht: false   → optionaler Schritt (blockiert nicht)
+   info: { feld, label } → zeigt bei einem Formular einen Projektwert daneben (z. B. die Anzahlung)
    wenn             → Schritt gilt nur, wenn eine Bedingung erfüllt ist:
                       { schritt: "id", wert: "option" }
                       { formular: "id", feld: "feld", wert: "ja" }
@@ -207,7 +208,7 @@ window.ABLAUF = [
       { id: "mail-umsetzung", typ: "mail", mail: "umsetzung", titel: "Umsetzungstermin per Mail bestätigen" },
       { id: "plan", typ: "formular", formular: "baustellenplan", titel: "Subunternehmer & Ablauf",
         hinweis: "Alle Gewerke aus der Materialauswahl sind schon eingetragen – Firma aus dem Adressbuch wählen." },
-      { id: "abschlag", typ: "formular", formular: "abschlag", titel: "Abschlagsrechnung" },
+      { id: "abschlag", typ: "formular", formular: "abschlag", titel: "Abschlagsrechnung", info: { feld: "anzahlung", label: "Anzahlung" } },
       { id: "team", typ: "team", titel: "Monteure & Partner zuweisen",
         hinweis: "Wer zugewiesen ist, sieht diese Baustelle. Welche Ordner, ist unter Konten → „Ordner & Bilder“ festgelegt." },
     ],

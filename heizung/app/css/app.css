@@ -932,3 +932,4 @@ small.gut { color: var(--gruen); font-weight: 600; } small.schlecht { color: var
 .anhang-wahl { margin-top: 14px; }
 .anhang-wahl ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; max-height: 220px; overflow: auto; }
 .anhang-wahl small { color: var(--leise); margin-left: 4px; }
+.schritt-info { font-size: 15px; margin-left: 4px; }

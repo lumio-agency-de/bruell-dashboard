@@ -31,6 +31,7 @@
                       (label = Beschriftung im PDF als RegExp, stellen = Länge der Nummer)
    links: [{ titel, url }] → Knöpfe zu externen Seiten (öffnen in neuem Tab)
    pflicht: false   → optionaler Schritt (blockiert nicht)
+   info: { feld, label } → zeigt bei einem Formular einen Projektwert daneben (z. B. die Anzahlung)
    wenn             → Schritt gilt nur, wenn eine Bedingung erfüllt ist (Liste: eine davon genügt):
                       { schritt: "id", wert: "option" }            (Entscheidung im selben Level)
                       { schritt: "id", nr: 6, wert: "option" }     (Entscheidung aus Level 6)
@@ -202,7 +203,7 @@ window.ABSCHNITTE = [
           hinweis: "Alle Fremdgewerke aus der Baustellenbesichtigung sind schon eingetragen – Firma aus dem Adressbuch wählen." },
         { id: "baustart", typ: "termin", termin: "baustart", titel: "Umsetzungstermin (Baustart)" },
         { id: "mail-umsetzung", typ: "mail", mail: "umsetzung", titel: "Umsetzungstermin per Mail bestätigen" },
-        { id: "abschlag", typ: "formular", formular: "abschlag", titel: "Abschlagsrechnung" },
+        { id: "abschlag", typ: "formular", formular: "abschlag", titel: "Abschlagsrechnung", info: { feld: "anzahlung", label: "Anzahlung" } },
         { id: "taf", typ: "formular", formular: "taf", titel: "Technische Angaben (TAF) an den Bezirksschornsteinfeger",
           hinweis: "Mindestens 10 Tage vor Baubeginn vorlegen.",
           vorlage: [
