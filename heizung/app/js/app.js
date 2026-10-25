@@ -1572,7 +1572,7 @@
           ${luecken.length ? `<div class="luecken">Noch offen: ${luecken.map(esc).join(", ")} – im Projekt nachtragen oder im Text ersetzen.</div>` : ""}
           <div class="feld"><label for="mail-betreff">Betreff</label><input class="eingabe" id="mail-betreff" value="${esc(m.betreff)}"></div>
           <div class="feld abstand-o"><label for="mail-text">Text</label><textarea class="eingabe mail-text" id="mail-text">${esc(text)}</textarea></div>
-          <p class="anhang-info">Anhänge: ${m.anhangDateien ? m.anhangDateien.map((f, i) => `<a href="${esc(f)}" download>${esc(m.anhaenge[i] || f.split("/").pop())}</a>`).join(", ") : m.anhaenge.map(esc).join(", ") || "keine"} · Absender: ${esc(cfg().kundenPostfach)}</p></div>
+          <p class="anhang-info">Anhänge: ${[...(m.anhangDateien || []).map((f, i) => `<a href="${esc(f)}" download>${esc(m.anhaenge[i] || f.split("/").pop())}</a>`), ...m.anhaenge.slice((m.anhangDateien || []).length).map(esc)].join(", ") || "keine"} · Absender: ${esc(cfg().kundenPostfach)}</p></div>
         <div class="dlg-fuss">${m.datei ? `<a class="btn links still" href="${esc(m.datei)}">Original-Vorlage</a>` : '<span class="links"></span>'}<button class="btn" data-dlg="kopieren">Text kopieren</button>
           <a class="btn still" data-dlg="mailto" href="#">Einfache Mail</a><button class="btn voll" data-dlg="eml">In Outlook öffnen</button><button class="btn jetzt" data-dlg="gesendet">Als gesendet markieren</button></div>
         <p class="anhang-info dlg-hinweis">„In Outlook öffnen“ erzeugt einen fertigen Entwurf mit Anhängen – Datei öffnen, in Outlook prüfen und absenden.</p>`;
@@ -2237,14 +2237,50 @@
     files = [...files]; if (!files.length) return;
     if (gesperrt(p)) return toast(`Schreibgeschützt – ${S.sperre.name || "jemand anderes"} bearbeitet gerade`, "fehler");
     $$(`[data-ablage="${kat}"] .drop`).forEach((z) => z.classList.add("laedt"));
-    let ok = 0;
+    let ok = 0, pdf = null;
     for (const f of files) {
       if (f.size > 50e6) { toast(`${f.name} ist größer als 50 MB`, "fehler"); continue; }
-      try { const d = await Daten.hochladen(p.id, kat, f, ebene() === "partner" ? "partner" : "team"); S.dateien.push(d); ok++; }
+      try { const d = await Daten.hochladen(p.id, kat, f, ebene() === "partner" ? "partner" : "team"); S.dateien.push(d); ok++; if (/\.pdf$/i.test(f.name)) pdf = f; }
       catch (e) { toast(`Upload fehlgeschlagen: ${f.name}`, "fehler"); }
     }
     if (ok) { aendern(p, () => {}, `${ok} ${ok === 1 ? "Datei" : "Dateien"} in „${katTitel(kat)}“ abgelegt`); toast(`${ok} ${ok === 1 ? "Datei" : "Dateien"} abgelegt`); }
+    const s = PHASEN.flatMap((ph) => ph.schritte).find((x) => x.typ === "dateien" && x.kategorie === kat && x.nummer);
+    if (s && pdf) await nummerAusPdf(p, pdf, s.nummer);
     allesNeu();
+  }
+
+  /* Nummer aus einer hochgeladenen PDF lesen (Schritt-Option „nummer“, z. B. BZA-Formular → bzaNr) */
+  let pdfjs;
+  async function pdfText(f) {
+    pdfjs = pdfjs || new Promise((res, rej) => {
+      const el = document.createElement("script"); el.src = "app/vendor/pdf.min.js";
+      el.onload = () => { window.pdfjsLib.GlobalWorkerOptions.workerSrc = "app/vendor/pdf.worker.min.js"; res(window.pdfjsLib); };
+      el.onerror = () => { pdfjs = null; rej(new Error("pdf.js nicht geladen")); };
+      document.head.appendChild(el);
+    });
+    const doc = await (await pdfjs).getDocument({ data: await f.arrayBuffer() }).promise;
+    let t = "";
+    for (let i = 1; i <= doc.numPages; i++) t += (await (await doc.getPage(i)).getTextContent()).items.map((x) => x.str).join(" ") + "\n";
+    return t.replace(/\s+/g, " ");
+  }
+  function nummerFinden(text, label, stellen) {
+    // erst direkt hinter der Beschriftung suchen (Leerzeichen/Bindestriche innerhalb der Nummer erlaubt), sonst die einzige passende Zeichenfolge im Dokument
+    const muster = new RegExp(`(?<![A-Za-z0-9])[A-Za-z0-9](?:[ -]?[A-Za-z0-9]){${stellen - 1}}(?![A-Za-z0-9])`, "g");
+    const passt = (x) => (x.match(/\d/g) || []).length >= 5;
+    for (const m of text.matchAll(new RegExp(label, "gi"))) {
+      const n = (text.slice(m.index + m[0].length, m.index + m[0].length + 120).match(muster) || []).find(passt);
+      if (n) return n.replace(/[ -]/g, "").toUpperCase();
+    }
+    const alle = [...new Set((text.match(new RegExp(`(?<![A-Za-z0-9])[A-Za-z0-9]{${stellen}}(?![A-Za-z0-9])`, "g")) || []).filter(passt))];
+    return alle.length === 1 ? alle[0].toUpperCase() : "";
+  }
+  async function nummerAusPdf(p, f, n) {
+    let nr = "";
+    try { nr = nummerFinden(await pdfText(f), n.label, n.stellen || 15); } catch (e) { /* unten: Hinweis */ }
+    if (!nr) return toast(`${n.titel} nicht im PDF gefunden – bitte von Hand eintragen`, "fehler");
+    if (p[n.feld] === nr) return;
+    aendern(p, (x) => { x[n.feld] = nr; }, `${n.titel} aus PDF übernommen: ${nr}`);
+    toast(`${n.titel} ${nr} übernommen – bitte kurz prüfen`);
   }
 
   /* ================================================================
