@@ -353,7 +353,7 @@
       case "erledigt": return !!st.erledigt;
       case "abschluss": return p.status === "abgeschlossen";
       case "entscheidung": { const o = (s.optionen || []).find((x) => x.id === st.wahl); return !!o && o.weiter !== false; }
-      case "feld": return !!String(p[s.feld] || "").trim();
+      case "feld": return s.mehrere ? (p[s.feld] || []).length > 0 : !!String(p[s.feld] || "").trim();
       case "team": return (p.zugriff || []).length > 0;
     }
     return false;
@@ -1250,10 +1250,12 @@
         break;
       }
       case "feld": {
-        const v = p[s.feld] || "";
+        const v = s.mehrere ? (p[s.feld] || []).map((k) => mitgliedZu(k)?.name || k).join(", ") : p[s.feld] || "";
         meta = v ? (s.mehrzeilig ? "notiert" : esc(v)) : "";
         inhalt = s.mehrzeilig
           ? `<div class="q-aktion q-notiz"><textarea class="eingabe" data-pfeld="${s.feld}" rows="4" aria-label="${esc(titel)}" placeholder="${esc(s.platzhalter || "eintragen")}">${esc(v)}</textarea></div>`
+          : s.mehrere
+          ? mitarbeiterAuswahl(p, s.feld, s.rolle)
           : s.feld === "zustaendig"
           ? `<div class="chips">${leute("badplanung").map((m) => `<button type="button" class="chip${v === m.kuerzel ? " an" : ""}" data-aktion="setze-feld" data-feld="zustaendig" data-wert="${esc(m.kuerzel)}">${esc(m.name)} (${esc(m.kuerzel)})</button>`).join("")}</div>`
           : `<div class="q-aktion"><input class="eingabe auto${s.feld === "downloadCode" ? " breit-feld" : ""}" data-pfeld="${s.feld}" value="${esc(v)}" aria-label="${esc(titel)}" placeholder="${esc(ersetzen(s.platzhalter || "eintragen"))}"></div>`;
@@ -1273,6 +1275,16 @@
       <span class="q-marker" aria-hidden="true">${x.erledigt ? "✓" : k + 1}</span>
       <div class="q-inhalt">${fehltHier ? '<p class="q-fehlt">Fehlt noch – bitte erledigen</p>' : ""}<div class="q-kopf"><h3>${esc(titel)}</h3>${x.pflicht || s.typ === "abschluss" ? "" : '<span class="q-tag">optional</span>'}${meta ? `<span class="q-meta">${meta}</span>` : ""}</div>
         ${s.hinweis ? `<p class="q-hinweis">${esc(ersetzen(s.hinweis))}</p>` : ""}${inhalt}</div></li>`;
+  }
+
+  /* Mehrfachauswahl von Mitarbeitern (Schritt-Option „mehrere“), z. B. Badexperten fürs Erstgespräch; rolle steht oben */
+  function mitarbeiterAuswahl(p, feld, rolle) {
+    const gew = p[feld] || [];
+    const ma = cfg().team.filter((m) => m.name && m.kuerzel && m.ebene !== "monteur")
+      .sort((a, b) => (b.rolle === rolle) - (a.rolle === rolle));
+    const namen = gew.map((k) => mitgliedZu(k)?.name || k).join(", ");
+    return `<details class="mehrwahl"><summary class="eingabe">${namen ? esc(namen) : '<span class="leise">Mitarbeiter auswählen …</span>'}</summary>
+      <div class="mehrwahl-liste">${ma.map((m) => `<label><input type="checkbox" data-mitarbeiter="${esc(m.kuerzel)}" data-mitarbeiter-feld="${esc(feld)}"${gew.includes(m.kuerzel) ? " checked" : ""}> ${esc(m.name)} <span class="leise">(${esc(m.kuerzel)} · ${esc(m.bezeichnung || m.rolle)})</span></label>`).join("")}</div></details>`;
   }
 
   /* Akte rechts: Dateien, Kunde, Termine, Verlauf */
@@ -2716,6 +2728,15 @@
       feldFehler(el, null);
       aendern(p, (x) => { x.termine = x.termine || {}; if (el.value) x.termine[def.key] = el.value; else delete x.termine[def.key]; }, el.value ? `${def.label}: ${fTermin(el.value)}` : `${def.label} entfernt`);
       return teilRendern(p);
+    }
+    if (el.dataset.mitarbeiter && p) {
+      const feld = el.dataset.mitarbeiterFeld, k = el.dataset.mitarbeiter;
+      const alt = p[feld] || [], neu = el.checked ? [...alt.filter((x) => x !== k), k] : alt.filter((x) => x !== k);
+      const m = mitgliedZu(k);
+      aendern(p, (x) => { x[feld] = neu; }, `Badexperte ${el.checked ? "hinzugefügt" : "entfernt"}: ${m ? m.name : k}`);
+      kopfNeu(p); teilRendern(p);
+      const d = document.querySelector("details.mehrwahl"); if (d) d.open = true;
+      return;
     }
     if (el.dataset.pfeld && p) {
       const k = el.dataset.pfeld;

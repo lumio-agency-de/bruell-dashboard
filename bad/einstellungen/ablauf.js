@@ -20,6 +20,7 @@
      abschluss    Knopf „Projekt abschließen & archivieren“ (letztes Level)
      frueher: n   Schritt lag früher in Level n – bisheriger Stand wird übernommen
      feld         ein Projektfeld ausfüllen                 { feld: "projektnr" | "zustaendig" | "downloadCode" }, mehrzeilig: true → Notizfeld
+                  mehrere: true → Mitarbeiter-Mehrfachauswahl (Liste im Projekt; rolle: wer oben steht)
 
    portal: [...]    → Ordner, in die der Kunde in diesem Level über seinen Link hochladen kann
    ebene: [...]     → wer den Schritt erledigen darf (Standard: ["planung"]).
@@ -78,6 +79,8 @@ window.ABLAUF = [
           { id: "nein", label: "Kein Interesse", status: "verloren", weiter: false },
         ] },
       { id: "eg-termin", typ: "termin", termin: "erstgespraech", titel: "Termin Erstgespräch eintragen", wenn: { schritt: "termin-ok", wert: "ja" } },
+      { id: "berater", typ: "feld", feld: "badexperten", mehrere: true, rolle: "badberater", titel: "Badexperte(n) fürs Erstgespräch", wenn: { schritt: "termin-ok", wert: "ja" },
+        hinweis: "Einen oder mehrere Mitarbeiter auswählen – sie führen das Erstgespräch in der Ausstellung." },
     ],
   },
   {
