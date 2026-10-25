@@ -10,3 +10,6 @@ personal/daten-lokal.js
 *.csv
 personal/fotos-lokal.js
 Mitarbeiter/
+
+# Mitarbeiterfotos (vertraulich, nur lokal – werden über werkzeuge/fotos_import.py in personal/fotos-lokal.js übernommen)
+personal/fotos/*_*

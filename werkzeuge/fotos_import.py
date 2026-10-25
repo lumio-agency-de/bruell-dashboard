@@ -12,6 +12,7 @@ QUELLE = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else HIER / "Mitarbeiter"
 ZIEL = HIER / "personal" / "fotos-lokal.js"
 
 def glatt(s):
+    s = unicodedata.normalize("NFC", s)                        # macOS-Dateinamen: „ü“ als u + Trema → zusammenfassen
     s = s.lower().replace("ß", "ss").replace("ä", "ae").replace("ö", "oe").replace("ü", "ue")
     s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode()
     return re.sub(r"[^a-z]", "", s)
