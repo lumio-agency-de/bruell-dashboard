@@ -147,7 +147,8 @@ Mit freundlichen Grüßen`,
     phase: 6,
     titel: "BZA-Nummer für den Förderantrag",
     datei: "",
-    anhaenge: [],
+    anhaenge: ["Anleitung KfW-Zuschussantrag"],
+    anhangDateien: ["vorlagen/06-foerderung/KfW-Anleitung-Zuschussantrag.pdf"],
     anredeStil: "formell",
     betreff: "Ihre Förderung: Bestätigung zum Antrag (BZA)",
     optionen: [],
@@ -158,7 +159,7 @@ für Ihre neue Heizung haben wir die Bestätigung zum Antrag (BZA) im Förderpor
 
 {bzaNr}
 
-Mit dieser Nummer stellen Sie den Zuschussantrag (Heizungsförderung für Privatpersonen) im Kundenportal „Meine KfW“ – wichtig: bitte vor Beginn der Arbeiten. Sobald Sie die Förderzusage erhalten haben, geben Sie uns bitte kurz Bescheid.
+Mit dieser Nummer stellen Sie den Zuschussantrag (Heizungsförderung für Privatpersonen) im Kundenportal „Meine KfW“ unter https://www.meine.kfw.de – wichtig: bitte vor Beginn der Arbeiten. Wie das Schritt für Schritt geht, zeigt Ihnen die Anleitung im Anhang. Sobald Sie die Förderzusage erhalten haben, geben Sie uns bitte kurz Bescheid.
 
 Bei Fragen zur Antragstellung helfen wir Ihnen gerne weiter.
 

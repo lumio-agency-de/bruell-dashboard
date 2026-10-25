@@ -27,6 +27,7 @@
    portal: [...]    → Ordner, in die der Kunde in diesem Level über seinen Link hochladen kann
    ebene: [...]     → wer den Schritt erledigen darf (Standard: ["planung"]).
                       Die Geschäftsführung darf immer alles.
+   links: [{ titel, url }] → Knöpfe zu externen Seiten (öffnen in neuem Tab)
    pflicht: false   → optionaler Schritt (blockiert nicht)
    wenn             → Schritt gilt nur, wenn eine Bedingung erfüllt ist (Liste: eine davon genügt):
                       { schritt: "id", wert: "option" }            (Entscheidung im selben Level)
@@ -165,8 +166,10 @@ window.ABSCHNITTE = [
             { id: "nein", label: "Keine Förderung" },
           ] },
         { id: "bza", typ: "erledigt", titel: "Bestätigung zum Antrag (BZA) im KfW-Prüftool erstellt",
-          hinweis: "experten.kfw.de/prueftoolbza-web", wenn: { schritt: "foerderung", wert: "ja" } },
+          links: [{ titel: "KfW-Prüftool öffnen", url: "https://experten.kfw.de/prueftoolbza-web/" }], wenn: { schritt: "foerderung", wert: "ja" } },
         { id: "bza-nr", typ: "feld", feld: "bzaNr", titel: "BZA-Nummer", wenn: { schritt: "foerderung", wert: "ja" } },
+        { id: "bza-pdf", typ: "dateien", kategorie: "foerderung", titel: "BZA-Formular hochladen",
+          hinweis: "Die Bestätigung zum Antrag als PDF aus dem KfW-Prüftool herunterladen und hier ablegen.", wenn: { schritt: "foerderung", wert: "ja" } },
         { id: "mail-bza", typ: "mail", mail: "bza", titel: "BZA-Nummer an den Kunden senden", wenn: { schritt: "foerderung", wert: "ja" } },
         { id: "zusage", typ: "entscheidung", titel: "Förderzusage erhalten?", wenn: { schritt: "foerderung", wert: "ja" },
           optionen: [

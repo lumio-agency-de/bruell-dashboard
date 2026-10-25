@@ -1220,7 +1220,7 @@
     return `<li class="quest ${x.erledigt ? "erledigt" : "offen"}${x.pflicht ? "" : " optional"}${darf ? "" : " fremd"}${fehltHier ? " fehlt" : ""}" data-quest="${key}">
       <span class="q-marker" aria-hidden="true">${x.erledigt ? "✓" : k + 1}</span>
       <div class="q-inhalt">${fehltHier ? '<p class="q-fehlt">Fehlt noch – bitte erledigen</p>' : ""}<div class="q-kopf"><h3>${esc(titel)}</h3>${x.pflicht || s.typ === "abschluss" ? "" : '<span class="q-tag">optional</span>'}${meta ? `<span class="q-meta">${meta}</span>` : ""}</div>
-        ${s.hinweis ? `<p class="q-hinweis">${esc(ersetzen(s.hinweis))}</p>` : ""}${inhalt}</div></li>`;
+        ${s.hinweis ? `<p class="q-hinweis">${esc(ersetzen(s.hinweis))}</p>` : ""}${s.links ? `<div class="q-vorlagen">${s.links.map((l) => `<a class="btn klein" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.titel)} ↗</a>`).join("")}</div>` : ""}${inhalt}</div></li>`;
   }
 
   /* Heizungsexperten wählen: Dropdown mit allen Mitarbeitern, Mehrfachauswahl */
