@@ -21,7 +21,7 @@
     { key: "baustellenbesichtigung", label: "Baustellenbesichtigung", typ: "datetime-local", mit: "besichtiger" },
     { key: "materialauswahl",        label: "Materialauswahl",        typ: "datetime-local", mit: "badexperten" },
     { key: "baustart",               label: "Baustart",               typ: "date" },
-    { key: "abnahme",                label: "Abnahme",                typ: "datetime-local" },
+    { key: "abnahme",                label: "Abnahme",                typ: "datetime-local", mit: "abnehmer" },
   ];
   const STATUS = [
     { id: "aktiv", label: "Aktiv" },
@@ -111,13 +111,17 @@
   const kuerzelListe = () => cfg().team.filter((m) => m.kuerzel).map((m) => m.kuerzel);
   /* „A“, „A und B“, „A, B und C“ */
   const aufzaehlen = (l) => (l.length > 1 ? `${l.slice(0, -1).join(", ")} und ${l[l.length - 1]}` : l[0] || "");
+  /* Mitarbeiter-Auswahlfelder im Projekt: Bezeichnung für den Verlauf + Rolle, falls niemand gewählt ist */
+  const MIT_FELDER = {
+    badexperten: { label: "Badexperte", rolle: "badberater" },           // Level 1 – Erstgespräch
+    besichtiger: { label: "Baustellenbesichtigung", rolle: "projektleiter" }, // Level 6
+    abnehmer:    { label: "Abnahme", rolle: "projektleiter" },           // Level 12
+  };
   function ersetzen(text, p) {
     const c = cfg();
     return String(text).replace(/\{([a-zA-Z0-9.]+)\}/g, (m, key) => {
-      /* {besichtiger}: wer in Level 6 für die Baustellenbesichtigung ausgewählt ist (sonst der Projektleiter) */
-      if (key === "besichtiger") return aufzaehlen(((p && p.besichtiger) || []).map((k) => mitgliedZu(k)?.name || k)) || namen("projektleiter");
-      /* {badexperten}: wer in Level 1 fürs Erstgespräch ausgewählt ist (sonst die Badberater) */
-      if (key === "badexperten") return aufzaehlen(((p && p.badexperten) || []).map((k) => mitgliedZu(k)?.name || k)) || namen("badberater");
+      /* {badexperten} {besichtiger} {abnehmer}: die im Projekt ausgewählten Mitarbeiter (sonst die Standardrolle) */
+      if (MIT_FELDER[key]) return aufzaehlen(((p && p[key]) || []).map((k) => mitgliedZu(k)?.name || k)) || namen(MIT_FELDER[key].rolle);
       if (key.startsWith("programm.")) return c.programme[key.slice(9)] ?? m;
       if (c.team.some((t) => t.rolle === key)) return namen(key);
       return m;
@@ -2751,7 +2755,7 @@
         x[feld] = neu;
         /* Monteure sehen nur Projekte, denen sie zugewiesen sind → bei Auswahl Zugriff geben */
         if (el.checked && m && m.ebene === "monteur" && !(x.zugriff || []).includes(k)) x.zugriff = [...(x.zugriff || []), k];
-      }, `${feld === "besichtiger" ? "Baustellenbesichtigung" : "Badexperte"}: ${m ? m.name : k} ${el.checked ? "hinzugefügt" : "entfernt"}`);
+      }, `${(MIT_FELDER[feld] || {}).label || feld}: ${m ? m.name : k} ${el.checked ? "hinzugefügt" : "entfernt"}`);
       kopfNeu(p); teilRendern(p);
       const d = document.querySelector("details.mehrwahl"); if (d) d.open = true;
       return;

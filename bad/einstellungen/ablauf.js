@@ -37,6 +37,7 @@
    Platzhalter in Texten: {badberater} {badplanung} {projektleiter}
    {badexperten} → in Level 1 fürs Erstgespräch ausgewählte Mitarbeiter (sonst Badberater)
    {besichtiger} → in Level 6 für die Baustellenbesichtigung ausgewählte Mitarbeiter (sonst Projektleiter)
+   {abnehmer}    → in Level 12 für die Abnahme ausgewählte Mitarbeiter (sonst Projektleiter)
    {programm.erp} {programm.cad} … (siehe firma.js)
    ========================================================================== */
 
@@ -227,7 +228,9 @@ window.ABLAUF = [
     nr: 12, titel: "Abnahme & Übergabe", abschnitt: "baustelle",
     ziel: "Abnahme protokollieren und das fertige Bad festhalten.",
     schritte: [
-      { id: "abnahme-termin", typ: "termin", termin: "abnahme", titel: "Abnahmetermin" },
+      { id: "abnehmer", typ: "feld", feld: "abnehmer", mehrere: true, monteure: true, rolle: "projektleiter", titel: "Wer macht die Abnahme?",
+        hinweis: "Einen oder mehrere Mitarbeiter auswählen. Ausgewählte Monteure bekommen automatisch Zugriff aufs Projekt." },
+      { id: "abnahme-termin", typ: "termin", termin: "abnahme", titel: "Abnahmetermin mit {abnehmer}" },
       { id: "protokoll", typ: "formular", formular: "abnahme", titel: "Abnahmeprotokoll mit Unterschrift", ebene: ["planung", "monteur"] },
       { id: "fotos-fertig", typ: "dateien", kategorie: "fertig", titel: "Bilder vom neuen Bad", ebene: ["planung", "monteur"], frueher: 13 },
       { id: "interview", typ: "entscheidung", pflicht: false, titel: "Interview für Social Media?", frueher: 13,
