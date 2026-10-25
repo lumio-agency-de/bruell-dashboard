@@ -101,6 +101,8 @@
 .ue-ico.an { background: color-mix(in oklab, var(--gruen, #2f6b45) 16%, transparent); color: var(--gruen, #2f6b45); }
 .ue-tag { flex: none; font-size: .64rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 2px 7px; border-radius: 99px; background: color-mix(in oklab, var(--tinte) 9%, transparent); color: var(--tinte); }
 .ue-tag.heizung { background: color-mix(in oklab, #c0392b 12%, transparent); color: #9b2c20; }
+.ue-tag.fahrzeug { background: color-mix(in oklab, #c67c00 14%, transparent); color: #8a5600; }
+.ue-tag.fahrzeug.ueberfaellig { background: #c0392b; color: #fff; }
 .ue-unter { margin: 6px 0 0; font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--leise); }
 .ue-unter em { font-style: normal; color: var(--akzent); }
 .ue-leer { margin: 4px 0; color: var(--leise); font-size: .88rem; }

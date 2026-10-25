@@ -99,6 +99,7 @@
   const datum = (s) => { if (!s) return null; const d = new Date(s.length > 10 ? s : s + "T00:00"); return isNaN(d) ? null : d; };
   const heute0 = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
   const tageBis = (d) => Math.round((new Date(d).setHours(0, 0, 0, 0) - heute0()) / 864e5);
+  const fDatum = (d) => `${zwei(d.getDate())}.${zwei(d.getMonth() + 1)}.${d.getFullYear()}`;
   const tagText = (d) => { const t = tageBis(d); return t === 0 ? "Heute" : t === 1 ? "Morgen" : `${WT[d.getDay()].slice(0, 2)}, ${zwei(d.getDate())}.${zwei(d.getMonth() + 1)}.`; };
   const uhr = (s) => (s && s.length > 10 ? s.slice(11, 16) : "");
   const geld = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1).replace(".", ",") + " Mio. €" : n >= 1e4 ? Math.round(n / 1000) + " T€" : Math.round(n).toLocaleString("de-DE") + " €");
@@ -110,14 +111,32 @@
   /* ---------- Widgets bauen (g = Größe: "k" klein, "m" mittel, "g" groß) ---------- */
   const anz = (g, k, m, gr) => (g === "k" ? k : g === "g" ? gr : m);
   const mehr = (l, n) => (l.length > n ? `<p class="ue-fuss">+ ${l.length - n} weitere</p>` : "");
+  /* HU / TÜV der Fahrzeuge (nur Geschäftsführung): ab 3 Wochen vorher im Kalender, überfällige bleiben stehen.
+     Daten: Fahrzeugkarten im Browser (fz_<Nr>), sonst personal/daten-lokal.js (nur auf dem eigenen Rechner). */
+  const TUEV_VORLAUF = 21;
+  function tuevTermine() {
+    if (!PERSON || PERSON.ebene !== "geschaeftsfuehrung") return [];
+    const fz = { ...(window.FZ_VOLL || {}) };
+    try { Object.keys(localStorage).filter((k) => /^fz_\d+$/.test(k)).forEach((k) => { fz[k.slice(3)] = lesen(k, {}); }); } catch (e) { /* gesperrt */ }
+    return Object.entries(fz).flatMap(([nr, f]) => {
+      const s = String((f && f.fz_tuev) || "").trim();
+      let m = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$/), d = null;
+      if (m) d = new Date(+m[3] < 100 ? 2000 + +m[3] : +m[3], +m[2] - 1, +m[1]);
+      else if ((m = s.match(/^(\d{4})-(\d{2})-(\d{2})/))) d = new Date(+m[1], +m[2] - 1, +m[3]);
+      else if ((m = s.match(/^(\d{1,2})[./](\d{4})$/))) d = new Date(+m[2], +m[1] - 1, 1);       // „03/2027“ → Monatsanfang
+      if (!d || isNaN(d) || tageBis(d) > TUEV_VORLAUF) return [];
+      return [{ d: +d, tuev: true, label: tageBis(d) < 0 ? "HU / TÜV überfällig" : "HU / TÜV fällig", name: [f.fz_kennzeichen, f.fz_modell].filter(Boolean).join(" · "),
+        ort: f.fz_fahrer || "", href: `fahrzeuge/karte.html${QS ? QS + "&" : "?"}nr=${nr}` }];
+    });
+  }
   function wKalender(A, g) {
-    const alle = Object.entries(A).flatMap(([b, a]) => ((a && a.termine) || []).map((t) => ({ ...t, b })));
+    const alle = [...Object.entries(A).flatMap(([b, a]) => ((a && a.termine) || []).map((t) => ({ ...t, b }))), ...tuevTermine()];
     alle.sort((x, y) => x.d - y.d);
     const h = heute0(), mo = new Date(h); mo.setDate(h.getDate() - ((h.getDay() + 6) % 7));
     const woche = [...Array(7)].map((_, i) => { const d = new Date(mo); d.setDate(mo.getDate() + i); return d; });
     const anzahl = (d) => alle.filter((t) => tageBis(new Date(t.d)) === tageBis(d)).length;
     const bald = alle.filter((t) => tageBis(new Date(t.d)) <= anz(g, 7, 14, 31)), n = anz(g, 3, 6, 14), heute = anzahl(h);
-    const zeile = (t) => `<li><a href="${link(t.b, t.pid)}"><span class="ue-zeit"><b>${esc(tagText(new Date(t.d)))}</b><small>${esc(uhr(t.s) || "ganztägig")}</small></span><span class="ue-zt"><b>${esc(t.label)}</b><small>${esc(t.name)}${t.ort && g !== "k" ? " · " + esc(t.ort) : ""}</small></span>${g === "k" ? "" : tag(t.b)}</a></li>`;
+    const zeile = (t) => `<li><a href="${t.tuev ? esc(t.href) : link(t.b, t.pid)}"><span class="ue-zeit"><b>${esc(tageBis(new Date(t.d)) < 0 ? fDatum(new Date(t.d)) : tagText(new Date(t.d)))}</b><small>${esc(uhr(t.s) || "ganztägig")}</small></span><span class="ue-zt"><b>${esc(t.label)}</b><small>${esc(t.name)}${t.ort && g !== "k" ? " · " + esc(t.ort) : ""}</small></span>${g === "k" ? "" : t.tuev ? `<span class="ue-tag fahrzeug${tageBis(new Date(t.d)) < 0 ? " ueberfaellig" : ""}">Fahrzeug</span>` : tag(t.b)}</a></li>`;
     return `${g === "k" ? `<p class="ue-gross-zahl"><b>${heute}</b><small>${heute === 1 ? "Termin" : "Termine"} heute</small></p>`
         : `<div class="ue-woche">${woche.map((d) => `<span class="${tageBis(d) === 0 ? "heute" : ""}${tageBis(d) < 0 ? " vorbei" : ""}"><small>${WT[d.getDay()].slice(0, 2)}</small><b>${d.getDate()}</b><i>${anzahl(d) ? "•".repeat(Math.min(3, anzahl(d))) : ""}</i></span>`).join("")}</div>`}
       ${bald.length ? `<ul class="ue-liste${g === "g" ? " zweispaltig" : ""}">${bald.slice(0, n).map(zeile).join("")}</ul>${mehr(bald, n)}` : leer("Keine Termine in nächster Zeit.")}
