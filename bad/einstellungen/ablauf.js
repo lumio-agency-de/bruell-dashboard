@@ -19,7 +19,8 @@
                     option.wiedervorlage: Tage → setzt eine Wiedervorlage
      abschluss    Knopf „Projekt abschließen & archivieren“ (letztes Level)
      frueher: n   Schritt lag früher in Level n – bisheriger Stand wird übernommen
-     feld         ein Projektfeld ausfüllen                 { feld: "projektnr" | "zustaendig" | "downloadCode" }, mehrzeilig: true → Notizfeld
+     feld         ein Projektfeld ausfüllen                 { feld: "projektnr" | "zustaendig" | "downloadCode" }, mehrzeilig: true → Notizfeld,
+                  optionen: [...] → Dropdown, platzhalter: "…" → Hinweis im leeren Feld
                   mehrere: true → Mitarbeiter-Mehrfachauswahl (Liste im Projekt; rolle: wer oben steht)
 
    portal: [...]    → Ordner, in die der Kunde in diesem Level über seinen Link hochladen kann
@@ -132,6 +133,8 @@ window.ABLAUF = [
           { id: "ueberlegt", label: "Kunde überlegt noch – in 7 Tagen nachfassen", wiedervorlage: 7, weiter: false },
           { id: "abgesagt", label: "Abgesagt", status: "verloren", weiter: false },
         ] },
+      { id: "anzahlung", typ: "feld", feld: "anzahlung", titel: "Anzahlung", optionen: ["keine Anzahlung", "40 %", "60 %", "80 %", "100 %"], wenn: { schritt: "ergebnis", wert: "auftrag" } },
+      { id: "wunschtermin", typ: "feld", feld: "wunschtermin", titel: "Wunschtermin des Kunden", pflicht: false, platzhalter: "Zeitraum, z. B. zwischen Oktober und November", wenn: { schritt: "ergebnis", wert: "auftrag" } },
       { id: "unterschrift", typ: "dateien", kategorie: "auftrag", kundenlink: true, titel: "Unterschriebenes Angebot einscannen / hochladen", wenn: { schritt: "ergebnis", wert: "auftrag" } },
       { id: "angebot-notiz", typ: "feld", feld: "angebotNotiz", mehrzeilig: true, pflicht: false, titel: "Notizen zum Angebot",
         platzhalter: "z. B. Änderungswünsche, Rabatt, offene Fragen, was nachgereicht wird …" },

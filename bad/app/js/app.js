@@ -1258,7 +1258,9 @@
           ? mitarbeiterAuswahl(p, s.feld, s.rolle)
           : s.feld === "zustaendig"
           ? `<div class="chips">${leute("badplanung").map((m) => `<button type="button" class="chip${v === m.kuerzel ? " an" : ""}" data-aktion="setze-feld" data-feld="zustaendig" data-wert="${esc(m.kuerzel)}">${esc(m.name)} (${esc(m.kuerzel)})</button>`).join("")}</div>`
-          : `<div class="q-aktion"><input class="eingabe auto${s.feld === "downloadCode" ? " breit-feld" : ""}" data-pfeld="${s.feld}" value="${esc(v)}" aria-label="${esc(titel)}" placeholder="${esc(ersetzen(s.platzhalter || "eintragen"))}"></div>`;
+          : s.optionen
+          ? `<div class="q-aktion"><select class="eingabe auto" data-pfeld="${s.feld}" aria-label="${esc(titel)}"><option value="">– bitte wählen –</option>${s.optionen.map((o) => `<option${v === o ? " selected" : ""}>${esc(o)}</option>`).join("")}</select></div>`
+          : `<div class="q-aktion"><input class="eingabe ${s.feld === "downloadCode" ? "auto breit-feld" : s.platzhalter ? "breit" : "auto"}" data-pfeld="${s.feld}" value="${esc(v)}" aria-label="${esc(titel)}" placeholder="${esc(ersetzen(s.platzhalter || "eintragen"))}"></div>`;
         break;
       }
     }
@@ -2740,7 +2742,7 @@
     }
     if (el.dataset.pfeld && p) {
       const k = el.dataset.pfeld;
-      aendern(p, (x) => { x[k] = el.value.trim(); }, k === "angebotNotiz" ? "Notizen zum Angebot geändert" : k === "status" ? `Status: ${STATUS.find((s) => s.id === el.value)?.label}` : k === "projektnr" ? `Projektnummer: ${el.value.trim()}` : k === "downloadCode" ? `Download-Code: ${el.value.trim()}` : null);
+      aendern(p, (x) => { x[k] = el.value.trim(); }, k === "angebotNotiz" ? "Notizen zum Angebot geändert" : k === "status" ? `Status: ${STATUS.find((s) => s.id === el.value)?.label}` : k === "projektnr" ? `Projektnummer: ${el.value.trim()}` : k === "anzahlung" ? `Anzahlung: ${el.value}` : k === "wunschtermin" ? `Wunschtermin: ${el.value.trim()}` : k === "downloadCode" ? `Download-Code: ${el.value.trim()}` : null);
       kopfNeu(p); return teilRendern(p);
     }
     if ((el.dataset.nk || el.dataset.nkTab) && p && istGF()) {
