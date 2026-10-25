@@ -53,3 +53,18 @@ Fahrzeug. Gleiches Speicherformat (`pk_<Nr>`, Foto `ph_<Nr>`, Abgleich mit Fahrz
   Fehler der alten Dateien (Zeilenumbruch in einer Meldung, doppelte Zeile bei „Kleidung“), durch die dort
   Speichern und Reiter nicht funktionierten.
 - Demo (`?demo=1`): vier erfundene Mitarbeiter.
+
+## Verschlüsselte Daten für die Online-Version (Fahrzeuge + Mitarbeiterfotos)
+
+- `personal/daten-tresor.js` enthält Fahrzeugdaten (`FZ_VOLL`) und Mitarbeiterfotos (`PK_FOTOS`) **AES-256-GCM-verschlüsselt**
+  (Schlüssel per PBKDF2-SHA256, 310 000 Runden, aus dem Datenpasswort). Ohne Passwort ist die Datei wertlos.
+- Erzeugen/aktualisieren: `node werkzeuge/tresor.js` (Passwort aus `werkzeuge/tresor-passwort.txt`, nur lokal, `.gitignore`).
+  Passwort ändern: `node werkzeuge/tresor.js "<neues Passwort>"`. Nach jeder Änderung an `daten-lokal.js`/`fotos-lokal.js` neu ausführen.
+- Im Browser (`gesamt/tresor.js`): Auf Personal/Fahrzeuge erscheint „Entsperren“. Entschlüsselt wird nur im Browser,
+  gemerkt für die Sitzung oder auf Wunsch auf dem Gerät. Lokal mit `daten-lokal.js` passiert nichts.
+- Die vollständigen Personaldaten (`PK_VOLL`: Bank, Steuer, Geburtsdaten …) sind **nicht** im Tresor.
+
+## Handy & iPad
+
+`gesamt/mobil.css` (in allen Seiten und beim Zusammenbau in Bad/Heizung eingebunden): auf dem Handy Hauptbereiche als
+Tab-Leiste unten, oben Logo + Bereichs-Menü + Abmelden; iPad hochkant mit schmalerer Seitenleiste.

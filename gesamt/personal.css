@@ -139,3 +139,13 @@ body { background: #fff !important; background-image: none !important; }
 .topbar { background: rgb(255 255 255 / .9); }
 .fz-seite[data-ansicht="karte"] .main { padding-top: 0; }
 .fz-art { display: inline-block; font-size: .7rem; font-weight: 700; letter-spacing: .04em; padding: 1px 7px; border-radius: 99px; background: var(--tinte-weich); color: var(--tinte); margin-right: 4px; }
+
+/* Verschlüsselte Daten entsperren (gesamt/tresor.js) */
+.tresor { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; justify-content: space-between; margin: 0 auto 18px; max-width: 1200px; padding: 16px 18px; border: 1px solid var(--fuge-stark, #d8d4ca); border-radius: 12px; background: var(--karte, #fff); }
+.tresor-text { display: grid; gap: 2px; min-width: 0; }
+.tresor-eingabe { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; }
+.tresor-eingabe .eingabe { width: 220px; max-width: 100%; }
+.tresor-merken { font-size: 14px; display: flex; gap: 6px; align-items: center; }
+.tresor-fehler { flex-basis: 100%; margin: 0; color: #b42318; font-size: 14px; }
+.tresor-fehler:empty { display: none; }
+@media (max-width: 600px) { .tresor-eingabe, .tresor-eingabe .eingabe, .tresor-eingabe .btn { width: 100%; } }

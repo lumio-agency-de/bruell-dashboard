@@ -22,6 +22,7 @@ baue() {   # $1 = Quelle, $2 = Zielordner (bad|heizung), $3 = alter Speicher-Pr�
 </head>#" "$z/index.html"
   # Bereichs-Umschalter einbinden
   sed -i '' -e "s#</body>#  <link rel=\"stylesheet\" href=\"../gesamt/bereiche.css?v=$V\">\\
+  <link rel=\"stylesheet\" href=\"../gesamt/mobil.css?v=$V\">\\
   <script src=\"../gesamt/bereiche.js?v=$V\" data-bereich=\"$2\"></script>\\
 </body>#" "$z/index.html"
   echo "✓ $2 ← $(cd "$q" && git log -1 --format='%h %s' 2>/dev/null | cut -c1-70)"
