@@ -1260,13 +1260,15 @@
       }
       case "feld": {
         const v = s.mehrere ? (p[s.feld] || []).map((k) => mitgliedZu(k)?.name || k).join(", ") : p[s.feld] || "";
-        meta = v ? (s.mehrzeilig ? "notiert" : esc(v)) : "";
+        meta = v ? (s.mehrzeilig ? "notiert" : s.feld === "zustaendig" ? esc(mitgliedZu(v)?.name || v) : esc(v)) : "";
         inhalt = s.mehrzeilig
           ? `<div class="q-aktion q-notiz"><textarea class="eingabe" data-pfeld="${s.feld}" rows="4" aria-label="${esc(titel)}" placeholder="${esc(s.platzhalter || "eintragen")}">${esc(v)}</textarea></div>`
           : s.mehrere
           ? mitarbeiterAuswahl(p, s.feld, s.rolle, s.monteure)
           : s.feld === "zustaendig"
-          ? `<div class="chips">${leute("badplanung").map((m) => `<button type="button" class="chip${v === m.kuerzel ? " an" : ""}" data-aktion="setze-feld" data-feld="zustaendig" data-wert="${esc(m.kuerzel)}">${esc(m.name)} (${esc(m.kuerzel)})</button>`).join("")}</div>`
+          ? `<div class="q-aktion"><select class="eingabe auto" data-pfeld="zustaendig" aria-label="${esc(titel)}"><option value="">Mitarbeiter auswählen …</option>${cfg().team.filter((m) => m.name && m.kuerzel && m.ebene !== "monteur")
+              .sort((a, b) => (b.rolle === "badplanung") - (a.rolle === "badplanung"))
+              .map((m) => `<option value="${esc(m.kuerzel)}"${v === m.kuerzel ? " selected" : ""}>${esc(m.name)} (${esc(m.kuerzel)} · ${esc(m.bezeichnung || m.rolle)})</option>`).join("")}</select></div>`
           : s.optionen
           ? `<div class="q-aktion"><select class="eingabe auto" data-pfeld="${s.feld}" aria-label="${esc(titel)}"><option value="">– bitte wählen –</option>${s.optionen.map((o) => `<option${v === o ? " selected" : ""}>${esc(o)}</option>`).join("")}</select></div>`
           : `<div class="q-aktion"><input class="eingabe ${s.feld === "downloadCode" ? "auto breit-feld" : s.platzhalter ? "breit" : "auto"}" data-pfeld="${s.feld}" value="${esc(v)}" aria-label="${esc(titel)}" placeholder="${esc(ersetzen(s.platzhalter || "eintragen"))}"></div>`;
@@ -2755,7 +2757,7 @@
     }
     if (el.dataset.pfeld && p) {
       const k = el.dataset.pfeld;
-      aendern(p, (x) => { x[k] = el.value.trim(); }, k === "angebotNotiz" ? "Notizen zum Angebot geändert" : k === "status" ? `Status: ${STATUS.find((s) => s.id === el.value)?.label}` : k === "projektnr" ? `Projektnummer: ${el.value.trim()}` : k === "anzahlung" ? `Anzahlung: ${el.value}` : k === "wunschtermin" ? `Wunschtermin: ${el.value.trim()}` : k === "downloadCode" ? `Download-Code: ${el.value.trim()}` : null);
+      aendern(p, (x) => { x[k] = el.value.trim(); }, k === "angebotNotiz" ? "Notizen zum Angebot geändert" : k === "status" ? `Status: ${STATUS.find((s) => s.id === el.value)?.label}` : k === "projektnr" ? `Projektnummer: ${el.value.trim()}` : k === "zustaendig" ? `Zuständig: ${mitgliedZu(el.value)?.name || el.value || "–"}` : k === "anzahlung" ? `Anzahlung: ${el.value}` : k === "wunschtermin" ? `Wunschtermin: ${el.value.trim()}` : k === "downloadCode" ? `Download-Code: ${el.value.trim()}` : null);
       kopfNeu(p); return teilRendern(p);
     }
     if ((el.dataset.nk || el.dataset.nkTab) && p && istGF()) {
