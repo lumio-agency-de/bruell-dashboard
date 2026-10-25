@@ -33,6 +33,7 @@
                       { formular: "id", feld: "feld", wert: "ja" }
 
    Platzhalter in Texten: {badberater} {badplanung} {projektleiter}
+   {badexperten} → in Level 1 fürs Erstgespräch ausgewählte Mitarbeiter (sonst „dem Badexperten“)
    {besichtiger} → in Level 6 für die Baustellenbesichtigung ausgewählte Mitarbeiter (sonst Projektleiter)
    {programm.erp} {programm.cad} … (siehe firma.js)
    ========================================================================== */
@@ -106,7 +107,7 @@ window.ABLAUF = [
       { id: "notizen", typ: "formular", formular: "erstgespraech", titel: "Erstgesprächs-Notizen", ebene: ["planung", "geschaeftsfuehrung"] },
       { id: "skizze", typ: "dateien", kategorie: "skizzen", pflicht: false, titel: "Skizze fotografieren & hochladen" },
       { id: "ab-termin", typ: "termin", termin: "angebotsbesprechung", titel: "Termin Angebots- & Planungsbesprechung" },
-      { id: "ab-kwp", typ: "erledigt", titel: "Termin Angebotsbesprechung in {programm.erp} eingetragen" },
+      { id: "ab-kwp", typ: "erledigt", titel: "Termin Angebotsbesprechung mit {badexperten} in {programm.erp} eingetragen" },
       { id: "planerin", typ: "feld", feld: "zustaendig", titel: "Zuständige Badplanerin festlegen" },
     ],
   },
