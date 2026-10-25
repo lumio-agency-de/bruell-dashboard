@@ -1,5 +1,5 @@
 /* Kundenportal — ruhig, groß, fürs Handy gemacht */
-body.portal { background-size: 32px 32px; }
+body.portal { }
 .portal-seite { max-width: 620px; margin: 0 auto; padding: 18px 16px 48px; }
 .portal-laedt { color: var(--leise); text-align: center; padding: 30vh 0; }
 .portal-kopf { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: var(--tinte); color: #fff; border-radius: var(--radius); }

@@ -16,7 +16,7 @@ html[data-thema="dunkel"] {
 }
 html[data-thema="dunkel"] body { background: var(--papier) !important; background-image: none !important; }
 html[data-thema="dunkel"] .rail { background: #0b0b0d !important; border-right: 1px solid var(--fuge); }
-html[data-thema="dunkel"] .marke-logo { background: #fff !important; }
+html[data-thema="dunkel"] .marke-logo, html[data-thema="dunkel"] .ue-logo { background: #fff !important; }
 html[data-thema="dunkel"] .btn.voll:hover, html[data-thema="dunkel"] .btn.voll:focus-visible { background: #4a4a51 !important; }
 
 /* Feinschliff einzelner Bausteine */

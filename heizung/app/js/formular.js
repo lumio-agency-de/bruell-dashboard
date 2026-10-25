@@ -30,9 +30,15 @@
     return Array.isArray(v) ? v.includes(f.wenn.wert) : v === f.wenn.wert;
   }
 
-  /* Tabellen mit summe: { spalte, einheit } – Spalte zusammenzählen (Komma oder Punkt als Dezimaltrenner) */
+  /* Tabellen mit summe: { spalte, mal, einheit } – Spalte zusammenzählen, je Zeile mal „mal“-Spalte (leer = 1).
+     Komma oder Punkt als Dezimaltrenner. */
   function summe(f, rows) {
-    const n = (Array.isArray(rows) ? rows : []).reduce((a, r) => a + (parseFloat(String((r || {})[f.summe.spalte] ?? "").replace(",", ".")) || 0), 0);
+    const zahl = (x) => parseFloat(String(x ?? "").replace(",", "."));
+    const n = (Array.isArray(rows) ? rows : []).reduce((a, r) => {
+      const v = zahl((r || {})[f.summe.spalte]); if (!v) return a;
+      const m = f.summe.mal ? zahl((r || {})[f.summe.mal]) : 1;
+      return a + v * (m > 0 ? m : 1);
+    }, 0);
     return `${f.summe.label || "Gesamt"}: ${n.toLocaleString("de-DE", { maximumFractionDigits: 2 })} ${f.summe.einheit || ""}`.trim();
   }
 
@@ -208,7 +214,7 @@
           if (s.typ === "janein") return `<td><select class="eingabe" ${a}><option value=""></option><option value="ja"${val === "ja" ? " selected" : ""}>ja</option><option value="nein"${val === "nein" ? " selected" : ""}>nein</option></select></td>`;
           return `<td><input class="eingabe" ${a} value="${esc(val)}"${s.typ === "zahl" ? ' inputmode="decimal"' : ""} aria-label="${esc(s.titel)}"></td>`;
         };
-        return wrap(`${lab}${f.adressbuchLink ? '<a class="ff-adresslink" href="#/adressbuch">Adressbuch öffnen →</a>' : ""}<div class="tab-wrap"><table class="ff-tab"><thead><tr>${f.zeilen ? "<th></th>" : ""}${f.spalten.map((s) => `<th>${esc(s.titel)}</th>`).join("")}${f.anfrage ? "<th>Anfrage</th>" : ""}${!f.zeilen || rows.length > fest ? "<th></th>" : ""}</tr></thead>
+        return wrap(`${lab}${f.adressbuchLink ? '<a class="ff-adresslink" href="#/adressbuch">Adressbuch öffnen →</a>' : ""}<div class="tab-wrap"><table class="ff-tab"><thead><tr>${f.zeilen ? "<th></th>" : ""}${f.spalten.map((s) => `<th${s.breite ? ` style="width:${esc(s.breite)}"` : ""}>${esc(s.titel)}</th>`).join("")}${f.anfrage ? "<th>Anfrage</th>" : ""}${!f.zeilen || rows.length > fest ? "<th></th>" : ""}</tr></thead>
           <tbody>${zeilen.map(({ label, eigen, kopie, basis, r, i }) => `<tr class="${eigen ? "eigen" : ""}${kopie ? " kopie" : ""}">${label && !eigen ? `<th scope="row"><span class="tz-label">${esc(label)}</span>${f.zeilen && !kopie ? `<button type="button" class="tz-plus" data-tab-plus="${esc(f.id)}" data-nach="${basis}" title="Weitere Zeile „${esc(f.zeilen[basis])}“ hinzufügen" aria-label="Weitere Zeile ${esc(f.zeilen[basis])}">+</button>` : ""}</th>` : eigen ? `<th scope="row"><input class="eingabe" data-tab="${esc(f.id)}" data-zeile="${i}" data-spalte="_label" value="${esc(r._label || "")}" placeholder="Eigene Zeile" aria-label="Bezeichnung"></th>` : ""}${f.spalten.map((s) => zelle(s, r, i)).join("")}${f.anfrage ? `<td class="tz-anfrage"><button type="button" class="btn klein${r.angefragt ? " still" : ""}" data-aktion="sub-anfrage" data-zeile="${i}"${r.firma ? "" : " disabled title=\"Erst eine Firma wählen\""}>${r.angefragt ? `✓ angefragt ${new Date(r.angefragt).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })}` : "Anfrage ✉"}</button></td>` : ""}${!f.zeilen || eigen || kopie ? `<td class="mitte"><button type="button" class="btn klein still" data-tab-weg="${esc(f.id)}" data-zeile="${i}" aria-label="Zeile entfernen">✕</button></td>` : f.zeilen && rows.length > fest ? "<td></td>" : ""}</tr>`).join("")}</tbody></table></div>
           ${f.summe ? `<p class="ff-summe" data-summe="${esc(f.id)}">${esc(summe(f, rows))}</p>` : ""}<button type="button" class="btn klein" data-tab-neu="${esc(f.id)}">${f.zeilen ? "+ Eigene Zeile" : "+ Zeile"}</button>`, "breit-tab");
       }
@@ -373,7 +379,7 @@
         const rows = Array.isArray(v) ? v : [];
         const zeilen = f.zeilen ? tabellenZeilen(f, rows).map((z) => ({ label: z.eigen ? (z.r._label || "Eigene Zeile") : z.label, r: z.r })) : rows.map((r) => ({ r }));
         if (!zeilen.length) return `<div class="d-zeile"><b>${esc(f.label)}</b><span class="d-leer">keine Einträge</span></div>`;
-        return `<table class="d-tab"><thead><tr>${f.zeilen ? "<th></th>" : ""}${f.spalten.map((s) => `<th>${esc(s.titel)}</th>`).join("")}</tr></thead><tbody>${zeilen.map(({ label, r }) => `<tr>${label ? `<th>${esc(label)}</th>` : ""}${f.spalten.map((s) => `<td>${s.typ === "haken" ? (r[s.id] ? "✓" : "") : esc(r[s.id] || "")}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+        return `<table class="d-tab"><thead><tr>${f.zeilen ? "<th></th>" : ""}${f.spalten.map((s) => `<th${s.breite ? ` style="width:${esc(s.breite)}"` : ""}>${esc(s.titel)}</th>`).join("")}</tr></thead><tbody>${zeilen.map(({ label, r }) => `<tr>${label ? `<th>${esc(label)}</th>` : ""}${f.spalten.map((s) => `<td>${s.typ === "haken" ? (r[s.id] ? "✓" : "") : esc(r[s.id] || "")}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
       }
       if (f.typ === "checkliste") {
         const o = v || {};

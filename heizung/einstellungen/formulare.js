@@ -23,7 +23,8 @@
      unterschrift  Unterschriftenfeld (Maus, Finger, Stift)
      tabelle     { spalten: [{ id, titel, typ }], zeilen: ["Armatur", …] }
                  ohne zeilen → Zeilen frei hinzufügen
-                 summe: { spalte, einheit, label } → Spalte unter der Tabelle zusammenzählen
+                 summe: { spalte, mal, einheit, label } → Spalte unter der Tabelle zusammenzählen (je Zeile × „mal“-Spalte)
+                 Spalten: breite: "90px" → feste Spaltenbreite
      checkliste  { punkte: [{ id, label, optional }], modus: "haken" | "janein" | "pruefung" }
                  Tabellen mit festen Zeilen bekommen automatisch „+ Eigene Zeile“
 
@@ -273,8 +274,8 @@
           zeilen: ["Staubschutz", "Demontage und Entsorgung Altanlage", "Tank leer pumpen / Tankdemontage", "Gerüst stellen", "Montage Heizungsanlage", "Abgasanlage / Kamin",
             "Elektroanschluss", "Externe Elektroinstallationsarbeiten", "Isolierungsarbeiten", "Heizkörper Ventile tauschen", "Gartenarbeit",
             "Befüllen, Spülen & Inbetriebnahme", "Einweisung Kunde", "Aufräumen & Abschluss Baustelle"],
-          spalten: [{ id: "monteure", titel: "Monteure", typ: "zahl" }, { id: "std", titel: "Stunden", typ: "zahl" }, { id: "notiz", titel: "Notiz" }],
-          summe: { spalte: "std", einheit: "Std.", label: "Gesamt" } },
+          spalten: [{ id: "monteure", titel: "Monteure", typ: "zahl", breite: "90px" }, { id: "std", titel: "Stunden", typ: "zahl", breite: "90px" }, { id: "notiz", titel: "Notiz", breite: "45%" }],
+          summe: { spalte: "std", mal: "monteure", einheit: "Std.", label: "Gesamt (Monteure × Stunden)" } },
         { typ: "abschnitt", titel: "Sonstige Notizen" },
         { id: "skizze", typ: "dateien", kategorie: "skizzen", auchAus: ["grundriss"], label: "Skizze Heizraum mit Bemaßung" },
         { id: "notizen", typ: "textarea", label: "Notizen Baustellenbesichtigung" },

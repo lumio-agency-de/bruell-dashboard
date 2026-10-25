@@ -69,6 +69,7 @@ html[data-thema="dunkel"] .ue-woche .heute { background: var(--flaeche-stark) !i
 html[data-thema="dunkel"] .ue-last .b { background: var(--flaeche-stark) !important; }
 html[data-thema="dunkel"] .ue-leg.b { background: var(--flaeche-stark) !important; }
 html[data-thema="dunkel"] body.uebersicht-seite { background: var(--feld) !important; }
+html[data-thema="dunkel"] .ue-logo { background: var(--feld) !important; }
 html[data-thema="dunkel"] .pk-card input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), html[data-thema="dunkel"] .pk-card select, html[data-thema="dunkel"] .pk-card textarea { background: var(--feld) !important; }
 html[data-thema="dunkel"] .abt-chip-label { background: var(--feld) !important; }
 html[data-thema="dunkel"] .abt-chip-label[class*="checked-"] { background: var(--flaeche-stark) !important; }
