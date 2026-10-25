@@ -109,9 +109,13 @@
   const leute = (rolle) => cfg().team.filter((m) => m.rolle === rolle && m.name);
   const namen = (rolle) => leute(rolle).map((m) => m.name).join(" oder ") || rolle;
   const kuerzelListe = () => cfg().team.filter((m) => m.kuerzel).map((m) => m.kuerzel);
-  function ersetzen(text) {
+  /* „A“, „A und B“, „A, B und C“ */
+  const aufzaehlen = (l) => (l.length > 1 ? `${l.slice(0, -1).join(", ")} und ${l[l.length - 1]}` : l[0] || "");
+  function ersetzen(text, p) {
     const c = cfg();
     return String(text).replace(/\{([a-zA-Z0-9.]+)\}/g, (m, key) => {
+      /* {besichtiger}: wer in Level 6 für die Baustellenbesichtigung ausgewählt ist (sonst der Projektleiter) */
+      if (key === "besichtiger") return aufzaehlen(((p && p.besichtiger) || []).map((k) => mitgliedZu(k)?.name || k)) || namen("projektleiter");
       if (key.startsWith("programm.")) return c.programme[key.slice(9)] ?? m;
       if (c.team.some((t) => t.rolle === key)) return namen(key);
       return m;
@@ -368,7 +372,7 @@
   function naechsterSchritt(p) {
     if (p.status === "abgeschlossen") return "Abgeschlossen";
     const st = phaseStatus(p, p.phase);
-    return st.komplett ? "Bereit für das nächste Level" : ersetzen(st.offen[0].s.titel);
+    return st.komplett ? "Bereit für das nächste Level" : ersetzen(st.offen[0].s.titel, p);
   }
 
   /* ---------- Schreibschutz: ein Projekt bearbeitet immer nur eine Person ---------- */
@@ -1003,7 +1007,7 @@
         const meine = st.liste.filter((x) => !x.erledigt && darfSchritt(x.s));
         return `<article class="panel einsatz-karte"><header><span class="lv-mini">${zwei(p.phase)}</span><div><h2>${esc(anzeigeName(p))}</h2><p>${esc(adr(k))}</p></div></header>
           <dl class="infos"><dt>Baustart</dt><dd>${esc(fTermin((p.termine || {}).baustart) || "—")}</dd><dt>Abnahme</dt><dd>${esc(fTermin((p.termine || {}).abnahme) || "—")}</dd><dt>Telefon</dt><dd>${[k.telefon, k.mobil].filter(Boolean).map((x) => `<a href="tel:${esc(x.replace(/[^\d+]/g, ""))}">${esc(x)}</a>`).join(" · ") || "—"}</dd></dl>
-          ${meine.length ? `<p class="q-gruppe">Für dich offen</p><ul class="einfach">${meine.map((x) => `<li>${esc(ersetzen(x.s.titel))}</li>`).join("")}</ul>` : ""}
+          ${meine.length ? `<p class="q-gruppe">Für dich offen</p><ul class="einfach">${meine.map((x) => `<li>${esc(ersetzen(x.s.titel, p))}</li>`).join("")}</ul>` : ""}
           <footer class="aktionen"><a class="btn voll" href="#/projekt/${p.id}">Öffnen <span class="pfeil">→</span></a>${p.downloadCode ? `<button class="btn" data-aktion="palettemove" data-id="${p.id}">3D-Planung (${esc(cfg().programme.app3d)})</button>` : ""}
           ${k.strasse ? `<a class="btn still" href="https://maps.google.com/?q=${encodeURIComponent(adr(k))}" target="_blank" rel="noopener">Route</a>` : ""}</footer></article>`;
       }).join("")}</div>` : `<div class="panel startfeld"><h2>Keine Baustellen</h2><p>Sobald dich das Büro einer Baustelle zuweist, erscheint sie hier.</p></div>`}</div>`;
@@ -1179,18 +1183,18 @@
       </header>
       <ol class="quests">${st.liste.map((x, k) => quest(p, nr, x, k)).join("")}</ol>
       <footer class="mission-fuss">${istJetzt && !istBuero()
-        ? `<span class="offen-text">${st.komplett ? "Alles erledigt – das Büro schaltet das nächste Level frei." : `Noch offen: ${st.offen.map((x) => esc(ersetzen(x.s.titel))).join(" · ")}`}</span>`
+        ? `<span class="offen-text">${st.komplett ? "Alles erledigt – das Büro schaltet das nächste Level frei." : `Noch offen: ${st.offen.map((x) => esc(ersetzen(x.s.titel, p))).join(" · ")}`}</span>`
         : istJetzt
         ? (st.komplett
           ? `<span class="bereit-text">Alles erledigt – Level freischalten.</span><button class="btn jetzt gross" data-aktion="abschliessen">${weiter ? `Weiter zu Level ${zwei(weiter)}: ${esc(phase(weiter).titel)}` : "Projekt abschließen & archivieren"} <span class="pfeil">→</span></button>`
-          : `<span class="offen-text">Noch offen: ${st.offen.map((x) => esc(ersetzen(x.s.titel))).join(" · ")}</span><button class="btn gross gesperrt" data-aktion="offen-zeigen">${weiter ? `Weiter zu Level ${zwei(weiter)}` : "Projekt abschließen"} <span class="schloss-mini" aria-hidden="true"></span></button>`)
+          : `<span class="offen-text">Noch offen: ${st.offen.map((x) => esc(ersetzen(x.s.titel, p))).join(" · ")}</span><button class="btn gross gesperrt" data-aktion="offen-zeigen">${weiter ? `Weiter zu Level ${zwei(weiter)}` : "Projekt abschließen"} <span class="schloss-mini" aria-hidden="true"></span></button>`)
         : `<span class="offen-text">Dieses Level ist abgeschlossen. Änderungen bleiben möglich.</span><button class="btn voll" data-aktion="level" data-nr="${p.phase}">Zum aktuellen Level ${zwei(p.phase)}</button>`}
       </footer></section>`;
   }
 
   function quest(p, nr, x, k) {
     const s = x.s, key = sKey(nr, s), st = schrittStand(p, nr, s);
-    const titel = ersetzen(s.titel);
+    const titel = ersetzen(s.titel, p);
     let inhalt = "", meta = "";
     switch (s.typ) {
       case "formular": {
@@ -1255,7 +1259,7 @@
         inhalt = s.mehrzeilig
           ? `<div class="q-aktion q-notiz"><textarea class="eingabe" data-pfeld="${s.feld}" rows="4" aria-label="${esc(titel)}" placeholder="${esc(s.platzhalter || "eintragen")}">${esc(v)}</textarea></div>`
           : s.mehrere
-          ? mitarbeiterAuswahl(p, s.feld, s.rolle)
+          ? mitarbeiterAuswahl(p, s.feld, s.rolle, s.monteure)
           : s.feld === "zustaendig"
           ? `<div class="chips">${leute("badplanung").map((m) => `<button type="button" class="chip${v === m.kuerzel ? " an" : ""}" data-aktion="setze-feld" data-feld="zustaendig" data-wert="${esc(m.kuerzel)}">${esc(m.name)} (${esc(m.kuerzel)})</button>`).join("")}</div>`
           : s.optionen
@@ -1276,13 +1280,13 @@
     return `<li class="quest ${x.erledigt ? "erledigt" : "offen"}${x.pflicht ? "" : " optional"}${darf ? "" : " fremd"}${fehltHier ? " fehlt" : ""}" data-quest="${key}">
       <span class="q-marker" aria-hidden="true">${x.erledigt ? "✓" : k + 1}</span>
       <div class="q-inhalt">${fehltHier ? '<p class="q-fehlt">Fehlt noch – bitte erledigen</p>' : ""}<div class="q-kopf"><h3>${esc(titel)}</h3>${x.pflicht || s.typ === "abschluss" ? "" : '<span class="q-tag">optional</span>'}${meta ? `<span class="q-meta">${meta}</span>` : ""}</div>
-        ${s.hinweis ? `<p class="q-hinweis">${esc(ersetzen(s.hinweis))}</p>` : ""}${inhalt}</div></li>`;
+        ${s.hinweis ? `<p class="q-hinweis">${esc(ersetzen(s.hinweis, p))}</p>` : ""}${inhalt}</div></li>`;
   }
 
   /* Mehrfachauswahl von Mitarbeitern (Schritt-Option „mehrere“), z. B. Badexperten fürs Erstgespräch; rolle steht oben */
-  function mitarbeiterAuswahl(p, feld, rolle) {
+  function mitarbeiterAuswahl(p, feld, rolle, monteure) {
     const gew = p[feld] || [];
-    const ma = cfg().team.filter((m) => m.name && m.kuerzel && m.ebene !== "monteur")
+    const ma = cfg().team.filter((m) => m.name && m.kuerzel && (monteure || m.ebene !== "monteur"))
       .sort((a, b) => (b.rolle === rolle) - (a.rolle === rolle));
     const namen = gew.map((k) => mitgliedZu(k)?.name || k).join(", ");
     return `<details class="mehrwahl"><summary class="eingabe">${namen ? esc(namen) : '<span class="leise">Mitarbeiter auswählen …</span>'}</summary>
@@ -2174,7 +2178,7 @@
     const faellig = laufend.flatMap(faelligkeiten).sort((a, b) => a.d - b.d).map((f) => ({ ...kurz(f.p), text: f.text, unter: f.unter, d: +f.d, ueber: f.ueber }));
     const naechstes = laufend.filter((p) => p.status === "aktiv").map((p) => {
       const st = phaseStatus(p, p.phase), o = st.offen[0];
-      return { ...kurz(p), phase: p.phase, level: phase(p.phase).titel, schritt: o ? ersetzen(o.s.titel) : "Level abschließen", fertig: st.fertig, pflicht: st.pflicht, komplett: st.komplett };
+      return { ...kurz(p), phase: p.phase, level: phase(p.phase).titel, schritt: o ? ersetzen(o.s.titel, p) : "Level abschließen", fertig: st.fertig, pflicht: st.pflicht, komplett: st.komplett };
     }).sort((a, b) => (b.komplett - a.komplett) || (b.phase - a.phase));
     const termine = [];
     for (const p of alle()) for (const t of TERMINE) {
@@ -2491,7 +2495,7 @@
     }
     if (akt === "bestaetigen" && p) {
       const key = a.dataset.key; const an = !((p.schritte || {})[key] || {}).erledigt;
-      aendern(p, (x) => { x.schritte = x.schritte || {}; x.schritte[key] = an ? { erledigt: true, am: Date.now(), von: S.ich.name || "" } : {}; }, an ? `Erledigt: ${ersetzen(schrittTitel(key))}` : null);
+      aendern(p, (x) => { x.schritte = x.schritte || {}; x.schritte[key] = an ? { erledigt: true, am: Date.now(), von: S.ich.name || "" } : {}; }, an ? `Erledigt: ${ersetzen(schrittTitel(key), p)}` : null);
       return teilRendern(p);
     }
     if (akt === "wahl" && p) {
@@ -2499,8 +2503,8 @@
       aendern(p, (x) => {
         x.schritte = x.schritte || {}; x.schritte[a.dataset.key] = { wahl: o.id, am: Date.now() };
         if (o.status) x.status = o.status; else if (x.status !== "aktiv" && x.status !== "abgeschlossen") x.status = "aktiv";
-        if (o.wiedervorlage) { x.wiedervorlage = isoTag(plusTage(new Date(), o.wiedervorlage)); x.wiedervorlageNotiz = `${ersetzen(s.titel)} – nachfassen`; }
-      }, `${ersetzen(s.titel)}: ${ersetzen(o.label)}`);
+        if (o.wiedervorlage) { x.wiedervorlage = isoTag(plusTage(new Date(), o.wiedervorlage)); x.wiedervorlageNotiz = `${ersetzen(s.titel, p)} – nachfassen`; }
+      }, `${ersetzen(s.titel, p)}: ${ersetzen(o.label)}`);
       if (o.status === "verloren") toast("Projekt als abgesagt markiert");
       else if (o.wiedervorlage) toast(`Wiedervorlage in ${o.wiedervorlage} Tagen gesetzt`);
       kopfNeu(p); return teilRendern(p);
@@ -2735,7 +2739,11 @@
       const feld = el.dataset.mitarbeiterFeld, k = el.dataset.mitarbeiter;
       const alt = p[feld] || [], neu = el.checked ? [...alt.filter((x) => x !== k), k] : alt.filter((x) => x !== k);
       const m = mitgliedZu(k);
-      aendern(p, (x) => { x[feld] = neu; }, `Badexperte ${el.checked ? "hinzugefügt" : "entfernt"}: ${m ? m.name : k}`);
+      aendern(p, (x) => {
+        x[feld] = neu;
+        /* Monteure sehen nur Projekte, denen sie zugewiesen sind → bei Auswahl Zugriff geben */
+        if (el.checked && m && m.ebene === "monteur" && !(x.zugriff || []).includes(k)) x.zugriff = [...(x.zugriff || []), k];
+      }, `${feld === "besichtiger" ? "Baustellenbesichtigung" : "Badexperte"}: ${m ? m.name : k} ${el.checked ? "hinzugefügt" : "entfernt"}`);
       kopfNeu(p); teilRendern(p);
       const d = document.querySelector("details.mehrwahl"); if (d) d.open = true;
       return;

@@ -21,7 +21,7 @@
      frueher: n   Schritt lag früher in Level n – bisheriger Stand wird übernommen
      feld         ein Projektfeld ausfüllen                 { feld: "projektnr" | "zustaendig" | "downloadCode" }, mehrzeilig: true → Notizfeld,
                   optionen: [...] → Dropdown, platzhalter: "…" → Hinweis im leeren Feld
-                  mehrere: true → Mitarbeiter-Mehrfachauswahl (Liste im Projekt; rolle: wer oben steht)
+                  mehrere: true → Mitarbeiter-Mehrfachauswahl (Liste im Projekt; rolle: wer oben steht; monteure: true → Monteure wählbar)
 
    portal: [...]    → Ordner, in die der Kunde in diesem Level über seinen Link hochladen kann
    ebene: [...]     → wer den Schritt erledigen darf (Standard: ["planung"]).
@@ -33,6 +33,7 @@
                       { formular: "id", feld: "feld", wert: "ja" }
 
    Platzhalter in Texten: {badberater} {badplanung} {projektleiter}
+   {besichtiger} → in Level 6 für die Baustellenbesichtigung ausgewählte Mitarbeiter (sonst Projektleiter)
    {programm.erp} {programm.cad} … (siehe firma.js)
    ========================================================================== */
 
@@ -138,13 +139,15 @@ window.ABLAUF = [
       { id: "unterschrift", typ: "dateien", kategorie: "auftrag", kundenlink: true, titel: "Unterschriebenes Angebot einscannen / hochladen", wenn: { schritt: "ergebnis", wert: "auftrag" } },
       { id: "angebot-notiz", typ: "feld", feld: "angebotNotiz", mehrzeilig: true, pflicht: false, titel: "Notizen zum Angebot",
         platzhalter: "z. B. Änderungswünsche, Rabatt, offene Fragen, was nachgereicht wird …" },
-      { id: "bb-termin", typ: "termin", termin: "baustellenbesichtigung", titel: "Baustellenbesichtigung mit {projektleiter} vereinbaren", wenn: { schritt: "ergebnis", wert: "auftrag" } },
     ],
   },
   {
     nr: 6, titel: "Baustellenbesichtigung", abschnitt: "auftrag",
     ziel: "Vor Ort aufmessen und alles für Planung und Monteure festhalten.",
     schritte: [
+      { id: "besichtiger", typ: "feld", feld: "besichtiger", mehrere: true, monteure: true, rolle: "projektleiter", titel: "Wer macht die Baustellenbesichtigung?",
+        hinweis: "Einen oder mehrere Mitarbeiter auswählen – sie fahren zur Besichtigung. Ausgewählte Monteure bekommen automatisch Zugriff aufs Projekt." },
+      { id: "bb-termin", typ: "termin", termin: "baustellenbesichtigung", titel: "Baustellenbesichtigung mit {besichtiger} vereinbaren" },
       { id: "checkliste", typ: "formular", formular: "baustellenbesichtigung", titel: "Checkliste Baustellenbesichtigung", ebene: ["planung", "monteur"] },
       { id: "masse", typ: "erledigt", titel: "Raummaße in {programm.cad} übernommen, Planung angepasst" },
       { id: "ma-termin", typ: "termin", termin: "materialauswahl", titel: "Termin Materialauswahl in der Ausstellung" },
