@@ -68,3 +68,24 @@ Fahrzeug. Gleiches Speicherformat (`pk_<Nr>`, Foto `ph_<Nr>`, Abgleich mit Fahrz
 
 `gesamt/mobil.css` (in allen Seiten und beim Zusammenbau in Bad/Heizung eingebunden): auf dem Handy Hauptbereiche als
 Tab-Leiste unten, oben Logo + Bereichs-Menü + Abmelden; iPad hochkant mit schmalerer Seitenleiste.
+
+## Fahrzeuge: DKV-Rechnungen automatisch auslesen
+
+`werkzeuge/dkv-eingang.js` überwacht den Ordner `DKV-Eingang/` (nur lokal, `.gitignore`) und prüft ihn alle 10 Sekunden.
+Liegt dort eine DKV-Rechnung (PDF) oder ein DKV-Export (CSV), wird sie ausgelesen:
+
+- **Tankvorgänge je Fahrzeug** (Zuordnung über Kennzeichen, sonst DKV-Karten-Nr. der Fahrzeugkarte): Fuhrpark-Liste zeigt
+  „⛽ Oktober 2026: 4× getankt · 312 €“, die Fahrzeugkarte Monate und alle Buchungen. AdBlue, Wäsche usw. zählen nur im Betrag.
+- **Kilometerstand**: der höchste plausible Wert (nie kleiner als bisher, kein Sprung über 50 000 km) wird `fz_km`.
+- Nicht zuordenbare Buchungen erscheinen oben in der Fuhrpark-Liste. Doppelte Rechnungen werden erkannt.
+- Danach liegt die Datei in `DKV-Eingang/verarbeitet/`, bei Fehlern in `DKV-Eingang/fehler/` (mit Begründung). Protokoll: `DKV-Eingang/protokoll.txt`.
+- Speicher heute: `personal/daten-lokal.js` (`FZ_TANKEN`, `FZ_TANKEN_OFFEN`) + Tresor wird erneuert. Auf dem Mac mini: Datenbank, als eigener Container.
+
+```
+node werkzeuge/dkv-eingang.js            # läuft dauerhaft
+node werkzeuge/dkv-eingang.js --einmal   # einmal verarbeiten
+node werkzeuge/dkv-lesen.js <Datei>      # nur anzeigen, was erkannt wird (Test)
+```
+
+PDF-Auslesen braucht `pdftotext` (Poppler, `brew install poppler`). Fahrzeuge, die nicht mehr im Bestand sind, blendet das
+Auge oben rechts auf der Fahrzeugkarte aus (`fz_ausgeblendet`); sie erscheinen dann eingeklappt am Ende und nicht mehr im TÜV-Kalender.

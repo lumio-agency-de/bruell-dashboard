@@ -149,3 +149,30 @@ body { background: #fff !important; background-image: none !important; }
 .tresor-fehler { flex-basis: 100%; margin: 0; color: #b42318; font-size: 14px; }
 .tresor-fehler:empty { display: none; }
 @media (max-width: 600px) { .tresor-eingabe, .tresor-eingabe .eingabe, .tresor-eingabe .btn { width: 100%; } }
+
+/* Fahrzeug ausblenden (Auge oben rechts) */
+.fz-huelle { position: relative; }
+.fz-huelle > .fz-karte { height: 100%; padding-right: 54px; }
+.fz-auge { position: absolute; top: 12px; right: 12px; display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 50%;
+  background: transparent; color: var(--leise); cursor: pointer; transition: background .15s, color .15s; }
+.fz-auge:hover { background: color-mix(in oklab, var(--tinte) 8%, transparent); color: var(--tinte); }
+.fz-auge:focus-visible { outline: 2px solid var(--akzent); outline-offset: 2px; }
+.fz-auge svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.fz-huelle.zu > .fz-karte { opacity: .55; padding-block: 12px; }
+.fz-huelle.zu > .fz-karte > .fz-fahrer, .fz-huelle.zu > .fz-karte > .ma-werte { display: none; }
+.fz-huelle.zu .fz-auge { color: var(--rot); }
+/* Tanken (DKV) */
+.fz-tank-kurz { display: block; margin-top: 2px; }
+.fz-tank-monate { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin: 8px 0 10px; }
+.fz-tank-monate > div { display: grid; gap: 2px; padding: 10px 12px; border: 1px solid var(--fuge); border-radius: 12px; }
+.fz-tank-monate small { font-size: .68rem; color: var(--leise); text-transform: uppercase; letter-spacing: .08em; }
+.fz-tank-monate span { font-size: .85rem; color: var(--leise); }
+.fz-tank-details summary, .fz-offen summary { cursor: pointer; font-weight: 600; margin-bottom: 8px; }
+.fz-tank-tab { width: 100%; border-collapse: collapse; font-size: .85rem; }
+.fz-tank-tab th, .fz-tank-tab td { padding: 6px 8px; border-bottom: 1px solid var(--fuge); text-align: left; }
+.fz-tank-tab th { font-size: .7rem; color: var(--leise); text-transform: uppercase; letter-spacing: .06em; }
+.fz-tank-tab .r { text-align: right; font-variant-numeric: tabular-nums; }
+.fz-offen { margin: 0 0 16px; padding: 12px 16px; border: 1px solid var(--akzent); border-radius: 14px; background: color-mix(in oklab, var(--akzent) 8%, var(--blatt)); }
+.fz-offen summary { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 0; }
+.fz-offen[open] summary { margin-bottom: 8px; }
+@media (max-width: 640px) { .fz-tank-details, .fz-offen { overflow-x: auto; } }

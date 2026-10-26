@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* Verschlüsselt die vertraulichen Daten für die Online-Version:
-     Fahrzeuge (window.FZ_VOLL aus personal/daten-lokal.js) + Mitarbeiterfotos (window.PK_FOTOS aus personal/fotos-lokal.js)
+     Fahrzeuge + Tankvorgänge (window.FZ_VOLL/FZ_TANKEN aus personal/daten-lokal.js) + Mitarbeiterfotos (window.PK_FOTOS aus personal/fotos-lokal.js)
    → personal/daten-tresor.js (AES-256-GCM, Schlüssel per PBKDF2-SHA256 aus dem Datenpasswort).
    Ohne Passwort ist die Datei wertlos; das Dashboard fragt es ab (gesamt/tresor.js) und entschlüsselt nur im Browser.
      node werkzeuge/tresor.js                → Passwort aus werkzeuge/tresor-passwort.txt (nur lokal, .gitignore)
@@ -21,7 +21,7 @@ const ITER = 310000;
     const p = path.join(HIER, f);
     if (fs.existsSync(p)) vm.runInNewContext(fs.readFileSync(p, "utf8"), { window: win });
   }
-  const inhalt = { FZ_VOLL: win.FZ_VOLL || {}, PK_FOTOS: win.PK_FOTOS || {}, DATEN_STAND: win.DATEN_STAND || "" };
+  const inhalt = { FZ_VOLL: win.FZ_VOLL || {}, FZ_TANKEN: win.FZ_TANKEN || {}, FZ_TANKEN_OFFEN: win.FZ_TANKEN_OFFEN || [], PK_FOTOS: win.PK_FOTOS || {}, DATEN_STAND: win.DATEN_STAND || "" };
   const stand = String(Date.now());
 
   const salt = c.getRandomValues(new Uint8Array(16)), iv = c.getRandomValues(new Uint8Array(12));

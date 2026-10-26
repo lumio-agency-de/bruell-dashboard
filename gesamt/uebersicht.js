@@ -119,7 +119,8 @@
     const fz = { ...(window.FZ_VOLL || {}) };
     try { Object.keys(localStorage).filter((k) => /^fz_\d+$/.test(k)).forEach((k) => { fz[k.slice(3)] = lesen(k, {}); }); } catch (e) { /* gesperrt */ }
     return Object.entries(fz).flatMap(([nr, f]) => {
-      const s = String((f && f.fz_tuev) || "").trim();
+      if (!f || f.fz_ausgeblendet) return [];                                       // nicht mehr im Bestand
+      const s = String(f.fz_tuev || "").trim();
       let m = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$/), d = null;
       if (m) d = new Date(+m[3] < 100 ? 2000 + +m[3] : +m[3], +m[2] - 1, +m[1]);
       else if ((m = s.match(/^(\d{4})-(\d{2})-(\d{2})/))) d = new Date(+m[1], +m[2] - 1, +m[3]);

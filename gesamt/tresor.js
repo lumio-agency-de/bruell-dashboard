@@ -19,7 +19,7 @@
     try {
       const d = JSON.parse(txt);
       if (d.stand === T.stand) {
-        window.FZ_VOLL = d.FZ_VOLL; window.PK_FOTOS = d.PK_FOTOS; window.DATEN_STAND = d.DATEN_STAND;
+        window.FZ_VOLL = d.FZ_VOLL; window.FZ_TANKEN = d.FZ_TANKEN || {}; window.FZ_TANKEN_OFFEN = d.FZ_TANKEN_OFFEN || []; window.PK_FOTOS = d.PK_FOTOS; window.DATEN_STAND = d.DATEN_STAND;
         window.TRESOR_SPERREN = () => { weg(); location.reload(); };
         return;
       }

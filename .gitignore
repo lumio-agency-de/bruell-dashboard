@@ -19,3 +19,6 @@ fahrzeuge/0*.html
 
 # Datenpasswort für personal/daten-tresor.js (nur lokal!)
 werkzeuge/tresor-passwort.txt
+
+# DKV-Rechnungen (vertraulich, nur lokal – werden von werkzeuge/dkv-eingang.js ausgelesen)
+DKV-Eingang/
