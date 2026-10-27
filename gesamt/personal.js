@@ -35,12 +35,12 @@ var PK_NR = (new URLSearchParams(location.search).get("nr") || "").replace(/\D/g
     const ini = (PERSON.name || "?").split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
     const hier = document.body.dataset.bereich || "personal";
     const nav = [["../", "Übersicht", "i-cockpit"], ["../bad/", "Bad", "i-projekte"], ["../heizung/", "Heizung", "i-projekte"],
-      ["../personal/", "Personal", "i-konten", hier === "personal"], ["../fahrzeuge/", "Fahrzeuge", "i-einrichtung", hier === "fahrzeuge"]];
-    $("#rail").innerHTML = `<a class="marke" href="../${QS}"><img class="marke-logo" src="../bad/app/img/logo.svg" alt=""><span class="marke-text"><strong>Brüll GmbH</strong><small>${hier === "fahrzeuge" ? "Fahrzeuge" : "Personal"}</small></span></a>
+      ["../personal/", "Personal", "i-konten", hier === "personal"], ["../fahrzeuge/", "Fahrzeuge", "i-einrichtung", hier === "fahrzeuge"], ["../betrieb/", "Betrieb", "i-kennzahlen", hier === "betrieb"]];
+    $("#rail").innerHTML = `<a class="marke" href="../${QS}"><img class="marke-logo" src="../bad/app/img/logo.svg" alt=""><span class="marke-text"><strong>Brüll GmbH</strong><small>${{ fahrzeuge: "Fahrzeuge", betrieb: "Betriebsmonitor" }[hier] || "Personal"}</small></span></a>
       <nav class="nav">${nav.map(([h, t, i, an]) => `<a href="${h}${QS}"${an ? ' aria-current="page"' : ""}><span class="nav-i ${i}" aria-hidden="true"></span>${t}</a>`).join("")}</nav>
       <div class="speicher"><div class="ich"><span class="ich-k">${esc(ini)}</span><span><b>${esc(PERSON.name)}</b><small>Geschäftsführung</small></span></div>
         <div class="ich-aktionen"><button class="btn klein hell" type="button" id="abmelden">Abmelden</button></div>
-        <p class="modus">${DEMO ? "Demo – Daten nur in diesem Browser" : "Personaldaten – vertraulich"}</p></div>`;
+        <p class="modus">${DEMO ? "Demo – Daten nur in diesem Browser" : hier === "betrieb" ? "Betriebszahlen – vertraulich" : "Personaldaten – vertraulich"}</p></div>`;
     $("#abmelden").addEventListener("click", () => {
       try { localStorage.removeItem("bruell:sitzung"); sessionStorage.removeItem("bruell:sitzung"); sessionStorage.setItem("bruell:zurueck", "1"); } catch (e) { /* egal */ }
       location.replace("../bad/" + QS);

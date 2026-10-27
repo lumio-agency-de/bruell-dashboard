@@ -22,3 +22,6 @@ werkzeuge/tresor-passwort.txt
 
 # DKV-Rechnungen (vertraulich, nur lokal – werden von werkzeuge/dkv-eingang.js ausgelesen)
 DKV-Eingang/
+
+# Betriebsmonitor-Zahlen (vertraulich, nur lokal – online nur verschlüsselt über werkzeuge/tresor.js)
+betrieb/daten-lokal.js

@@ -1552,8 +1552,10 @@
     });
     return { text: text.replace(/\n{3,}/g, "\n\n").replace(/\s+$/, "") + (extra._ohneSignatur ? "" : signatur()), luecken };
   }
-  /* Signatur des angemeldeten Nutzers (Name, Funktion, Durchwahl, E-Mail) */
+  /* Signatur des angemeldeten Nutzers – ausgeschaltet: die persönliche Signatur setzt Outlook (Wunsch Heizung, 26.10.2026) */
+  const SIGNATUR_IM_TEXT = false;
   function signatur() {
+    if (!SIGNATUR_IM_TEXT) return "";
     const c = cfg(), t = S.ich && c.team.find((m) => m.kuerzel === S.ich.id);
     if (!t || !t.name) return "";
     return "\n\n" + [t.name, t.bezeichnung && `${t.bezeichnung} · ${c.name}`, t.telefon && `Telefon ${t.telefon}`, t.email].filter(Boolean).join("\n");

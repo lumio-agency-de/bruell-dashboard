@@ -15,6 +15,7 @@ Dashboard Gesamt/
 ├── index.html          → Übersicht (Startseite)
 ├── bad/                → Kopie von „Bad Dashboard/Dashboard“
 ├── heizung/            → Kopie von „Heizung Dashboard/Dashboard“
+├── betrieb/           → Betriebsmonitor (nur Geschäftsführung)
 ├── gesamt/             → Übersicht (uebersicht.js/.css) + Leisten-Navigation der Bereiche (bereiche.js/.css)
 └── werkzeuge/zusammenbauen.sh
 ```
@@ -89,3 +90,20 @@ node werkzeuge/dkv-lesen.js <Datei>      # nur anzeigen, was erkannt wird (Test)
 
 PDF-Auslesen braucht `pdftotext` (Poppler, `brew install poppler`). Fahrzeuge, die nicht mehr im Bestand sind, blendet das
 Auge oben rechts auf der Fahrzeugkarte aus (`fz_ausgeblendet`); sie erscheinen dann eingeklappt am Ende und nicht mehr im TÜV-Kalender.
+
+## Betriebsmonitor (nur Geschäftsführung)
+
+`betrieb/` – alle Kennzahlen auf einen Blick (Wunsch vom 27.10.2026, angelehnt an den „BetriebsMonitor“ des handwerk magazins).
+Logik in `gesamt/betrieb.js`, Demo mit `?demo=1` (frei erfundener Betrieb, eigener Speicher `bm-demo:`).
+
+- **Cockpit:** Zielstundensatz, Umsatz/Ergebnis/Rohertrag gegen Plan, Ist-Stundensatz, Auslastung, Auftragsbestand
+  und offene Angebote (Auszug aus Bad/Heizung), Hinweise mit Ampel.
+- **Stundensatz:** Mitarbeiter aus Personal (produktiver Anteil, Bruttolohn, Ein-/Austritt anteilig), Gemeinkosten,
+  Fahrzeugkosten aus dem Fuhrpark (Leasing, Versicherung, Steuer, DKV-Tanken), Materialaufschlag, Gewinnziel → Zielstundensatz.
+- **Jahresplanung:** aus dem Stundensatz nach Werktagen verteilt; Werte von Hand überschreiben die Vorbelegung.
+- **Soll-Ist:** DATEV-CSV importieren – BWA (Kurzfristige Erfolgsrechnung, Zeilen nach Bezeichnung) oder
+  Summen- und Saldenliste (Konten SKR 03/04). Vorschau vor dem Übernehmen, Monat wird aus der Spalte erkannt.
+
+Daten: Browser (`bm:<Jahr>`), später Datenbank auf dem Mac mini. Für die Online-Version: „⬇ Sichern“ lädt
+`daten-lokal.js` herunter → nach `betrieb/` legen (`.gitignore`) → `node werkzeuge/tresor.js` verschlüsselt es mit in
+`personal/daten-tresor.js`. Echte Zahlen nie unverschlüsselt ins Repo.

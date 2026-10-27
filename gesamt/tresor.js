@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Brüll Dashboard – verschlüsselte Daten (Fahrzeuge + Mitarbeiterfotos)
+   Brüll Dashboard – verschlüsselte Daten (Fahrzeuge + Mitarbeiterfotos + Betriebsmonitor)
    personal/daten-tresor.js liegt öffentlich, ist aber AES-verschlüsselt (werkzeuge/tresor.js).
    Nach Eingabe des Datenpasswortes wird im Browser entschlüsselt und für diese Sitzung
    (oder auf Wunsch auf diesem Gerät) gemerkt. Lokal mit daten-lokal.js passiert hier nichts.
@@ -19,7 +19,7 @@
     try {
       const d = JSON.parse(txt);
       if (d.stand === T.stand) {
-        window.FZ_VOLL = d.FZ_VOLL; window.FZ_TANKEN = d.FZ_TANKEN || {}; window.FZ_TANKEN_OFFEN = d.FZ_TANKEN_OFFEN || []; window.PK_FOTOS = d.PK_FOTOS; window.DATEN_STAND = d.DATEN_STAND;
+        window.FZ_VOLL = d.FZ_VOLL; window.FZ_TANKEN = d.FZ_TANKEN || {}; window.FZ_TANKEN_OFFEN = d.FZ_TANKEN_OFFEN || []; window.PK_FOTOS = d.PK_FOTOS; window.DATEN_STAND = d.DATEN_STAND; if (d.BM_DATEN && !window.BM_DATEN) window.BM_DATEN = d.BM_DATEN;
         window.TRESOR_SPERREN = () => { weg(); location.reload(); };
         return;
       }
@@ -28,7 +28,7 @@
   }
 
   /* 2) Entsperren nur auf den Personal- und Fahrzeugseiten anbieten */
-  if (!/\/(personal|fahrzeuge)\//.test(location.pathname)) return;
+  if (!/\/(personal|fahrzeuge|betrieb)\//.test(location.pathname)) return;
   const ab = (s) => Uint8Array.from(atob(s), (ch) => ch.charCodeAt(0));
   async function entschluesseln(pw) {
     const basis = await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveKey"]);
@@ -39,7 +39,7 @@
     const ziel = document.querySelector("main") || document.body;   // nicht in .seite – die wird neu gezeichnet
     const f = document.createElement("form");
     f.className = "tresor";
-    f.innerHTML = `<div class="tresor-text"><strong>🔒 Fahrzeugdaten &amp; Mitarbeiterfotos sind verschlüsselt</strong>
+    f.innerHTML = `<div class="tresor-text"><strong>🔒 ${/\/betrieb\//.test(location.pathname) ? "Betriebszahlen, Fahrzeugdaten &amp; Fotos sind" : "Fahrzeugdaten &amp; Mitarbeiterfotos sind"} verschlüsselt</strong>
         <span class="leise">Mit dem Datenpasswort entsperren – es wird nur in diesem Browser entschlüsselt.</span></div>
       <div class="tresor-eingabe">
         <input class="eingabe" type="password" name="pw" autocomplete="current-password" placeholder="Datenpasswort" aria-label="Datenpasswort" required>

@@ -1,9 +1,9 @@
 /* ==========================================================================
    MAILVORLAGEN
    --------------------------------------------------------------------------
-   Heizung: Die Terminbestätigung basiert auf dem Outlook-Entwurf „Ihre sparsame
-   Heizung zum Greifen nah …“ (Postfach sparsameheizung@) – Wortlaut bitte dort
-   abgleichen. Alle übrigen Texte sind Entwürfe zur Prüfung. Das Dashboard setzt
+   Heizung: Terminbestätigung, BZA, Umsetzungstermin, Baustart-Erinnerung und
+   Schlussrechnung entsprechen den Outlook-Vorlagen von Annika (26.10.2026,
+   Heizung Dashboard/änderungen/annika-2026-10-26) – ohne den Fotorabatt. Das Dashboard setzt
    Kundendaten und Termine ein; dann „Text kopieren" oder „In Mailprogramm
    öffnen". Bilder, Signatur und Anhänge bleiben in der Original-.oft —
    die liegt unter „datei" und kann jederzeit geöffnet werden.
@@ -27,8 +27,7 @@
    anhangOrdner:  Projektordner, deren neueste Datei beim „In Outlook öffnen“ angehängt wird.
    Optionale Absätze: [[id]] … [[/id]] — im Dashboard per Häkchen an/aus.
    Felder, die noch leer sind, erscheinen als markierte Lücke ‹…›.
-   Unter jede Mail setzt das Dashboard die Signatur des angemeldeten Nutzers
-   (Name, Funktion, Durchwahl, E-Mail – gepflegt unter Konten).
+   Keine Signatur im Text: Die persönliche Signatur des Absenders setzt Outlook.
    ========================================================================== */
 
 window.MAILVORLAGEN = [
@@ -105,17 +104,19 @@ Mit freundlichen Grüßen`,
     phase: 2,
     titel: "Terminbestätigung Erstgespräch",
     datei: "",
-    anhaenge: ["Fotoanleitung Heizung"],
-    anhangDateien: ["vorlagen/02-terminbestaetigung/Fotoanleitung-Heizung.pdf"],
+    anhaenge: ["Fotoanleitung Heizung", "Broschüre Heizung"],
+    anhangDateien: ["vorlagen/02-terminbestaetigung/Fotoanleitung-Heizung.pdf", "vorlagen/02-terminbestaetigung/Broschuere-Heizung.pdf"],
     anredeStil: "formell",
     betreff: "Ihre sparsame Heizung zum Greifen nah …",
-    optionen: [{ id: "fotos", label: "Um Fotos bitten (100 € Fotorabatt)", an: true }],
+    optionen: [],
     text:
 `{anrede}
 
 vielen Dank für Ihr Interesse an einer neuen Heizung!
 
-Ob Wärmepumpe, Pellets, Gas, Öl, Solar – oder eine clevere Kombination daraus: Gemeinsam mit Ihnen entwickeln wir ein Wärmekonzept, das zu Ihrem Haus passt, Ihre Kosten senkt und Sie langfristig unabhängiger von Energieanbietern macht. Dazu gehört auch eine ehrliche Beratung zu Fördermöglichkeiten und den gesetzlichen Vorgaben.
+Ob Wärmepumpe, Pellets, Gas, Öl, Solar – oder eine clevere Kombination daraus: Gemeinsam mit Ihnen entwickeln wir ein Wärmekonzept, das zu Ihrem Haus passt, Ihre Kosten senkt und Sie langfristig unabhängiger von Energieanbietern macht.
+
+Dazu gehört auch eine ehrliche Beratung zu Fördermöglichkeiten und den gesetzlichen Vorgaben.
 
 Gerne bestätigen wir Ihnen Ihren Gesprächstermin mit unserem Heizungsexperten Herrn {heizungsexperte}:
 📅 {erstgespraech.wochentag}, {erstgespraech.datum}
@@ -123,19 +124,18 @@ Gerne bestätigen wir Ihnen Ihren Gesprächstermin mit unserem Heizungsexperten 
 📍 {firma.adresse}
 
 📌 Anfahrt leicht gemacht: Hier geht’s zur Adresse auf Google Maps: {firma.mapsLink}
-[[fotos]]
+
 Damit wir Ihr Angebot – und später die Lieferung und Montage – schon vorab gut planen können, helfen uns Fotos Ihrer aktuellen Heizsituation sehr. Was genau wir brauchen, steht in der Fotoanleitung im Anhang:
 •  Ihre aktuelle Heizung mit dem ganzen Heizraum
 •  die Anschlüsse an Heizung, Warmwasserspeicher, Pumpen und Schornstein
 •  die Außenansicht Ihres Hauses mit dem Schornsteinkopf
 •  die Thermostatventile an Ihren Heizkörpern
+•  ein Bild des aktuellen Zählerschranks
 
-Für diese rund 15 Minuten Mitarbeit erhalten Sie bei Auftragserteilung einen Fotorabatt von 100 € (brutto).
+Bringen Sie gerne auch Ihre letzten Verbrauchsabrechnungen und das Protokoll des Schornsteinfegers mit.
 
 Am einfachsten laden Sie alles über Ihren persönlichen Link hoch – direkt vom Handy, ohne Anmeldung:
 👉 {uploadLink}
-[[/fotos]]
-Bringen Sie gerne auch Ihre letzten Verbrauchsabrechnungen und das Protokoll des Schornsteinfegers mit.
 
 Wir freuen uns auf das Gespräch mit Ihnen.
 
@@ -160,7 +160,9 @@ für Ihre neue Heizung haben wir die Bestätigung zum Antrag (BZA) im Förderpor
 
 {bzaNr}
 
-Mit dieser Nummer stellen Sie den Zuschussantrag (Heizungsförderung für Privatpersonen) im Kundenportal „Meine KfW“ unter https://www.meine.kfw.de – wichtig: bitte vor Beginn der Arbeiten. Im Anhang finden Sie die Bestätigung zum Antrag (BZA) sowie eine Anleitung, wie Sie den Antrag Schritt für Schritt stellen. Sobald Sie die Förderzusage erhalten haben, geben Sie uns bitte kurz Bescheid.
+Mit dieser Nummer stellen Sie den Zuschussantrag (Heizungsförderung für Privatpersonen) im Kundenportal „Meine KfW“ unter https://www.meine.kfw.de – wichtig: bitte vor Beginn der Arbeiten.
+
+Im Anhang finden Sie die Bestätigung zum Antrag (BZA) sowie eine Anleitung, wie Sie den Antrag Schritt für Schritt stellen. Sobald Sie die Förderzusage erhalten haben, geben Sie uns bitte kurz Bescheid.
 
 Bei Fragen zur Antragstellung helfen wir Ihnen gerne weiter.
 
@@ -175,15 +177,14 @@ Mit freundlichen Grüßen`,
     anhaenge: [],
     anredeStil: "formell",
     betreff: "Ihr Termin für die neue Heizung",
-    optionen: [{ id: "abnahme", label: "Geplanten Einweisungstermin nennen" }],
+    optionen: [],
     text:
 `{anrede}
 
 vielen Dank für Ihr Vertrauen! Gerne bestätigen wir Ihnen den Termin für den Einbau Ihrer neuen Heizung:
 
 📅 Baustart: {baustart.wochentag}, {baustart.datum}
-[[abnahme]]📅 Geplante Einweisung in die neue Anlage: {abnahme.wochentag}, {abnahme.datum}
-[[/abnahme]]
+
 Rund eine Woche vor Baubeginn melden wir uns noch einmal mit allen Informationen zum Ablauf.
 
 Sollten Sie bis dahin Fragen haben oder sich an Ihrem Termin etwas ändern, melden Sie sich gerne jederzeit bei uns.
@@ -199,20 +200,18 @@ Mit freundlichen Grüßen`,
     anhaenge: [],
     anredeStil: "gutentag",
     betreff: "Bald ist es so weit – Ihre neue Heizung kommt",
-    optionen: [{ id: "warmwasser", label: "Hinweis: kein Warmwasser während des Umbaus", an: true }],
+    optionen: [],
     text:
 `{anrede}
 
 am kommenden {baustart.wochentag}, den {baustart.datum} geht es los – unser Team freut sich darauf, bei Ihnen die neue Heizung einzubauen.
 
-Die Monteure sind in der Regel von ca. 8:00 bis 17:00 Uhr bei Ihnen vor Ort – freitags voraussichtlich nur bis 12:30 Uhr. Gerne können Sie uns einen Schlüssel übergeben 😊
+Die Monteure sind in der Regel von ca. 7:00 bis 16:30 Uhr bei Ihnen vor Ort – freitags voraussichtlich nur bis 12:30 Uhr. Gerne können Sie uns einen Schlüssel übergeben 😊
 
 Damit wir direkt starten können, bitten wir Sie:
 •  den Heizraum und die Laufwege dorthin freizuräumen,
-•  für das Lieferfahrzeug möglichst einen Parkplatz nah am Haus freizuhalten.
-[[warmwasser]]
-Bitte beachten Sie: Während des Umbaus stehen Heizung und Warmwasser zeitweise nicht zur Verfügung. Wir halten diese Zeit so kurz wie möglich und sprechen den genauen Ablauf mit Ihnen ab.
-[[/warmwasser]]
+•  für unser Fahrzeug möglichst einen Parkplatz nah am Haus freizuhalten.
+
 Sollten Sie vorab noch Fragen haben, melden Sie sich gerne!
 
 Wir wünschen Ihnen weiterhin eine angenehme Woche!`,

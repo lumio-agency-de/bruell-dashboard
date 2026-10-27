@@ -176,7 +176,7 @@
         <span><b>${s("fertigJahr")}</b><small>fertig ${new Date().getFullYear()}</small></span></div>`;
     const tabelle = g === "g" ? `<table class="ue-tab"><thead><tr><th></th><th>Umsatz ${new Date().getFullYear()}</th><th>Auftragsbestand</th><th>offene Angebote</th><th>Anfragen</th><th>fertig</th><th>abgesagt</th></tr></thead>
         <tbody>${k.map((x) => `<tr><td>${tag(x.b)}</td><td>${geld(x.umsatzJahr || 0)}</td><td>${geld(x.bestand || 0)}</td><td>${geld(x.angeboteWert || 0)} · ${x.angebote}</td><td>${x.anfragen}</td><td>${x.fertigJahr}</td><td>${x.verloren}</td></tr>`).join("")}</tbody></table>` : "";
-    return `${kopf}${kacheln}${tabelle}<div class="ue-aktion"><a class="btn klein still" href="bad/${QS}#/kennzahlen">Unternehmen Bad</a><a class="btn klein still" href="heizung/${QS}#/kennzahlen">Unternehmen Heizung</a></div>`;
+    return `${kopf}${kacheln}${tabelle}<div class="ue-aktion"><a class="btn klein" href="betrieb/${QS}">Betriebsmonitor</a><a class="btn klein still" href="bad/${QS}#/kennzahlen">Unternehmen Bad</a><a class="btn klein still" href="heizung/${QS}#/kennzahlen">Unternehmen Heizung</a></div>`;
   }
   function wPersonal(A, g) {
     const m = new Map();
@@ -338,7 +338,7 @@
   function leiste(person) {
     $("#nav").innerHTML = `<a href="./${QS}" aria-current="page"><span class="nav-i i-cockpit" aria-hidden="true"></span>Übersicht</a>
       ${BEREICHE.map((b) => `<a href="${b.id}/${QS}#/cockpit"><span class="nav-i ${b.icon}" aria-hidden="true"></span>${esc(b.titel)}</a>`).join("")}
-      ${person.ebene === "geschaeftsfuehrung" ? `<a href="personal/${QS}"><span class="nav-i i-konten" aria-hidden="true"></span>Personal</a><a href="fahrzeuge/${QS}"><span class="nav-i i-einrichtung" aria-hidden="true"></span>Fahrzeuge</a><a href="bad/${QS}#/konten"><span class="nav-i i-einrichtung" aria-hidden="true"></span>Konten</a>` : ""}`;
+      ${person.ebene === "geschaeftsfuehrung" ? `<a href="personal/${QS}"><span class="nav-i i-konten" aria-hidden="true"></span>Personal</a><a href="fahrzeuge/${QS}"><span class="nav-i i-einrichtung" aria-hidden="true"></span>Fahrzeuge</a><a href="betrieb/${QS}"><span class="nav-i i-kennzahlen" aria-hidden="true"></span>Betrieb</a><a href="bad/${QS}#/konten"><span class="nav-i i-einrichtung" aria-hidden="true"></span>Konten</a>` : ""}`;
     const ini = (person.name || "?").split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
     $("#ich").innerHTML = `<div class="ich"><span class="ich-k">${esc(ini)}</span><span><b>${esc(person.name)}</b><small>${esc({ geschaeftsfuehrung: "Geschäftsführung", planung: "Planung / Bearbeitung", monteur: "Monteur" }[person.ebene] || "")}</small></span></div>
       <div class="ich-aktionen"><button class="btn klein hell" data-aktion="abmelden">Abmelden</button></div>

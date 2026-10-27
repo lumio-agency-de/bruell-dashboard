@@ -1,0 +1,108 @@
+/* ==========================================================================
+   Betriebsmonitor – Cockpit, Stundensatz, Jahresplanung, Soll-Ist (Stil des Brüll Dashboards)
+   ========================================================================== */
+.bm-seite .seite { max-width: 1400px; }
+.bm-tabs { display: flex; gap: 4px; margin: -6px 0 18px; border-bottom: 1px solid var(--fuge); overflow-x: auto; scrollbar-width: none; }
+.bm-tabs a { padding: 9px 14px 11px; font-weight: 600; font-size: .92rem; color: var(--leise); text-decoration: none; position: relative; white-space: nowrap; }
+.bm-tabs a:hover { color: var(--tinte); }
+.bm-tabs a[aria-current="page"] { color: var(--tinte); }
+.bm-tabs a[aria-current="page"]::after { content: ""; position: absolute; left: 10px; right: 10px; bottom: -1px; height: 3px; border-radius: 3px 3px 0 0; background: var(--akzent); }
+.panel-innen { padding: 4px 18px 18px; }
+.panel + .panel { margin-top: 16px; }
+.felder.vier { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 14px; }
+.bm-aktion { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+.bm-aktion.oben { margin: 0 0 14px; }
+.klein-text { font-size: .8rem; margin: 8px 0 0; }
+
+/* ---------- Cockpit ---------- */
+.bm-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+.bm-kpi { position: relative; color: inherit; }
+.bm-kpi:hover { border-color: var(--tinte); }
+.bm-kpi .kpi-zahl { font-size: 1.85rem; margin: 4px 0 2px; }
+.bm-ampel { justify-self: start; display: inline-flex; align-items: center; gap: 5px; margin-top: 6px; font-size: .72rem; font-weight: 700; padding: 2px 9px 2px 3px; border-radius: 99px; }
+.bm-ampel i { font-style: normal; width: 16px; height: 16px; border-radius: 50%; display: grid; place-items: center; font-size: .62rem; color: #fff; }
+.bm-ampel.gruen { background: var(--gruen-weich); color: var(--gruen); } .bm-ampel.gruen i { background: var(--gruen); }
+.bm-ampel.gelb { background: var(--akzent-weich); color: var(--akzent-text); } .bm-ampel.gelb i { background: var(--akzent); color: var(--tinte); }
+.bm-ampel.rot { background: color-mix(in oklab, var(--rot) 12%, var(--blatt)); color: var(--rot); } .bm-ampel.rot i { background: var(--rot); }
+.bm-zwei { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.bm-zwei .panel + .panel { margin-top: 0; }
+.bm-chart { width: 100%; height: auto; display: block; }
+.bm-chart .gitter { stroke: var(--fuge); stroke-width: 1; }
+.bm-chart .achse { font-size: 10px; fill: var(--leise); }
+.bm-chart .mitte { text-anchor: middle; }
+.bm-chart .rechts { text-anchor: end; }
+.bm-chart .plan { fill: var(--tinte-weich); stroke: var(--fuge-stark); stroke-width: 1; }
+.bm-chart .ist { fill: var(--tinte); }
+.bm-chart .treffer { fill: transparent; }
+.bm-chart .bm-mon:hover .treffer { fill: color-mix(in oklab, var(--tinte) 5%, transparent); }
+.bm-legende { display: flex; gap: 16px; margin: 8px 0 0; font-size: .8rem; color: var(--leise); }
+.bm-legende span { display: inline-flex; align-items: center; gap: 6px; }
+.bm-legende i { width: 12px; height: 12px; border-radius: 3px; }
+.bm-legende i.plan { background: var(--tinte-weich); box-shadow: inset 0 0 0 1px var(--fuge-stark); }
+.bm-legende i.ist { background: var(--tinte); }
+.bm-hinweise { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 8px; }
+.bm-hinweise li { padding: 9px 12px; border-radius: 10px; border-left: 3px solid; font-size: .88rem; }
+.bm-hinweise li.rot { border-color: var(--rot); background: color-mix(in oklab, var(--rot) 7%, var(--blatt)); }
+.bm-hinweise li.gelb { border-color: var(--akzent); background: var(--akzent-weich); }
+.bm-hinweise a { color: inherit; text-decoration: none; }
+.bm-hinweise a:hover { text-decoration: underline; }
+
+/* ---------- Tabellen ---------- */
+.bm-scroll { overflow-x: auto; }
+.bm-tab { width: 100%; border-collapse: collapse; font-size: .88rem; }
+.bm-tab th { text-align: left; font-size: .68rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--leise); padding: 6px 6px; white-space: nowrap; }
+.bm-tab tbody th { text-transform: none; letter-spacing: 0; font-size: .86rem; color: var(--tinte); }
+.bm-tab td { padding: 4px 6px; border-top: 1px solid var(--fuge); vertical-align: top; }
+.bm-tab td small, .bm-tab th small { display: block; font-size: .7rem; font-weight: 500; text-transform: none; letter-spacing: 0; }
+.bm-tab .r { text-align: right; white-space: nowrap; }
+.bm-tab.klein { font-size: .82rem; }
+.bm-tab .eingabe { padding: 5px 7px; min-width: 0; }
+.bm-zahl { text-align: right; font-variant-numeric: tabular-nums; }
+.bm-pers td:first-child .eingabe { min-width: 112px; }
+.bm-pers td:nth-child(2) .eingabe, .bm-pers td:nth-child(3) .eingabe { width: 58px; }
+.bm-pers td:nth-child(4) .eingabe { width: 96px; }
+.bm-daten { display: flex; gap: 4px; }
+.bm-daten .eingabe { width: 124px; padding-right: 4px; font-size: .8rem; }
+.bm-daten .eingabe:not(:focus):placeholder-shown, .bm-daten .eingabe[value=""]:not(:focus) { color: var(--leise); }
+.bm-pers th { white-space: normal; }
+.bm-pers tr.anteilig td:first-child .eingabe { border-style: dashed; }
+.bm-betrag { width: 150px; text-align: right; }
+.bm-fz small { display: block; margin-top: 4px; }
+.bm-check { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; padding-top: 5px; }
+.bm-monate td { min-width: 92px; }
+.bm-monate td.hand .eingabe { border-color: var(--akzent); background: var(--akzent-weich); }
+.bm-monate tr.summe td, .bm-monate tr.summe th { font-weight: 700; border-top: 2px solid var(--fuge-stark); padding-top: 8px; }
+.bm-ist td { min-width: 110px; }
+.bm-ist tr.ohne .eingabe { background: transparent; }
+.bm-ist small.plus { color: var(--gruen); font-weight: 600; }
+.bm-ist small.minus { color: var(--rot); font-weight: 600; }
+.bm-ist tfoot td, .bm-ist tfoot th { border-top: 2px solid var(--fuge-stark); padding-top: 8px; }
+.bm-imp { border-color: var(--akzent); margin-bottom: 16px; }
+.bm-imp .bm-z { max-width: 420px; }
+
+/* ---------- Stundensatz ---------- */
+.bm-satz { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 16px; align-items: start; }
+.bm-ergebnis { position: sticky; top: 16px; }
+.bm-gross { display: grid; gap: 2px; padding: 14px 16px; margin-bottom: 12px; border-radius: 14px; background: var(--tinte); color: #fff; }
+.bm-gross small { font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--akzent); font-weight: 700; }
+.bm-gross b { font: 400 2.6rem/1.05 var(--serif); }
+.bm-gross .leise { color: rgb(255 255 255 / .72); font-size: .82rem; }
+.bm-z { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--fuge); font-size: .88rem; }
+.bm-z b { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bm-z.summe { font-weight: 700; color: var(--tinte); border-bottom-color: var(--fuge-stark); }
+.bm-beispiel { margin: 14px 0 0; padding: 10px 12px; border-radius: 10px; background: var(--akzent-weich); font-size: .88rem; }
+
+@media (max-width: 1180px) {
+  .bm-satz { grid-template-columns: 1fr; }
+  .bm-ergebnis { position: static; }
+  .bm-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bm-zwei { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .bm-kpis { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .bm-kpi .kpi-zahl { font-size: 1.35rem; }
+  .felder.vier { grid-template-columns: 1fr 1fr; }
+  .bm-gross b { font-size: 2.1rem; }
+}
+html[data-thema="dunkel"] .bm-gross { background: #222226; border: 1px solid var(--fuge); }
+html[data-thema="dunkel"] .bm-chart .ist, html[data-thema="dunkel"] .bm-legende i.ist { fill: #b9b9c2; background: #b9b9c2; }

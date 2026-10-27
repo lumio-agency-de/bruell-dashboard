@@ -36,8 +36,8 @@
 
    Platzhalter in Texten: {badberater} {badplanung} {projektleiter}
    {badexperten} → in Level 1 fürs Erstgespräch ausgewählte Mitarbeiter (sonst Badberater)
-   {besichtiger} → in Level 6 für die Baustellenbesichtigung ausgewählte Mitarbeiter (sonst Projektleiter)
-   {abnehmer}    → in Level 12 für die Abnahme ausgewählte Mitarbeiter (sonst Projektleiter)
+   {besichtiger} → in Level 7 für die Baustellenbesichtigung ausgewählte Mitarbeiter (sonst Projektleiter)
+   {abnehmer}    → in Level 13 für die Abnahme ausgewählte Mitarbeiter (sonst Projektleiter)
    {programm.erp} {programm.cad} … (siehe firma.js)
    ========================================================================== */
 
@@ -51,6 +51,7 @@ window.KATEGORIEN = [
   { id: "heizung",     titel: "Heizraum & Haus",          nurMitDateien: true },   // nur noch für Altbestand – Dashboard ist reines Bad
   { id: "skizzen",     titel: "Skizzen" },
   { id: "planung",     titel: "Planung & Renderings" },
+  { id: "musterangebot", titel: "Musterangebot" },
   { id: "angebot",     titel: "Angebote" },
   { id: "auftrag",     titel: "Auftrag unterschrieben",   kunde: true, kundeTitel: "Unterschriebenes Angebot",
     hinweis: "Als PDF, Scan oder einfach ein gut lesbares Foto jeder Seite." },
@@ -67,9 +68,9 @@ window.KATEGORIEN = [
 
 window.ABSCHNITTE = [
   { id: "anfrage",   titel: "Anfrage",                von: 1,  bis: 3 },
-  { id: "planung",   titel: "Planung & Angebot",      von: 4,  bis: 5 },
-  { id: "auftrag",   titel: "Auftrag & Vorbereitung", von: 6,  bis: 10 },
-  { id: "baustelle", titel: "Baustelle & Abschluss",  von: 11, bis: 13 },
+  { id: "planung",   titel: "Planung & Angebot",      von: 4,  bis: 6 },
+  { id: "auftrag",   titel: "Auftrag & Vorbereitung", von: 7,  bis: 11 },
+  { id: "baustelle", titel: "Baustelle & Abschluss",  von: 12, bis: 14 },
 ];
 
 window.ABLAUF = [
@@ -115,20 +116,29 @@ window.ABLAUF = [
     ],
   },
   {
-    nr: 4, titel: "Angebot & Planung erstellen", abschnitt: "planung",
-    ziel: "3D-Planung rendern und das Angebot aus dem Musterangebot ableiten.",
+    nr: 4, titel: "Musterangebot erstellen", abschnitt: "planung",
+    ziel: "Aus dem Musterangebot einen groben Überblick ableiten, den man dem Kunden nach dem Erstgespräch zeigen kann.",
+    schritte: [
+      { id: "kwp-projekt", typ: "erledigt", titel: "Projekt in {programm.erp} angelegt",
+        hinweis: "Titel „Realisierung Ihres Traumbades“, Abteilung Bad/Sanitär, rote Farbe (Auftrag noch nicht erteilt)." },
+      { id: "projektnr", typ: "feld", feld: "projektnr", titel: "Projektnummer aus {programm.erp}" },
+      { id: "musterangebot", typ: "erledigt", titel: "Musterangebot hinterlegt und Titel für Titel angepasst",
+        hinweis: "Nicht benötigte Titel löschen, bei den übrigen Positionen Artikel und Mengen nach dem Erstgespräch anpassen. Grober Überblick – Feinheiten kommen im ausführlichen Angebot." },
+      { id: "muster-pdf", typ: "dateien", kategorie: "musterangebot", titel: "Musterangebot als PDF ablegen" },
+    ],
+  },
+  {
+    nr: 5, titel: "Angebot & Planung erstellen", abschnitt: "planung",
+    ziel: "3D-Planung rendern und das ausführliche Angebot aus dem Musterangebot ableiten.",
     schritte: [
       { id: "pruefslot", typ: "erledigt", titel: "Prüftermin „Angebot & Planung prüfen“ bei {badexperten} im Kalender eingetragen" },
       { id: "planung", typ: "dateien", kategorie: "planung", titel: "Planung aus {programm.cad} (Renderings) hochladen" },
-      { id: "kwp-projekt", typ: "erledigt", titel: "Projekt in {programm.erp} angelegt",
-        hinweis: "Titel „Realisierung Ihres Traumbades“, Abteilung Bad/Sanitär, rote Farbe. Musterangebot Titel für Titel anpassen." },
-      { id: "projektnr", typ: "feld", feld: "projektnr", titel: "Projektnummer aus {programm.erp}" },
       { id: "freigabe-intern", typ: "erledigt", titel: "Angebot & Planung von {badexperten} geprüft", ebene: ["geschaeftsfuehrung"] },
       { id: "angebot", typ: "dateien", kategorie: "angebot", titel: "Angebot als PDF ablegen" },
     ],
   },
   {
-    nr: 5, titel: "Angebotsbesprechung", abschnitt: "planung",
+    nr: 6, titel: "Angebotsbesprechung", abschnitt: "planung",
     ziel: "Planung vorstellen und dranbleiben, bis der Auftrag kommt.",
     portal: ["auftrag"],
     schritte: [
@@ -146,7 +156,7 @@ window.ABLAUF = [
     ],
   },
   {
-    nr: 6, titel: "Baustellenbesichtigung", abschnitt: "auftrag",
+    nr: 7, titel: "Baustellenbesichtigung", abschnitt: "auftrag",
     ziel: "Vor Ort aufmessen und alles für Planung und Monteure festhalten.",
     schritte: [
       { id: "besichtiger", typ: "feld", feld: "besichtiger", mehrere: true, monteure: true, rolle: "projektleiter", titel: "Wer macht die Baustellenbesichtigung?",
@@ -158,7 +168,7 @@ window.ABLAUF = [
     ],
   },
   {
-    nr: 7, titel: "Materialauswahl", abschnitt: "auftrag",
+    nr: 8, titel: "Materialauswahl", abschnitt: "auftrag",
     ziel: "Alles auswählen und festhalten — die Formulare zeigen, welche Gewerke nötig sind.",
     schritte: [
       { id: "uebersicht", typ: "formular", formular: "projektuebersicht", titel: "Projekt-Übersicht: Was wird benötigt?" },
@@ -178,7 +188,7 @@ window.ABLAUF = [
     ],
   },
   {
-    nr: 8, titel: "Freigabe durch den Kunden", abschnitt: "auftrag",
+    nr: 9, titel: "Freigabe durch den Kunden", abschnitt: "auftrag",
     ziel: "Exposé (und ggf. neues Angebot) zur Unterschrift schicken.",
     portal: ["freigabe"],
     schritte: [
@@ -192,7 +202,7 @@ window.ABLAUF = [
     ],
   },
   {
-    nr: 9, titel: "Materialbestellung", abschnitt: "auftrag",
+    nr: 10, titel: "Materialbestellung", abschnitt: "auftrag",
     ziel: "Bestellungen aus dem Angebot erzeugen, prüfen und rausschicken.",
     schritte: [
       { id: "bestellwesen", typ: "erledigt", titel: "Artikel aus dem Angebot ins Bestellwesen ({programm.erp}) übertragen" },
@@ -203,7 +213,7 @@ window.ABLAUF = [
     ],
   },
   {
-    nr: 10, titel: "Baustelle planen", abschnitt: "auftrag",
+    nr: 11, titel: "Baustelle planen", abschnitt: "auftrag",
     ziel: "Termin festlegen und bestätigen, Subunternehmer anfragen, Abschlag – und wer mitarbeitet.",
     schritte: [
       { id: "baustart", typ: "termin", termin: "baustart", titel: "Umsetzungstermin (Baustart)" },
@@ -216,7 +226,7 @@ window.ABLAUF = [
     ],
   },
   {
-    nr: 11, titel: "Ausführung", abschnitt: "baustelle",
+    nr: 12, titel: "Ausführung", abschnitt: "baustelle",
     ziel: "Kunden einstimmen, bauen, Restarbeiten erledigen.",
     schritte: [
       { id: "mail-baustart", typ: "mail", mail: "baustart", titel: "Kundenerinnerung 1 Woche vor Baustart" },
@@ -225,25 +235,25 @@ window.ABLAUF = [
     ],
   },
   {
-    nr: 12, titel: "Abnahme & Übergabe", abschnitt: "baustelle",
+    nr: 13, titel: "Abnahme & Übergabe", abschnitt: "baustelle",
     ziel: "Abnahme protokollieren und das fertige Bad festhalten.",
     schritte: [
       { id: "abnehmer", typ: "feld", feld: "abnehmer", mehrere: true, monteure: true, rolle: "projektleiter", titel: "Wer macht die Abnahme?",
         hinweis: "Einen oder mehrere Mitarbeiter auswählen. Ausgewählte Monteure bekommen automatisch Zugriff aufs Projekt." },
       { id: "abnahme-termin", typ: "termin", termin: "abnahme", titel: "Abnahmetermin mit {abnehmer}" },
       { id: "protokoll", typ: "formular", formular: "abnahme", titel: "Abnahmeprotokoll mit Unterschrift", ebene: ["planung", "monteur"] },
-      { id: "fotos-fertig", typ: "dateien", kategorie: "fertig", titel: "Bilder vom neuen Bad", ebene: ["planung", "monteur"], frueher: 13 },
-      { id: "interview", typ: "entscheidung", pflicht: false, titel: "Interview für Social Media?", frueher: 13,
+      { id: "fotos-fertig", typ: "dateien", kategorie: "fertig", titel: "Bilder vom neuen Bad", ebene: ["planung", "monteur"], frueher: 14 },
+      { id: "interview", typ: "entscheidung", pflicht: false, titel: "Interview für Social Media?", frueher: 14,
         optionen: [{ id: "ja", label: "Ja, gemacht" }, { id: "nein", label: "Nein" }] },
     ],
   },
   {
-    nr: 13, titel: "Abschluss", abschnitt: "baustelle",
+    nr: 14, titel: "Abschluss", abschnitt: "baustelle",
     ziel: "Abrechnen, Bewertung, Showroom — dann das Projekt abschließen.",
     schritte: [
-      { id: "rechnung", typ: "dateien", kategorie: "rechnungen", min: 2, titel: "Schlussrechnung ablegen", frueher: 12,
+      { id: "rechnung", typ: "dateien", kategorie: "rechnungen", min: 2, titel: "Schlussrechnung ablegen", frueher: 13,
         hinweis: "Zweite Rechnung im Ordner (nach der Abschlagsrechnung)." },
-      { id: "mail-rechnung", typ: "mail", mail: "schlussrechnung", titel: "Schlussrechnung mit Bitte um Bewertung senden", frueher: 12 },
+      { id: "mail-rechnung", typ: "mail", mail: "schlussrechnung", titel: "Schlussrechnung mit Bitte um Bewertung senden", frueher: 13 },
       { id: "bewertung", typ: "entscheidung", titel: "Google-Bewertung", seitMail: "schlussrechnung",
         optionen: [
           { id: "erhalten", label: "Bewertung erhalten & beantwortet" },

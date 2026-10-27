@@ -103,7 +103,7 @@ window.ABSCHNITTE = [
           hinweis: "Nur Neukunden anlegen – Stammkunden nur mit dem Termin verknüpfen." },
         { id: "mail-termin", typ: "mail", mail: "terminbestaetigung", titel: "Terminbestätigung mit Fotoanleitung & Upload-Link senden" },
         { id: "fotos", typ: "dateien", kategorie: "bilder-alt", kundenlink: true, titel: "Fotos Heizraum & Außenansicht vom Kunden",
-          hinweis: "Kommt über den Kundenlink automatisch hier an. Fehlen die Fotos 4 Tage vor dem Termin, meldet sich das Cockpit. Für vollständige Fotos gibt es 100 € Fotorabatt.",
+          hinweis: "Kommt über den Kundenlink automatisch hier an. Fehlen die Fotos 4 Tage vor dem Termin, meldet sich das Cockpit.",
           ersatz: "Kunde bringt die Fotos zum Termin mit" },
         { id: "fotos-ok", typ: "erledigt", pflicht: false, titel: "Fotos auf Vollständigkeit geprüft",
           hinweis: "Heizraum mit Verrohrung und Deckenhöhe · alle Anschlüsse (Kessel, Speicher, Pumpen, Abgasrohr) · Außenansicht mit Schornsteinkopf und Dach · Thermostatventile." },
@@ -142,7 +142,7 @@ window.ABSCHNITTE = [
         { id: "wunschtermin", typ: "feld", feld: "wunschtermin", titel: "Wunschtermin des Kunden", pflicht: false, platzhalter: "Zeitraum, z. B. zwischen Oktober und November", wenn: { schritt: "ergebnis", wert: "auftrag" } },
         { id: "unterschrift", typ: "dateien", kategorie: "auftrag", kundenlink: true, titel: "Unterschriebenes Angebot einscannen / hochladen", wenn: { schritt: "ergebnis", wert: "auftrag" } },
         { id: "angebot-notiz", typ: "feld", feld: "angebotNotiz", mehrzeilig: true, pflicht: false, titel: "Notizen zum Angebot",
-          platzhalter: "z. B. Änderungswünsche, Rabatt (Fotorabatt?), offene Fragen, was nachgereicht wird …" },
+          platzhalter: "z. B. Änderungswünsche, offene Fragen, was nachgereicht wird …" },
       ],
     },
     {
