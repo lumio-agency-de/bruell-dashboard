@@ -1,6 +1,6 @@
 # Bad-Dashboard · Brüll GmbH (Vorschau)
 
-Arbeits-Dashboard für den Badbau: 13 Level von der Anfrage bis zum Abschluss,
+Arbeits-Dashboard für den Badbau: 14 Level von der Anfrage bis zum Abschluss,
 digitale Formulare, Projektordner, Kunden-Upload-Link, Ebenen (Geschäftsführung,
 Planung, Monteur, Partner) und Unternehmens-Kennzahlen.
 

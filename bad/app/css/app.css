@@ -228,7 +228,7 @@ a.zeile:hover { background: var(--tinte-weich); }
 .p-kontakt a:hover { border-color: var(--tinte); }
 
 .karte { background: var(--blatt); border: 1px solid var(--fuge-stark); border-radius: var(--radius); box-shadow: var(--schatten); padding: 16px 10px 12px; margin-bottom: 16px; overflow-x: auto; }
-.levels { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(13, minmax(64px, 1fr)); position: relative; }
+.levels { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(var(--n, 14), minmax(58px, 1fr)); position: relative; }
 .lv { position: relative; }
 .lv::before { content: ""; position: absolute; top: 19px; left: -50%; right: 50%; height: 3px; background: var(--fuge-stark); z-index: 0; }
 .lv:first-child::before { display: none; }

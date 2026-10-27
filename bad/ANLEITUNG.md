@@ -1,7 +1,7 @@
 # Bad-Dashboard — Anleitung
 
 Ein Arbeits-Dashboard, das jeden Badbau von der ersten Anfrage bis zum Archiv
-durch **13 Level** führt. Jedes Level besteht aus konkreten Schritten:
+durch **14 Level** führt. Jedes Level besteht aus konkreten Schritten:
 Formulare ausfüllen, Dateien ablegen, Termine setzen, Mails senden,
 Entscheidungen treffen. **Das nächste Level wird erst freigeschaltet, wenn alle
 Pflichtschritte erledigt sind.** Formulare, Fotos, Pläne und Kunden-Uploads
@@ -26,7 +26,7 @@ liegen direkt im Projekt — kein Netzlaufwerk, keine Ordner zum Verschieben.
 
 - Wer was erledigen darf, steht an jedem Schritt in `einstellungen/ablauf.js` (`ebene: [...]`).
   Schritte anderer Ebenen sind sichtbar, aber gesperrt („Erledigt: Planung / Bearbeitung“).
-- Monteure und Partner werden im Projekt zugewiesen: Level 10 „Monteure & Partner zuweisen –
+- Monteure und Partner werden im Projekt zugewiesen: Level 11 „Monteure & Partner zuweisen –
   Ordner freigeben“ oder jederzeit im Reiter **Team** der Akte. Je Person lässt sich per Klick
   festlegen, welche Ordner sie sieht (Standard Monteur: alles außer Angebote, Auftrag, Rechnungen;
   Standard Partner: Skizzen, Planung, Baustelle, Auswahl). Dort erscheinen auch die Rückmeldungen.
@@ -40,7 +40,7 @@ liegen direkt im Projekt — kein Netzlaufwerk, keine Ordner zum Verschieben.
 - **Projekte löschen** darf nur die Geschäftsführung. Gelöschte Projekte liegen 30 Tage im
   **Papierkorb** (Projekte → Papierkorb) und lassen sich wiederherstellen.
 - Welche Formulare ein Partner sieht, hängt an seinem Gewerk (`gewerke` in `firma.js`).
-- **Konten → Wer sieht was:** Level 1–13, jedes ausklappbar bis auf die einzelnen Schritte.
+- **Konten → Wer sieht was:** Level 1–14, jedes ausklappbar bis auf die einzelnen Schritte.
   Pro Schritt per Haken festlegen, ob Planung, Monteur und Partner ihn **sehen** (inkl. Formular
   und Dateien). Der Haken am Level setzt alle Schritte darin auf einmal („–“ = nur teilweise).
   Erledigen darf, wer den Schritt sieht und im Ablauf dafür zuständig ist. Die Geschäftsführung
@@ -85,23 +85,24 @@ Anmeldefenster zum Anklicken anbietet. Ohne `?demo=1` beginnt das Dashboard mit 
 
 **+ Neue Anfrage** (links oben) legt ein Projekt an und öffnet direkt die Bestandsaufnahme.
 
-## Die 13 Level
+## Die 14 Level
 
 | Level | Was dort passiert |
 | --- | --- |
 | 01 Kundenanfrage | Bestandsaufnahme, Entscheidung „Erstgespräch ja/nein“, Termin |
 | 02 Terminbestätigung | Kunde in KWP, Terminbestätigung mit Upload-Link, Fotos & Maße vom Kunden |
 | 03 Erstgespräch | Erstgesprächs-Notizen, Skizze, Badplanerin festlegen, Termin Angebotsbesprechung |
-| 04 Angebot & Planung | Renderings und Angebot ablegen, Projektnummer, Prüfung durch den Badberater |
-| 05 Angebotsbesprechung | Ergebnis: Auftrag / überlegt noch (Wiedervorlage) / abgesagt; unterschriebenes Angebot |
-| 06 Baustellenbesichtigung | Checkliste mit Fotos und Raummaßen, ggf. Angaben zur Tür |
-| 07 Materialauswahl | Projekt-Übersicht, Auswahlgespräch mit Unterschrift; Fliesen-, Elektro-, Abriss-Formular und Spanndecke erscheinen nur, wenn sie gebraucht werden |
-| 08 Freigabe | Exposé, PaletteMove-Code, Freigabe-Mail, unterschriebene Freigabe (vom Kunden per Link) |
-| 09 Materialbestellung | Bestellungen in KWP anlegen, abgleichen, versenden |
-| 10 Baustelle planen | Baustart, Mail „Termin Umsetzung“, Baustellenplan (Subunternehmer vorbelegt), Abschlagsrechnung, Monteure & Partner zuweisen + Ordner freigeben |
-| 11 Ausführung | Kundenerinnerung, Baustellenfotos, Restarbeiten |
-| 12 Abnahme & Übergabe | Abnahmeprotokoll mit Unterschrift, Schlussrechnung, Mail |
-| 13 Abschluss | Bewertung, Bilder fertiges Bad, Showroom — dann archivieren |
+| 04 Musterangebot | Projekt in KWP anlegen, Projektnummer, Musterangebot Titel für Titel anpassen, als PDF ablegen – grober Überblick zum Zeigen nach dem Erstgespräch |
+| 05 Angebot & Planung | Renderings und ausführliches Angebot ablegen, Prüfung durch den Badberater |
+| 06 Angebotsbesprechung | Ergebnis: Auftrag / überlegt noch (Wiedervorlage) / abgesagt; unterschriebenes Angebot |
+| 07 Baustellenbesichtigung | Checkliste mit Fotos und Raummaßen, ggf. Angaben zur Tür |
+| 08 Materialauswahl | Projekt-Übersicht, Auswahlgespräch mit Unterschrift; Fliesen-, Elektro-, Abriss-Formular und Spanndecke erscheinen nur, wenn sie gebraucht werden |
+| 09 Freigabe | Exposé, PaletteMove-Code, Freigabe-Mail, unterschriebene Freigabe (vom Kunden per Link) |
+| 10 Materialbestellung | Bestellungen in KWP anlegen, abgleichen, versenden |
+| 11 Baustelle planen | Baustart, Mail „Termin Umsetzung“, Baustellenplan (Subunternehmer vorbelegt), Abschlagsrechnung, Monteure & Partner zuweisen + Ordner freigeben |
+| 12 Ausführung | Kundenerinnerung, Baustellenfotos, Restarbeiten |
+| 13 Abnahme & Übergabe | Abnahmeprotokoll mit Unterschrift, Schlussrechnung, Mail |
+| 14 Abschluss | Bewertung, Bilder fertiges Bad, Showroom — dann archivieren |
 
 Was in **KWP** oder **Palette CAD** passiert, wird im Dashboard mit „Als erledigt
 bestätigen“ quittiert — mit Datum und Namen.
@@ -203,7 +204,7 @@ Dashboard/
 
 Die Originale liegen unverändert in `../Bad_Dashboard/`.
 
-## Subunternehmer anfragen (Level 10)
+## Subunternehmer anfragen (Level 11)
 
 Der **Baustellenplan** legt für jedes Gewerk aus der Materialauswahl eine Zeile an (Abriss,
 Elektro, Fliesen, Maler, Spanndecke, Fenster, Tür) – mit dem Termin aus dem Gewerke-Formular.
@@ -225,7 +226,7 @@ Den Mailtext ändert man in `einstellungen/mailvorlagen.js` (`sub-anfrage`).
 - **„In Outlook öffnen“** erzeugt jetzt eine formatierte Mail: klickbare Links, Bilder aus der Vorlage
   (z. B. Foto der Ausstellung in der Terminbestätigung) und das Signaturbild – plus Anhänge.
 - **Terminbestätigung** = neue Fassung nur fürs Bad (Vorlage von Karin), weiterhin mit Upload-Link.
-- **Freigabe-Mail:** 3D-Ansicht als Link (Level 8: „Link zur 3D-Ansicht“). „sowie das unterschriebene Angebot“
+- **Freigabe-Mail:** 3D-Ansicht als Link (Level 9: „Link zur 3D-Ansicht“). „sowie das unterschriebene Angebot“
   und der Angebots-Anhang gehen nur mit, wenn „Angebot hat sich geändert“ angehakt ist.
 - **Kundenerinnerung vor Baustart:** Absatz „Aushang für die Nachbarn“ abwählbar (inkl. Anhang), mit Baustart-Datum.
 - **Wer sieht was:** externe Partner in Elektriker, Fliesenleger, Maler und „Weitere Partner“ aufgeteilt.

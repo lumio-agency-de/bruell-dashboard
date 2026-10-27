@@ -114,8 +114,8 @@
   /* Mitarbeiter-Auswahlfelder im Projekt: Bezeichnung für den Verlauf + Rolle, falls niemand gewählt ist */
   const MIT_FELDER = {
     badexperten: { label: "Badexperte", rolle: "badberater" },           // Level 1 – Erstgespräch
-    besichtiger: { label: "Baustellenbesichtigung", rolle: "projektleiter" }, // Level 6
-    abnehmer:    { label: "Abnahme", rolle: "projektleiter" },           // Level 12
+    besichtiger: { label: "Baustellenbesichtigung", rolle: "projektleiter" }, // Level 7
+    abnehmer:    { label: "Abnahme", rolle: "projektleiter" },           // Level 13
   };
   function ersetzen(text, p) {
     const c = cfg();
@@ -329,11 +329,28 @@
       id: uid(), kunde: { anrede: "Herr", vorname: "", nachname: "", strasse: "", hausnr: "", ort: "", email: "", telefon: "", telefonGeschaeft: "", mobil: "", ...kunde },
       projektnr: "", zustaendig: "", status: "aktiv", phase: ersteNr, schritte: {}, formulare: {}, termine: {}, mails: {},
       downloadCode: "", wiedervorlage: "", wiedervorlageNotiz: "", notiz: "", verlauf: [{ ts: Date.now(), text: "Anfrage angelegt" }],
-      angelegt: Date.now(), geaendert: Date.now(), level: { [ersteNr]: Date.now() }, ...extra,
+      angelegt: Date.now(), geaendert: Date.now(), level: { [ersteNr]: Date.now() }, ablaufV: ABLAUF_V, ...extra,
     };
     S.projekte.push(p);
     speichern(p);
     return p;
+  }
+
+  /* Okt. 2026: neues Level 4 „Musterangebot erstellen“ – gespeicherte Stände ab Level 4 rücken eine Nummer weiter.
+     „Projekt in KWP angelegt“ und „Projektnummer“ lagen schon in Level 4 und gehören jetzt zum Musterangebot. */
+  const ABLAUF_V = 2, BLEIBT_IN_4 = ["kwp-projekt", "projektnr"];
+  function ablaufUmzug(p) {
+    if (!p || (p.ablaufV || 1) >= ABLAUF_V) return false;
+    const neu = (n) => (n >= 4 ? n + 1 : n);
+    if (p.phase) p.phase = neu(Number(p.phase));
+    p.schritte = Object.fromEntries(Object.entries(p.schritte || {}).map(([k, v]) => {
+      const [nr, id] = [Number(k.split(":")[0]), k.slice(k.indexOf(":") + 1)];
+      return [nr === 4 && BLEIBT_IN_4.includes(id) ? k : `${neu(nr)}:${id}`, v];
+    }));
+    if (p.level) { const l = {}; for (const [n, t] of Object.entries(p.level)) l[neu(Number(n))] = t; if (p.level[4]) l[4] = p.level[4]; p.level = l; }
+    (p.zeiten || []).forEach((z) => { if (z.level) z.level = neu(Number(z.level)); });
+    p.ablaufV = ABLAUF_V;
+    return true;
   }
 
   /* ---------- Spiel-Logik: Schritte & Level ---------- */
@@ -622,19 +639,19 @@
     if (p.phase === 2 && eg && tageBis(eg) >= 0 && tageBis(eg) <= f.erinnerungVorErstgespraech && !dateienVon(p.id, "bilder-alt").length && !((p.schritte || {})["2:fotos"] || {}).ersatz)
       add("Fotos & Maße fehlen – Kunden anrufen", plusTage(eg, -f.erinnerungVorErstgespraech), `Erstgespräch ${fTermin(t.erstgespraech)}`);
     const ab = datum(t.angebotsbesprechung);
-    if (p.phase === 4 && ab && tageBis(ab) <= 3) add("Angebot & Planung fertigstellen", plusTage(ab, -3), `Besprechung ${fTermin(t.angebotsbesprechung)}`);
-    if (p.phase === 5 && ab && !((p.schritte || {})["5:ergebnis"] || {}).wahl && tageBis(plusTage(ab, f.angebotsverfolgung)) <= 0)
+    if (p.phase === 5 && ab && tageBis(ab) <= 3) add("Angebot & Planung fertigstellen", plusTage(ab, -3), `Besprechung ${fTermin(t.angebotsbesprechung)}`);
+    if (p.phase === 6 && ab && !((p.schritte || {})["6:ergebnis"] || {}).wahl && tageBis(plusTage(ab, f.angebotsverfolgung)) <= 0)
       add("Angebotsverfolgung – nachfragen", plusTage(ab, f.angebotsverfolgung), `Besprechung war ${fTermin(t.angebotsbesprechung)}`);
     const ma = datum(t.materialauswahl);
-    if ((p.phase === 7 || p.phase === 8) && ma && !m.freigabe && tageBis(plusTage(ma, f.freigabeNachMaterialauswahl)) <= 0)
+    if ((p.phase === 8 || p.phase === 9) && ma && !m.freigabe && tageBis(plusTage(ma, f.freigabeNachMaterialauswahl)) <= 0)
       add("Planung zur Freigabe schicken", plusTage(ma, f.freigabeNachMaterialauswahl), `Materialauswahl ${fTermin(t.materialauswahl)}`);
     const bs = datum(t.baustart);
-    if (bs && p.phase <= 11 && tageBis(bs) >= 0 && tageBis(bs) <= f.kundenerinnerungVorBaustart && !m.baustart)
+    if (bs && p.phase <= 12 && tageBis(bs) >= 0 && tageBis(bs) <= f.kundenerinnerungVorBaustart && !m.baustart)
       add("Kundenerinnerung vor Baustart senden", plusTage(bs, -f.kundenerinnerungVorBaustart), `Baustart ${fTermin(t.baustart)}`);
     const an = datum(t.abnahme);
-    if (p.phase >= 12 && an && tageBis(an) <= 0 && !m.schlussrechnung) add("Schlussrechnung senden", an, `Abnahme ${fTermin(t.abnahme)}`);
+    if (p.phase >= 13 && an && tageBis(an) <= 0 && !m.schlussrechnung) add("Schlussrechnung senden", an, `Abnahme ${fTermin(t.abnahme)}`);
     /* x Tage nach der Schlussrechnung: Abschluss prüfen & Google-Bewertung checken (bis eine Entscheidung getroffen ist) */
-    const bw = ((p.schritte || {})["13:bewertung"] || {}).wahl;
+    const bw = ((p.schritte || {})["14:bewertung"] || {}).wahl;
     if (m.schlussrechnung && !["erhalten", "erinnert", "warten"].includes(bw)) {
       const d = plusTage(new Date(m.schlussrechnung), f.bewertungNachRechnung ?? 7);
       if (tageBis(d) <= 0) add("Abschluss prüfen & Google-Bewertung checken", d, `Schlussrechnung gesendet am ${fDatum(new Date(m.schlussrechnung))}`);
@@ -773,7 +790,7 @@
     };
     const proPerson = {};
     (p.zeiten || []).forEach((x) => { proPerson[x.name] = (proPerson[x.name] || 0) + dauerMs(x) / 36e5; });
-    const t = p.termine || {}, start = levelZeit(p, ersteNr), auftrag = levelZeit(p, 6), ende = abschlussZeit(p);
+    const t = p.termine || {}, start = levelZeit(p, ersteNr), auftrag = levelZeit(p, 7), ende = abschlussZeit(p);
     const bs = datum(t.baustart), an = datum(t.abnahme);
     const h = (x) => `${(x || 0).toFixed(1).replace(".", ",")} h`;
     const abw = (ist, soll, einheit) => (soll ? `<small class="${ist > soll ? "schlecht" : "gut"}">${ist > soll ? "+" : ""}${einheit === "h" ? h(ist - soll) : eur(ist - soll)} ggü. Kalkulation</small>` : "");
@@ -839,7 +856,7 @@
     function werte(von, bis2) {
       const fertig = projekte.filter((p) => p.status === "abgeschlossen" && (abschlussZeit(p) || 0) >= von && (abschlussZeit(p) || 0) < bis2);
       const anfragen = projekte.filter((p) => { const t = levelZeit(p, ersteNr) || 0; return t >= von && t < bis2; });
-      const auftraege = anfragen.filter((p) => erreicht(p, 6));
+      const auftraege = anfragen.filter((p) => erreicht(p, 7));
       const abgesagt = anfragen.filter((p) => p.status === "verloren");
       const g = fertig.map(geld), mitK = g.filter((x) => x.umsatz && x.hatKosten);
       const umsatzK = mitK.reduce((a, x) => a + x.umsatz, 0), db = mitK.reduce((a, x) => a + x.db, 0);
@@ -849,7 +866,7 @@
         proBad: schnitt(g.map((x) => x.umsatz || null)), kostenProBad: schnitt(mitK.map((x) => x.kosten)),
         quote: auftraege.length + abgesagt.length ? auftraege.length / (auftraege.length + abgesagt.length) : null,
         dauer: schnitt(fertig.map((p) => tage(levelZeit(p, ersteNr), abschlussZeit(p)))),
-        dauerAuftrag: schnitt(auftraege.map((p) => tage(levelZeit(p, ersteNr), levelZeit(p, 6)))),
+        dauerAuftrag: schnitt(auftraege.map((p) => tage(levelZeit(p, ersteNr), levelZeit(p, 7)))),
       };
     }
     const W = werte(ab, bis), V = vAb != null ? werte(vAb, vBis) : null;
@@ -866,8 +883,8 @@
 
     /* Bestand & Pipeline */
     const laufend = projekte.filter((p) => p.status === "aktiv" || p.status === "pausiert");
-    const offeneAngebote = laufend.filter((p) => p.phase >= 4 && p.phase <= 5).reduce((a, p) => a + geld(p).angebot, 0);
-    const bestand = laufend.filter((p) => p.phase >= 6).reduce((a, p) => a + (geld(p).auftrag || geld(p).angebot), 0);
+    const offeneAngebote = laufend.filter((p) => p.phase >= 4 && p.phase <= 6).reduce((a, p) => a + geld(p).angebot, 0);
+    const bestand = laufend.filter((p) => p.phase >= 7).reduce((a, p) => a + (geld(p).auftrag || geld(p).angebot), 0);
     const monatsSchnitt = (() => { const w = werte(jetzt - 365 * TAG, jetzt); return w.umsatz / 12; })();
     const reichweite = monatsSchnitt ? bestand / monatsSchnitt : null;
 
@@ -884,14 +901,14 @@
     const forderungen = [];
     projekte.forEach((p) => {
       const z = S.zahlen[p.id] || {};
-      if (Number(z.abschlag) && !z.abschlagBezahlt) forderungen.push({ p, art: "Abschlag", betrag: Number(z.abschlag), seit: levelZeit(p, 10) });
-      if (Number(z.rechnung) && !z.rechnungBezahlt) forderungen.push({ p, art: "Schlussrechnung", betrag: Number(z.rechnung), seit: levelZeit(p, 12) || abschlussZeit(p) });
+      if (Number(z.abschlag) && !z.abschlagBezahlt) forderungen.push({ p, art: "Abschlag", betrag: Number(z.abschlag), seit: levelZeit(p, 11) });
+      if (Number(z.rechnung) && !z.rechnungBezahlt) forderungen.push({ p, art: "Schlussrechnung", betrag: Number(z.rechnung), seit: levelZeit(p, 13) || abschlussZeit(p) });
     });
     forderungen.sort((a, b) => (a.seit || 0) - (b.seit || 0));
     const fSumme = forderungen.reduce((a, f) => a + f.betrag, 0);
 
     /* Vertriebstrichter */
-    const stufen = [[ersteNr, "Anfrage"], [3, "Erstgespräch"], [5, "Angebot besprochen"], [6, "Auftrag"]];
+    const stufen = [[ersteNr, "Anfrage"], [3, "Erstgespräch"], [6, "Angebot besprochen"], [7, "Auftrag"]];
     const trichter = [...stufen.map(([nr, l]) => ({ l, n: W.anfragen.filter((p) => erreicht(p, nr)).length })), { l: "Abgeschlossen", n: W.anfragen.filter((p) => p.status === "abgeschlossen").length }];
     const maxT = Math.max(1, trichter[0].n);
 
@@ -922,7 +939,7 @@
     const maxM = Math.max(1, ...monate.map((m) => m.summe));
     const MON = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
     const wege = {};
-    W.anfragen.forEach((p) => { const k = Formular.werteVon(p, "bestandsaufnahme").kontakt || "nicht erfasst"; const w = (wege[k] = wege[k] || { n: 0, auftrag: 0, verloren: 0 }); w.n++; if (erreicht(p, 6)) w.auftrag++; if (p.status === "verloren") w.verloren++; });
+    W.anfragen.forEach((p) => { const k = Formular.werteVon(p, "bestandsaufnahme").kontakt || "nicht erfasst"; const w = (wege[k] = wege[k] || { n: 0, auftrag: 0, verloren: 0 }); w.n++; if (erreicht(p, 7)) w.auftrag++; if (p.status === "verloren") w.verloren++; });
     const fehlend = W.fertig.filter((p) => !geld(p).umsatz).length;
 
     const kachel = (wert, titel, unter, d = "") => `<div class="kpi"><span class="kpi-zahl klein">${wert}</span><span class="kpi-titel">${titel} ${d}</span><span class="kpi-unter">${unter}</span></div>`;
@@ -933,9 +950,9 @@
       quote: kachel(W.quote != null ? prozent(W.quote) : "—", "Abschlussquote", `${W.auftraege.length} Aufträge · ${W.abgesagt.length} Absagen`, delta(W.quote, V && V.quote)),
       dauer: kachel(tageText(W.dauer), "Erstkontakt → Abschluss", "Ø Dauer je Bad", delta(W.dauer, V && V.dauer, "weniger")),
       dauerAuftrag: kachel(tageText(W.dauerAuftrag), "Erstkontakt → Auftrag", "Ø bis zur Unterschrift", delta(W.dauerAuftrag, V && V.dauerAuftrag, "weniger")),
-      bestand: kachel(eur(bestand), "Auftragsbestand", reichweite != null ? `reicht für ca. ${reichweite.toFixed(1).replace(".", ",")} Monate` : "Level 06–13, noch nicht abgerechnet"),
+      bestand: kachel(eur(bestand), "Auftragsbestand", reichweite != null ? `reicht für ca. ${reichweite.toFixed(1).replace(".", ",")} Monate` : "Level 07–14, noch nicht abgerechnet"),
       forderungen: kachel(eur(fSumme), "Offene Forderungen", `${forderungen.length} Rechnungen unbezahlt`),
-      angebote: kachel(eur(offeneAngebote), "Offene Angebote", "Level 04–05, noch nicht entschieden"),
+      angebote: kachel(eur(offeneAngebote), "Offene Angebote", "Level 04–06, noch nicht entschieden"),
     };
     const P = {
       ziel: `<section class="panel ziel-panel"><h2 class="panel-titel">Jahresziel ${new Date().getFullYear()}</h2><div class="panel-innen">${zielBalken}</div></section>`,
@@ -961,7 +978,7 @@
             <table class="kz-tab"><thead><tr><th>Kontaktweg</th><th>Anfragen</th><th>Aufträge</th><th>Quote</th></tr></thead><tbody>
             ${Object.entries(wege).sort((a, b) => b[1].n - a[1].n).map(([k, w]) => `<tr><td>${esc(k)}</td><td>${w.n}</td><td>${w.auftrag}</td><td>${w.auftrag + w.verloren ? prozent(w.auftrag / (w.auftrag + w.verloren)) : "—"}</td></tr>`).join("") || '<tr><td colspan="4" class="leise">Noch keine Anfragen im Zeitraum.</td></tr>'}</tbody></table></section>`,
       nachkalkulation: (() => {
-        const l = projekte.filter((p) => p.status === "abgeschlossen" || (p.status === "aktiv" && p.phase >= 6)).sort((a, b) => (abschlussZeit(b) || b.geaendert || 0) - (abschlussZeit(a) || a.geaendert || 0));
+        const l = projekte.filter((p) => p.status === "abgeschlossen" || (p.status === "aktiv" && p.phase >= 7)).sort((a, b) => (abschlussZeit(b) || b.geaendert || 0) - (abschlussZeit(a) || a.geaendert || 0));
         const h = (x) => (x ? `${x.toFixed(1).replace(".", ",")} h` : "—");
         return `<section class="panel"><h2 class="panel-titel">Nachkalkulationen <small>je Bad · Klick öffnet die Nachkalkulation</small></h2>
         <div class="tab-wrap ohne-rand"><table class="kz-tab breit"><thead><tr><th>Kunde</th><th>Status</th><th class="r">Stunden</th><th class="r">Lohn</th><th class="r">Partner</th><th class="r">Material</th><th class="r">Umsatz</th><th class="r">DB</th><th class="r">Marge</th><th class="r">DB/h</th></tr></thead><tbody>
@@ -1166,7 +1183,7 @@
   }
   function levelKarte(p, ansicht) {
     const i = phaseIndex(p.phase), fertigAlle = p.status === "abgeschlossen";
-    return `<ol class="levels">${PHASEN.map((ph, k) => {
+    return `<ol class="levels" style="--n:${N}">${PHASEN.map((ph, k) => {
       const z = fertigAlle || k < i ? "fertig" : k === i ? "jetzt" : "zu";
       return `<li class="lv ${z}${ph.nr === ansicht ? " ansicht" : ""}">
         <button type="button" data-aktion="level" data-nr="${ph.nr}" ${z === "zu" ? 'aria-disabled="true"' : ""} title="${zwei(ph.nr)} ${esc(ph.titel)}${z === "zu" ? " – noch gesperrt" : ""}">
@@ -1595,7 +1612,7 @@
       if (key === "anrede") return anrede(p, m.anredeStil);
       if (key === "nachname") return p.kunde.nachname || fehlt("Nachname");
       if (key === "downloadCode") return p.downloadCode || fehlt(`${c.programme.app3d}-Code`);
-      if (key === "link3d") return p.downloadCode || fehlt(`Link zur 3D-Ansicht (Level 8)`);
+      if (key === "link3d") return p.downloadCode || fehlt(`Link zur 3D-Ansicht (Level 9)`);
       if (key === "uploadLink") return link || fehlt("Upload-Link");
       if (key === "berater") return leute("badberater")[0]?.name || fehlt("Badberater");
       if (key === "heizungsexperte") return leute("heizungsexperte")[0]?.name || fehlt("Heizungsexperte");
@@ -2123,11 +2140,11 @@
       const level = {}; let tt = Date.now() - (ph * 6 + 4) * TAG;
       PHASEN.filter((x) => x.nr <= ph).forEach((x) => { level[x.nr] = tt; tt += 6 * TAG; });
       const p = neuesProjekt(kunde, { demo: true, phase: ph, angelegt: level[ersteNr], level, ...extra });
-      if (istGF() && ph >= 4) { const w = 16000 + ph * 900; S.zahlen[p.id] = { angebot: w, ...(ph >= 6 ? { auftrag: w } : {}), ...(ph >= 11 ? { abschlag: Math.round(w * 0.3) } : {}) }; Daten.zahlenSpeichern(p.id, S.zahlen[p.id]); }
+      if (istGF() && ph >= 5) { const w = 16000 + ph * 900; S.zahlen[p.id] = { angebot: w, ...(ph >= 7 ? { auftrag: w } : {}), ...(ph >= 12 ? { abschlag: Math.round(w * 0.3) } : {}) }; Daten.zahlenSpeichern(p.id, S.zahlen[p.id]); }
       return p;
     };
     /* abgeschlossene und abgesagte Bäder mit Verlauf und Zahlen – damit „Kennzahlen“ etwas zeigt */
-    const DAUER = [2, 6, 5, 10, 8, 9, 7, 6, 11, 13, 9, 3, 12];
+    const DAUER = [2, 6, 5, 3, 10, 8, 9, 7, 6, 11, 13, 9, 3, 12];
     const fertigBsp = [
       ["Herr", "Klaus", "Hartmann", "71139 Ehningen", 330, 24800, 16100, "Empfehlung"],
       ["Frau", "Sabine", "Weidner", "71083 Herrenberg", 290, 18900, 13300, "Website / Badrechner"],
@@ -2145,18 +2162,18 @@
       if (istGF()) { S.zahlen[p.id] = { angebot: umsatz, auftrag: umsatz, abschlag: Math.round(umsatz * 0.3), abschlagBezahlt: bez, rechnung: Math.round(umsatz * 0.7), ...(i < 5 ? { rechnungBezahlt: bez } : {}), material: Math.round(kosten * 0.55), sub: Math.round(kosten * 0.2), lohn: Math.round(kosten * 0.22), sonst: Math.round(kosten * 0.03) }; Daten.zahlenSpeichern(p.id, S.zahlen[p.id]); }
     });
     [["Herr", "Peter", "Absage", 200, "Website / Badrechner"], ["Frau", "Maria", "Vergleich", 100, "Social Media"]].forEach(([anrede, vorname, nachname, vor, kontakt]) =>
-      neuesProjekt({ anrede, vorname, nachname, ort: "71088 Holzgerlingen" }, { demo: true, phase: 5, status: "verloren", angelegt: Date.now() - vor * TAG, level: { 1: Date.now() - vor * TAG }, formulare: { bestandsaufnahme: { werte: { kontakt } } } }));
+      neuesProjekt({ anrede, vorname, nachname, ort: "71088 Holzgerlingen" }, { demo: true, phase: 6, status: "verloren", angelegt: Date.now() - vor * TAG, level: { 1: Date.now() - vor * TAG }, formulare: { bestandsaufnahme: { werte: { kontakt } } } }));
     musterProjekte();
     mk({ anrede: "Familie", nachname: "Beispiel", ort: "71134 Aidlingen", strasse: "Lindenweg", hausnr: "4", telefon: "07031 000000", email: "familie@beispiel.de" }, 1, {});
     mk({ anrede: "Frau", vorname: "Anna", nachname: "Muster", ort: "71083 Herrenberg", strasse: "Hauptstr.", hausnr: "12", email: "anna@beispiel.de" }, 2,
       { zustaendig: pl[1] || "", termine: { erstgespraech: t(2, "10:00") }, schritte: { "2:kwp-kunde": { erledigt: true, am: Date.now() } } });
-    mk({ anrede: "Herr und Frau", nachname: "Probst", ort: "71032 Böblingen", strasse: "Am Wald", hausnr: "3", email: "probst@beispiel.de" }, 5,
+    mk({ anrede: "Herr und Frau", nachname: "Probst", ort: "71032 Böblingen", strasse: "Am Wald", hausnr: "3", email: "probst@beispiel.de" }, 6,
       { zustaendig: pl[0] || "", projektnr: "B-2026-027", termine: { erstgespraech: t(-30, "10:00"), angebotsbesprechung: t(-9, "15:00") } });
-    mk({ anrede: "Herr", vorname: "Jonas", nachname: "Vorlage", ort: "71101 Schönaich", strasse: "Gartenstr.", hausnr: "8", email: "jonas@beispiel.de" }, 7,
+    mk({ anrede: "Herr", vorname: "Jonas", nachname: "Vorlage", ort: "71101 Schönaich", strasse: "Gartenstr.", hausnr: "8", email: "jonas@beispiel.de" }, 8,
       { zustaendig: pl[1] || "", projektnr: "B-2026-019", termine: { baustellenbesichtigung: t(-12, "08:30"), materialauswahl: t(-4, "10:00") },
         formulare: { projektuebersicht: { werte: { abriss: "ja", abrissWer: "eigen", elektriker: "ja", fliesen: "ja", fliesenWo: ["Wand", "Boden"], decke: ["Spanndecke"], fenster: "nein", tuer: "nein", maler: "nein" } } } });
     const mo = monteure().map((m) => m.kuerzel), pa = (cfg().partner || []).map((x) => x.id);
-    mk({ anrede: "Familie", nachname: "Testfeld", ort: "71093 Weil im Schönbuch", strasse: "Schulstr.", hausnr: "1", email: "testfeld@beispiel.de", telefon: "07157 000000" }, 11,
+    mk({ anrede: "Familie", nachname: "Testfeld", ort: "71093 Weil im Schönbuch", strasse: "Schulstr.", hausnr: "1", email: "testfeld@beispiel.de", telefon: "07157 000000" }, 12,
       { zustaendig: pl[0] || "", projektnr: "B-2026-011", termine: { baustart: t(5), abnahme: t(16, "10:00") }, zugriff: [...mo.slice(0, 1), ...pa],
         notiz: "Interne Notiz: Kunde zahlt in zwei Raten.",
         formulare: { projektuebersicht: { werte: { abriss: "ja", abrissWer: "eigen", elektriker: "ja", elektrikerWer: pa[0] || "eigen", fliesen: "ja", fliesenWer: pa[1] || "eigen", fliesenWo: ["Wand", "Boden"], decke: ["Streichen"], fenster: "nein", tuer: "nein", maler: "ja", malerWer: "eigen", licht: ["Decke", "Spiegelschrank"], lichtNotiz: "2 Deckenspots über der Dusche" } },
@@ -2203,7 +2220,7 @@
       if (s.typ === "mail" && schrittGilt(p, p.phase, s) && !(p.mails || {})[s.mail]) mails.push({ ...kurz(p), titel: ersetzen(s.titel), an: (p.kunde || {}).email || "" });
     const neu = {};
     for (const d of S.dateien.filter((x) => x.neu && finde(x.projekt_id))) { const p = finde(d.projekt_id); (neu[p.id] = neu[p.id] || { ...kurz(p), n: 0 }).n++; }
-    const baustellen = laufend.filter((p) => { const bs = datum((p.termine || {}).baustart), ab = datum((p.termine || {}).abnahme); return bs && tageBis(bs) <= 7 && (!ab || tageBis(ab) >= 0) && p.phase >= 9; })
+    const baustellen = laufend.filter((p) => { const bs = datum((p.termine || {}).baustart), ab = datum((p.termine || {}).abnahme); return bs && tageBis(bs) <= 7 && (!ab || tageBis(ab) >= 0) && p.phase >= 10; })
       .map((p) => ({ ...kurz(p), baustart: p.termine.baustart, abnahme: p.termine.abnahme || "", phase: p.phase, level: phase(p.phase).titel,
         team: (p.zugriff || []).map((id) => (mitgliedZu(id) || {}).name || id), laeuftHeute: tageBis(datum(p.termine.baustart)) <= 0 }));
     const team = cfg().team.filter((m) => m.name).map((m) => {
@@ -2217,8 +2234,8 @@
       const fertigJahr = alle().filter((p) => p.status === "abgeschlossen" && p.abgeschlossenAm && new Date(p.abgeschlossenAm).getFullYear() === jahr);
       kennzahlen = {
         anfragen: laufend.filter((p) => p.phase <= 3).length,
-        angebote: laufend.filter((p) => p.phase >= 4 && p.phase <= 5).length, angeboteWert: sum(laufend.filter((p) => p.phase >= 4 && p.phase <= 5), (p) => geld(p).angebot),
-        bestand: sum(laufend.filter((p) => p.phase >= 6), (p) => geld(p).auftrag || geld(p).angebot), auftraege: laufend.filter((p) => p.phase >= 6).length,
+        angebote: laufend.filter((p) => p.phase >= 4 && p.phase <= 6).length, angeboteWert: sum(laufend.filter((p) => p.phase >= 4 && p.phase <= 6), (p) => geld(p).angebot),
+        bestand: sum(laufend.filter((p) => p.phase >= 7), (p) => geld(p).auftrag || geld(p).angebot), auftraege: laufend.filter((p) => p.phase >= 7).length,
         umsatzJahr: sum(fertigJahr, (p) => geld(p).umsatz), fertigJahr: fertigJahr.length, ziel: (cfg().ziele || {}).jahresumsatz || 0,
         verloren: alle().filter((p) => p.status === "verloren").length,
       };
@@ -2851,6 +2868,7 @@
       } else if (Daten.modus === "cloud") {
         for (const q of await Daten.abgleichen()) {
           if (offen.has(q.id)) continue;
+          if (ablaufUmzug(q)) speichern(q);
           const i = S.projekte.findIndex((x) => x.id === q.id);
           if (i < 0) S.projekte.push(q); else if ((q.geaendert || 0) > (S.projekte[i].geaendert || 0)) S.projekte[i] = q;
           neu = true;
@@ -2858,6 +2876,7 @@
         if (neu) S.dateien = await Daten.alleDateien();
       } else if (!offen.size) {
         const l = await Daten.projekteLaden();
+        l.forEach(ablaufUmzug);
         if (l.map((x) => x.geaendert).join() !== S.projekte.map((x) => x.geaendert).join()) { S.projekte = l; neu = true; }
         const d = await Daten.alleDateien();
         if (d.length !== S.dateien.length) { S.dateien = d; neu = true; }
@@ -2883,6 +2902,8 @@
         S.projekte = S.voll.filter((p) => !p.geloescht && (p.zugriff || []).includes(S.ich.id)).map((p) => partnerSicht(p, { id: S.ich.id, gewerk: S.ich.gewerk }));
       }
     } else S.projekte = await Daten.projekteLaden();
+    S.projekte.forEach((p) => { if (ablaufUmzug(p)) speichern(p); });
+    (S.voll || []).forEach(ablaufUmzug);
     S.dateien = await Daten.alleDateien();
     S.zahlen = S.ich.ebene === "geschaeftsfuehrung" ? (await Daten.zahlenLaden().catch(() => ({}))) || {} : {};
   }

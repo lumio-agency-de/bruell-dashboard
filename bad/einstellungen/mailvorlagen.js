@@ -24,7 +24,7 @@
    anhangOrdner:  Projektordner, deren neueste Datei beim „In Outlook öffnen“ angehängt wird.
    Optionale Absätze: [[id]] … [[/id]] — im Dashboard per Häkchen an/aus (an: true = vorab angehakt).
    Bilder im Text: Zeile „[Bild: name]“ + bilder: { name: "vorlagen/…jpg" } – erscheinen im Outlook-Entwurf.
-   {link3d}: Link zur 3D-Ansicht aus dem Projekt (Level 8).
+   {link3d}: Link zur 3D-Ansicht aus dem Projekt (Level 9).
    Felder, die noch leer sind, erscheinen als markierte Lücke ‹…›.
    Unter jede Mail setzt das Dashboard die Signatur des angemeldeten Nutzers
    (Name, Funktion, Durchwahl, E-Mail – gepflegt unter Konten).
@@ -38,7 +38,7 @@ window.MAILVORLAGEN = [
   {
     id: "sub-anfrage",
     an: "partner",
-    phase: 10,
+    phase: 11,
     titel: "Anfrage an Subunternehmer",
     datei: "",
     anhaenge: [],
@@ -123,7 +123,7 @@ Mit freundlichen Grüßen`,
 
   {
     id: "freigabe",
-    phase: 8,
+    phase: 9,
     titel: "Badplanung zur Prüfung und Freigabe",
     datei: "vorlagen/08-freigabe/Mail-Planung-zur-Freigabe.oft",
     anhaenge: ["Exposé (2D-Ansichten) als PDF", "ggf. aktualisiertes Angebot"],
@@ -162,7 +162,7 @@ Vielen Dank und herzliche Grüße`,
 
   {
     id: "umsetzung",
-    phase: 10,
+    phase: 11,
     titel: "Bestätigung Umsetzungstermin",
     datei: "",
     anhaenge: [],
@@ -186,7 +186,7 @@ Mit freundlichen Grüßen`,
 
   {
     id: "baustart",
-    phase: 11,
+    phase: 12,
     titel: "Kundenerinnerung vor Baustart",
     datei: "vorlagen/11-ausfuehrung/Mail-Baustart.oft",
     anhaenge: ["Aushang für die Nachbarn", "Team-Foto (in der .oft)"],
@@ -219,7 +219,7 @@ Wir wünschen Ihnen weiterhin eine angenehme Woche!`,
 
   {
     id: "schlussrechnung",
-    phase: 12,
+    phase: 13,
     titel: "Schlussrechnung & Bitte um Bewertung",
     datei: "vorlagen/12-abnahme/Mail-Schlussrechnung.oft",
     anhaenge: ["Schlussrechnung als PDF"],
