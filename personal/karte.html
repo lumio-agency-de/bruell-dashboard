@@ -7,7 +7,7 @@
 <title>Brüll · Personalkarte</title>
 <link rel="icon" href="../bad/app/img/logo.svg">
 <link rel="stylesheet" href="../bad/app/css/app.css?v=202610242000">
-<link rel="stylesheet" href="../gesamt/personal.css?v=202610261851">
+<link rel="stylesheet" href="../gesamt/personal.css?v=202610301200">
   <link rel="stylesheet" href="../gesamt/dunkel-auto.css?v=202610252020">
   <link rel="stylesheet" href="../gesamt/thema.css?v=202610252020">
   <link rel="stylesheet" href="../gesamt/mobil.css?v=202610252020">
@@ -57,19 +57,22 @@
 <div class="form-group"><label>Nachname</label><input id="nachname" type="text"/></div>
 <div class="form-group"><label>Geburtsdatum</label><input id="geburt" type="text"/></div>
 <div class="form-group"><label>Familienstand</label><select id="familienstand"><option value="">– bitte wählen –</option><option value="ledig">Ledig</option><option value="verheiratet">Verheiratet</option><option value="geschieden">Geschieden</option><option value="verwitwet">Verwitwet</option><option value="eingetragene_lebenspartnerschaft">Eingetr. Lebenspartnerschaft</option></select></div>
+<div class="form-group full"><label>Ehe-/Lebenspartner(in)</label><div id="partnerListe" style="display:flex;flex-direction:column;gap:8px;margin-top:4px;"></div><button id="partnerBtn" onclick="addPartner()" style="margin-top:8px;background:#e8f0fe;color:#1a3c6e;border:1px solid #c5d5f5;border-radius:8px;padding:7px 14px;font-size:13px;cursor:pointer;font-weight:600;width:fit-content;font-family:inherit;" type="button">+ Partner(in) hinzufügen</button></div>
 <div class="form-group full"><label>Kinder</label><div id="kinderListe" style="display:flex;flex-direction:column;gap:8px;margin-top:4px;"></div><button onclick="addKind()" style="margin-top:8px;background:#e8f0fe;color:#1a3c6e;border:1px solid #c5d5f5;border-radius:8px;padding:7px 14px;font-size:13px;cursor:pointer;font-weight:600;width:fit-content;font-family:inherit;" type="button">+ Kind hinzufügen</button></div>
-<div class="form-group"><label>Steuerklasse</label><select id="steuerklasse"><option value="">– bitte wählen –</option><option value="1">Klasse I</option><option value="2">Klasse II</option><option value="3">Klasse III</option><option value="4">Klasse IV</option><option value="5">Klasse V</option><option value="6">Klasse VI</option></select></div>
+<div class="form-group"><label>Telefon / Mobil</label><input id="telefon" type="text"/></div>
 <div class="form-group"><label>E-Mail</label><input id="email" type="email"/></div>
+<div class="form-group"><label>Adresse</label><input id="adresse" type="text"/></div>
+<div class="form-group"><label>Steuerklasse</label><select id="steuerklasse"><option value="">– bitte wählen –</option><option value="1">Klasse I</option><option value="2">Klasse II</option><option value="3">Klasse III</option><option value="4">Klasse IV</option><option value="5">Klasse V</option><option value="6">Klasse VI</option></select></div>
+<div class="form-group"><label>Sozialversicherungsnr.</label><input id="svnr" type="text"/></div>
 <div class="form-group"><label>Bank</label><input id="bank" type="text"/></div>
 <div class="form-group"><label>IBAN</label><input id="iban" type="text"/></div>
 <div class="form-group"><label>BIC / Bankleitzahl</label><input id="bic" type="text"/></div>
-<div class="form-group"><label>Telefon / Mobil</label><input id="telefon" type="text"/></div>
-<div class="form-group"><label>Adresse</label><input id="adresse" type="text"/></div>
 </div>
 <div class="sec" style="margin-top:28px;">Beschäftigung</div>
 <div class="form-grid">
 <div class="form-group"><label>Einstellungsdatum</label><input id="einstellung" type="text"/></div>
 <div class="form-group"><label>Austrittsdatum</label><input id="austritt" type="text"/></div>
+<div class="form-group"><label>Kürzel</label><input id="kuerzel" type="text"/></div>
 <div class="form-group"><label>Position</label><input id="position" type="text"/></div>
 <div class="form-group" style="grid-column:1/-1"><label>Abteilung(en)</label><div class="abt-picker-wrap" id="abt-picker">
 <label class="abt-chip-label" data-val="inhaber"><input name="abt" onchange="toggleAbt(this)" type="checkbox" value="inhaber"/>👑 Inhaber</label>
@@ -84,8 +87,6 @@
 </div></div>
 <div class="form-group"><label>Stammlohnart</label><select id="stammlohnart"><option value="normalstunden">(1) Normalstunden</option><option value="teilzeit">Teilzeit</option><option value="aushilfe">Aushilfe</option><option value="azubi">Azubi</option></select></div>
 <div class="form-group"><label>Regelarbeitszeit</label><select id="regelarbeitszeit"><option value="40std">40 Std. Woche</option><option value="20std">20 Std. Woche</option><option value="23std">23 Std. Woche</option><option value="teilzeit">Teilzeit / variabel</option></select></div>
-<div class="form-group"><label>Sozialversicherungsnr.</label><input id="svnr" type="text"/></div>
-<div class="form-group"><label>Kürzel</label><input id="kuerzel" type="text"/></div>
 <div class="form-group full"><div class="cb-group"><input id="unproduktiv" type="checkbox"/><label for="unproduktiv">Unproduktiv (keine Berücksichtigung in Mittellohnberechnung)</label></div></div>
 </div>
 </div>
@@ -404,6 +405,22 @@ function addKind(n='',g=''){
   document.getElementById('kinderListe').appendChild(div);
 }
 
+// ── Ehe-/Lebenspartner(in) (höchstens eine Person) ───────────────────────
+function partnerBtnZeigen(){
+  document.getElementById('partnerBtn').style.display=document.querySelector('#partnerListe > div')?'none':'';
+}
+function addPartner(n='',g=''){
+  if(document.querySelector('#partnerListe > div')) return;
+  const div=document.createElement('div');
+  div.style.cssText='display:flex;gap:10px;align-items:center;background:#f7f8fa;border-radius:8px;padding:8px 10px;border:1px solid #e8eaf0;';
+  div.innerHTML=
+    `<input type="text" placeholder="Vorname" value="${n}" style="flex:1;border:1px solid #dde1e9;border-radius:6px;padding:7px 9px;font-size:13px">`+
+    `<input type="text" placeholder="Geburtsdatum" value="${g}" style="flex:1;border:1px solid #dde1e9;border-radius:6px;padding:7px 9px;font-size:13px">`+
+    `<button type="button" onclick="this.parentElement.remove();partnerBtnZeigen()" style="background:none;border:none;color:#c0392b;font-size:20px;cursor:pointer;padding:0 4px">×</button>`;
+  document.getElementById('partnerListe').appendChild(div);
+  partnerBtnZeigen();
+}
+
 // ── Speichern ─────────────────────────────────────────────────────────────
 function saveData(){
   const d={};
@@ -430,6 +447,10 @@ function saveData(){
     kinder.push({n:ins[0]?.value||'',g:ins[1]?.value||''});
   });
   d['_kinder']=JSON.stringify(kinder);
+
+  // Ehe-/Lebenspartner(in)
+  const pIns=document.querySelectorAll('#partnerListe > div input');
+  d['_partner']=pIns.length?JSON.stringify({n:pIns[0].value||'',g:pIns[1].value||''}):'';
 
   // Urlaubs-Tabelle
   const urlaubData=[];
@@ -526,6 +547,13 @@ function loadData(){
       });
     }catch(e){}
   }
+
+  // Ehe-/Lebenspartner(in)
+  document.getElementById('partnerListe').innerHTML='';
+  if(d._partner){
+    try{ const p=JSON.parse(d._partner); addPartner(p.n,p.g); }catch(e){}
+  }
+  partnerBtnZeigen();
 
   // Kinder
   if(d._kinder){

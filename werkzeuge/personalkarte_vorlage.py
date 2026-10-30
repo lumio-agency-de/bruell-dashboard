@@ -21,7 +21,7 @@ for el in main.find_all("input"):
 for el in main.find_all("option"): el.attrs.pop("selected", None)
 for el in main.find_all("textarea"): el.string = ""
 for lbl in main.select(".abt-chip-label"): lbl["class"] = [c for c in lbl.get("class", []) if not c.startswith("checked-")]
-for tid in ("ak-tbody", "wz-tbody", "bestell-tbody", "bestell-neu-tbody", "kinderListe", "urlaubBody"):
+for tid in ("ak-tbody", "wz-tbody", "bestell-tbody", "bestell-neu-tbody", "kinderListe", "partnerListe", "urlaubBody"):
     el = main.find(id=tid)
     if el: el.clear()
 for sel in (".header-name", ".header-position", ".header-nr", ".tb-title", ".tb-nr", ".photo-initials"):

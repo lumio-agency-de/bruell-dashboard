@@ -71,8 +71,8 @@
 .pk-card input:focus, .pk-card select:focus, .pk-card textarea:focus { outline: 2px solid color-mix(in oklab, var(--akzent) 60%, transparent); outline-offset: 1px; border-color: var(--akzent) !important; }
 .pk-card textarea { width: 100%; min-height: 96px; resize: vertical; }
 .pk-card button[onclick^="add"] { background: var(--tinte-weich) !important; color: var(--tinte) !important; border: 1px solid var(--fuge-stark) !important; border-radius: 10px !important; padding: 7px 14px !important; font-weight: 600; cursor: pointer; }
-#kinderListe { display: grid; gap: 6px; }
-#kinderListe > div { background: var(--tinte-weich) !important; border-color: var(--fuge) !important; border-radius: 12px !important; }
+#kinderListe, #partnerListe { display: grid; gap: 6px; }
+#kinderListe > div, #partnerListe > div { background: var(--tinte-weich) !important; border-color: var(--fuge) !important; border-radius: 12px !important; }
 /* Abteilungen als Chips */
 .abt-picker-wrap { display: flex; flex-wrap: wrap; gap: 6px; }
 .abt-chip-label { display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border-radius: 99px; border: 1px solid var(--fuge-stark); background: #fff; font-size: .84rem; cursor: pointer; user-select: none; transition: background-color 150ms ease, color 150ms ease; }
