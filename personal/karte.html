@@ -7,8 +7,8 @@
 <title>Brüll · Personalkarte</title>
 <link rel="icon" href="../bad/app/img/logo.svg">
 <link rel="stylesheet" href="../bad/app/css/app.css?v=202610242000">
-<link rel="stylesheet" href="../gesamt/personal.css?v=202610301200">
-  <link rel="stylesheet" href="../gesamt/dunkel-auto.css?v=202610252020">
+<link rel="stylesheet" href="../gesamt/personal.css?v=202610302300">
+  <link rel="stylesheet" href="../gesamt/dunkel-auto.css?v=202610302300">
   <link rel="stylesheet" href="../gesamt/thema.css?v=202610252020">
   <link rel="stylesheet" href="../gesamt/mobil.css?v=202610252020">
   <script src="../gesamt/thema.js?v=202610252020"></script>
@@ -41,9 +41,9 @@
 </div>
 <div class="tabs">
 <button class="tab-btn active" onclick="showTab('pd',this)">👤 Pers. Daten</button>
-<button class="tab-btn" onclick="showTab('gz',this)">⏱ Gleitzeit</button>
-<button class="tab-btn" onclick="showTab('url',this)">📅 Urlaub</button>
-<button class="tab-btn" onclick="showTab('bew',this)">⭐ Bewertung</button>
+<button class="tab-btn" onclick="showTab('gz',this)">⏱ Gleitzeit &amp; Urlaub</button>
+<button class="tab-btn" onclick="showTab('lz',this)">💶 Lohnzettel</button>
+<button class="tab-btn nur-intern" onclick="showTab('bew',this)">⭐ Bewertung</button>
 <button class="tab-btn" onclick="showTab('son',this)">📋 Sonstiges</button>
 <button class="tab-btn" onclick="showTab('ak',this)">👕 Arbeitskleidung</button>
 <button class="tab-btn" onclick="showTab('wz',this)">🔧 Werkzeug</button>
@@ -86,31 +86,42 @@
 <label class="abt-chip-label" data-val="fliesen"><input name="abt" onchange="toggleAbt(this)" type="checkbox" value="fliesen"/>🪟 Fliesen</label>
 </div></div>
 <div class="form-group"><label>Stammlohnart</label><select id="stammlohnart"><option value="normalstunden">(1) Normalstunden</option><option value="teilzeit">Teilzeit</option><option value="aushilfe">Aushilfe</option><option value="azubi">Azubi</option></select></div>
-<div class="form-group"><label>Regelarbeitszeit</label><select id="regelarbeitszeit"><option value="40std">40 Std. Woche</option><option value="20std">20 Std. Woche</option><option value="23std">23 Std. Woche</option><option value="teilzeit">Teilzeit / variabel</option></select></div>
+<div class="form-group"><label>Regelarbeitszeit</label><div class="regel-zeile"><select id="regelarbeitszeit" onchange="regelStdZeigen()"><option value="40std">40 Std. Woche</option><option value="20std">20 Std. Woche</option><option value="23std">23 Std. Woche</option><option value="teilzeit">Teilzeit / variabel</option></select><input id="regel_std" type="number" min="0" max="60" step="0.5" placeholder="Std. / Woche" title="Wochenstunden bei Teilzeit / variabel"></div></div>
 <div class="form-group full"><div class="cb-group"><input id="unproduktiv" type="checkbox"/><label for="unproduktiv">Unproduktiv (keine Berücksichtigung in Mittellohnberechnung)</label></div></div>
 </div>
+<div class="nur-intern" id="zugangBox" style="margin-top:28px;"><div class="sec">Zugang zum Dashboard</div><div id="zugangInhalt"></div></div>
 </div>
 <!-- GLEITZEIT -->
 <div class="tab-content" id="tab-gz">
 <div class="sec">Gleitzeit-Konto</div>
 <div class="gz-grid">
-<div class="gz-card"><div class="gz-label">Soll-Std / Woche</div><input id="gz_soll" type="text"/></div>
-<div class="gz-card"><div class="gz-label">Ist-Stunden aktuell</div><input id="gz_ist" type="text"/></div>
+<div class="gz-card"><div class="gz-label">Monat</div><input id="gz_monat" type="month"/></div>
+<div class="gz-card"><div class="gz-label">Soll-Std / Monat</div><input id="gz_soll" type="text" readonly title="Arbeitstage des Monats (Mo–Fr ohne Feiertage BW) × Wochenstunden ÷ 5"/><div class="gz-quelle" id="gz_soll_quelle"></div></div>
+<div class="gz-card"><div class="gz-label">Ist-Std / Monat</div><input id="gz_ist" type="text"/></div>
 <div class="gz-card"><div class="gz-label">Saldo (±)</div><input id="gz_saldo" type="text"/></div>
-<div class="gz-card"><div class="gz-label">Überstunden gesamt</div><input id="gz_ueber" type="text"/></div>
-<div class="gz-card"><div class="gz-label">Abgebaut (Std.)</div><input id="gz_abbau" type="text"/></div>
-<div class="gz-card"><div class="gz-label">Verbleibend</div><input id="gz_rest" type="text"/></div>
+<div class="gz-card"><div class="gz-label">Überstunden-Konto aktuell</div><input id="gz_konto" type="text" readonly/></div>
 </div>
+<div class="sec" style="margin-top:28px;">Überstunden je Jahr</div>
+<p class="dok-hinweis">Stunden als Kommazahl in Viertelstunden, z. B. 1,25 · 1,5 · 1,75 oder -8. Andere Werte werden auf die nächste Viertelstunde gerundet. Der Stand am Jahresende wird automatisch als Übertrag ins nächste Jahr übernommen. Nur beim ersten Jahr lässt sich der Übertrag als Startwert eintragen.</p>
+<button type="button" class="jahre-umschalter" data-tabelle="ueberTab" onclick="alteJahre(this)"></button>
+<table class="dt dt-eng" id="ueberTab"><thead><tr><th>Jahr</th><th>Übertrag Vorjahr</th><th>Überstunden</th><th>Abgebaut / ausbezahlt</th><th>Stand Jahresende</th><th>Bemerkung</th></tr></thead><tbody id="ueberBody"></tbody></table>
+<!-- URLAUB (im selben Reiter) -->
+<div class="sec" style="margin-top:28px;">Urlaubsübersicht</div>
+<button type="button" class="jahre-umschalter" data-tabelle="urlaubTab" onclick="alteJahre(this)"></button>
+<table class="dt dt-eng" id="urlaubTab"><thead><tr><th>Jahr</th><th>Übertrag Vorjahr</th><th>Anspruch</th><th>Genommen</th><th>Resturlaub</th><th>Krank&shy;heitstage</th><th>Sonder&shy;urlaub</th><th>Bemerkung</th></tr></thead><tbody id="urlaubBody"></tbody></table>
 <div style="margin-top:24px;"><div class="sec">Notizen</div><textarea id="gz_notiz" placeholder="Besonderheiten, Vereinbarungen …"></textarea></div>
 </div>
-<!-- URLAUB -->
-<div class="tab-content" id="tab-url">
-<div class="sec">Urlaubsübersicht</div>
-<table class="dt"><thead><tr><th>Jahr</th><th>Anspruch (Tage)</th><th>Genommen</th><th>Resturlaub</th><th>Übertrag</th><th>Bemerkung</th></tr></thead><tbody id="urlaubBody"></tbody></table>
-<div style="margin-top:20px;"><div class="sec">Abwesenheiten</div><div class="form-grid"><div class="form-group"><label>Krankheitstage (lfd. Jahr)</label><input id="krank" min="0" type="number"/></div><div class="form-group"><label>Sonderurlaub (Tage)</label><input id="sonderurlaub" min="0" type="number"/></div></div></div>
+<!-- LOHNZETTEL -->
+<div class="tab-content" id="tab-lz">
+<div class="sec">Lohnzettel</div>
+<p class="dok-hinweis lz-darf">Ein Ordner je Jahr. PDFs in das Feld des Jahres ziehen – der Monat wird aus dem Dateinamen erkannt (z. B. „Februar“, „Feb“ oder „2026-02“). Später kommen die Lohnzettel automatisch aus der Löhne-ZIP vom Steuerberater.</p>
+<p class="dok-hinweis lz-lesen">Deine Lohnzettel nach Jahren. Lohnzettel anhaken und „Ausgewählte herunterladen“ – oder auf den Namen klicken, um ihn anzusehen.</p>
+<div class="lz-leiste"><span class="lz-jahr-neu"><select id="lzJahrWahl" aria-label="Jahr"></select><button type="button" class="dok-knopf" onclick="lzJahrOeffnen()">📁 Ordner öffnen</button></span>
+<button type="button" class="dok-knopf lz-auswahl-laden" onclick="lzAuswahlLaden()" disabled>⬇ Ausgewählte herunterladen</button></div>
+<div id="lzListe" class="lz-liste"></div>
 </div>
 <!-- BEWERTUNG -->
-<div class="tab-content" id="tab-bew">
+<div class="tab-content nur-intern" id="tab-bew">
 <div class="sec">Mitarbeiterbeurteilung</div>
 <div style="display:flex;flex-direction:column;gap:16px;margin-bottom:20px;">
 <div class="form-group"><label>Fachkompetenz</label><div class="stars" data-key="fach"><span class="star" data-val="1">★</span><span class="star" data-val="2">★</span><span class="star" data-val="3">★</span><span class="star" data-val="4">★</span><span class="star" data-val="5">★</span></div></div>
@@ -125,16 +136,11 @@
 <!-- SONSTIGES -->
 <div class="tab-content" id="tab-son">
 <div class="sec">Dokumente &amp; Nachweise</div>
-<div class="form-grid">
-<div class="form-group"><div class="cb-group"><input id="dok1" type="checkbox"/><label for="dok1">Arbeitsvertrag vorhanden</label></div></div>
-<div class="form-group"><div class="cb-group"><input id="dok2" type="checkbox"/><label for="dok2">Lohnsteuerkarte / ELSTAM aktiv</label></div></div>
-<div class="form-group"><div class="cb-group"><input id="dok3" type="checkbox"/><label for="dok3">Gesundheitszeugnis vorhanden</label></div></div>
-<div class="form-group"><div class="cb-group"><input id="dok4" type="checkbox"/><label for="dok4">Führerschein Kl. B geprüft</label></div></div>
-<div class="form-group"><div class="cb-group"><input id="dok5" type="checkbox"/><label for="dok5">Erste-Hilfe-Kurs aktuell</label></div></div>
-<div class="form-group"><div class="cb-group"><input id="dok6" type="checkbox"/><label for="dok6">Gasprüfung / Zertifikate aktuell</label></div></div>
-</div>
+<p class="dok-hinweis lz-gf">Datei hineinziehen oder auf 📩 klicken. Klick auf den Dateinamen öffnet sie. Die Dateien bleiben nur auf diesem Rechner (nicht online).</p>
+<div id="dokListe" class="dok-liste"></div>
+<button onclick="addDokument()" type="button" style="margin-top:10px;">+ Dokument hinzufügen</button>
 <div style="margin-top:22px;"><div class="sec">Weiterbildungen</div><textarea id="weiterbildung" placeholder="Schulungen, Kurse, Zertifikate …"></textarea></div>
-<div style="margin-top:16px;"><div class="sec">Sonstige Notizen</div><textarea id="sonstnotiz" placeholder="Interne Vermerke, Besonderheiten …"></textarea></div>
+<div class="nur-intern" style="margin-top:16px;"><div class="sec">Sonstige Notizen</div><textarea id="sonstnotiz" placeholder="Interne Vermerke, Besonderheiten …"></textarea></div>
 </div>
 <!-- ARBEITSKLEIDUNG -->
 <div class="tab-content" id="tab-ak">
@@ -211,7 +217,7 @@
 <script>document.write('<script src="fotos-lokal.js" onerror="this.remove()"><\/script>')</script>
 <script src="../personal/daten-tresor.js?v=1792953619395" onerror="this.remove()"></script>
 <script src="../gesamt/tresor.js?v=202610271200"></script>
-<script src="../gesamt/personal.js?v=202610271200"></script>
+<script src="../gesamt/personal.js?v=202610302100"></script>
 <script>
 /* ===== Funktionen der Personalkarte (aus der Vorlage übernommen) ===== */
 function applyPendingQty() {}
@@ -289,22 +295,119 @@ for(let y=cy-3;y<=cy+1;y++){
   tr.dataset.year=y;
   tr.innerHTML=
     `<td><strong>${y}</strong></td>`+
+    `<td><input type="number" class="url-uebertrag" value="0" min="0" style="width:60px${y===cy-3?'':';background:#f0f7ff'}"${y===cy-3?'':' readonly'}></td>`+
     `<td><input type="number" class="url-anspruch" value="30" min="0" style="width:60px"></td>`+
     `<td><input type="number" class="url-genommen" value="0"  min="0" style="width:60px"></td>`+
     `<td><input type="number" class="url-rest"     value="30" min="0" style="width:60px;background:#f0f7ff;font-weight:600" readonly></td>`+
-    `<td><input type="number" class="url-uebertrag" value="0" min="0" style="width:60px"></td>`+
+    `<td><input type="number" class="url-krank"    placeholder="0" min="0" style="width:60px"></td>`+
+    `<td><input type="number" class="url-sonder"   placeholder="0" min="0" style="width:60px"></td>`+
     `<td><input type="text"   class="url-bemerk"   placeholder="–"    style="width:150px"></td>`;
   ub.appendChild(tr);
 }
-// Auto-Berechnung Resturlaub
-ub.addEventListener('input',e=>{
-  const tr=e.target.closest('tr'); if(!tr)return;
-  const a=parseInt(tr.querySelector('.url-anspruch')?.value)||0;
-  const g=parseInt(tr.querySelector('.url-genommen')?.value)||0;
-  const u=parseInt(tr.querySelector('.url-uebertrag')?.value)||0;
-  const re=tr.querySelector('.url-rest');
-  if(re) re.value=Math.max(0,a-g+u);
-});
+// Auto-Berechnung Resturlaub; der Rest springt als Übertrag ins nächste Jahr (nur das erste Jahr ist frei einstellbar)
+function calcUrlaub(){
+  let vor=null;
+  ub.querySelectorAll('tr').forEach(tr=>{
+    const ue=tr.querySelector('.url-uebertrag');
+    if(vor!==null) ue.value=vor;
+    const a=parseInt(tr.querySelector('.url-anspruch')?.value)||0;
+    const g=parseInt(tr.querySelector('.url-genommen')?.value)||0;
+    const rest=Math.max(0,a-g+(parseInt(ue.value)||0));
+    tr.querySelector('.url-rest').value=rest;
+    vor=rest;
+  });
+}
+ub.addEventListener('input',calcUrlaub);
+calcUrlaub();
+
+// ── Überstunden je Jahr (Übertrag ins Folgejahr automatisch) ──────────────
+// Stunden als Kommazahl in Viertelstunden (1,25 = 1 Std. 15 Min.); intern Minuten. Alte Werte „12:30“ werden noch gelesen.
+const ueStd=v=>{const t=String(v||'').trim().replace(/\s|h|std\.?/gi,'');if(!t)return 0;const neg=t.startsWith('-');const r=t.replace(/^[-+]/,'');
+  const m=r.includes(':')?(parseInt(r.split(':')[0])||0)*60+(parseInt(r.split(':')[1])||0):Math.round((parseFloat(r.replace(',','.'))||0)*60);
+  return (neg?-1:1)*Math.round(m/15)*15;};
+const ueTxt=m=>{const q=Math.round(m/15)*15;return (q/60).toLocaleString('de-DE',{maximumFractionDigits:2});};
+const ueb=document.getElementById('ueberBody');
+for(let y=cy-3;y<=cy+1;y++){
+  const tr=document.createElement('tr');
+  tr.dataset.year=y;
+  const erste=y===cy-3;
+  tr.innerHTML=
+    `<td><strong>${y}</strong></td>`+
+    `<td><input type="text" class="ue-uebertrag" placeholder="0" style="width:80px${erste?'':';background:#f0f7ff'}"${erste?'':' readonly'}></td>`+
+    `<td><input type="text" class="ue-plus"   placeholder="0" style="width:80px"></td>`+
+    `<td><input type="text" class="ue-abbau"  placeholder="0" style="width:80px"></td>`+
+    `<td><input type="text" class="ue-stand"  style="width:80px;background:#f0f7ff;font-weight:600" readonly></td>`+
+    `<td><input type="text" class="ue-bemerk" placeholder="–" style="width:150px"></td>`;
+  ueb.appendChild(tr);
+}
+function calcUeber(){
+  let vor=null;
+  ueb.querySelectorAll('tr').forEach(tr=>{
+    const ue=tr.querySelector('.ue-uebertrag');
+    if(vor!==null) ue.value=vor?ueTxt(vor):'';
+    const stand=ueStd(ue.value)+ueStd(tr.querySelector('.ue-plus').value)-ueStd(tr.querySelector('.ue-abbau').value);
+    tr.querySelector('.ue-stand').value=ueTxt(stand);
+    if(+tr.dataset.year===cy) document.getElementById('gz_konto').value=ueTxt(stand);
+    vor=stand;
+  });
+}
+ueb.addEventListener('input',calcUeber);
+// Beim Verlassen des Felds auf Viertelstunden runden und einheitlich schreiben (1.5 → 1,5)
+ueb.addEventListener('change',e=>{const el=e.target;if(!el.matches('.ue-uebertrag,.ue-plus,.ue-abbau')||el.readOnly)return;if(String(el.value).trim())el.value=ueTxt(ueStd(el.value));calcUeber();});
+calcUeber();
+
+// ── Regelarbeitszeit: bei „Teilzeit / variabel“ eigene Wochenstunden ──────
+function regelStdZeigen(fokus=true){
+  const v=document.getElementById('regelarbeitszeit').value==='teilzeit';
+  const el=document.getElementById('regel_std'); el.style.display=v?'':'none';
+  if(fokus&&v&&!el.value) el.focus();
+  sollMonatRechnen();
+}
+// Soll-Std / Monat = Arbeitstage des Monats (Mo–Fr ohne gesetzliche Feiertage Baden-Württemberg) × Wochenstunden ÷ 5
+function wochenStd(){
+  const r=document.getElementById('regelarbeitszeit').value;
+  if(r==='teilzeit') return parseFloat(String(document.getElementById('regel_std').value).replace(',','.'))||0;
+  return parseFloat(r)||0;
+}
+function feiertageBW(j){
+  // Ostersonntag nach Gauß/Meeus
+  const a=j%19,b=Math.floor(j/100),c=j%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),
+        h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),
+        mon=Math.floor((h+l-7*m+114)/31),tag=((h+l-7*m+114)%31)+1;
+  const ostern=new Date(j,mon-1,tag), plus=n=>{const x=new Date(ostern);x.setDate(x.getDate()+n);return x;};
+  const fest=[[1,1],[1,6],[5,1],[10,3],[11,1],[12,25],[12,26]].map(([mo,t])=>new Date(j,mo-1,t));
+  return [...fest,plus(-2),plus(1),plus(39),plus(50),plus(60)].map(x=>x.toDateString());
+}
+function arbeitstage(j,mo){
+  const frei=feiertageBW(j); let n=0;
+  for(let t=new Date(j,mo-1,1);t.getMonth()===mo-1;t.setDate(t.getDate()+1)){
+    const wt=t.getDay(); if(wt!==0&&wt!==6&&!frei.includes(t.toDateString())) n++;
+  }
+  return n;
+}
+function sollMonatRechnen(){
+  const mEl=document.getElementById('gz_monat');
+  if(!mEl.value){ const h=new Date(); mEl.value=h.getFullYear()+'-'+String(h.getMonth()+1).padStart(2,'0'); }
+  const [j,mo]=mEl.value.split('-').map(Number), w=wochenStd(), at=arbeitstage(j,mo), min=Math.round(at*w/5*60);
+  const hm=x=>Math.floor(x/60)+':'+String(x%60).padStart(2,'0');
+  document.getElementById('gz_soll').value=w?hm(min):'';
+  document.getElementById('gz_soll_quelle').textContent=w?`${at} Arbeitstage × ${hm(Math.round(w/5*60))} Std. (${String(w).replace('.',',')} Std./Woche ÷ 5)`:'erst Regelarbeitszeit wählen';
+  if(typeof calcGzSaldo==='function') calcGzSaldo();
+}
+document.getElementById('gz_monat').addEventListener('change',sollMonatRechnen);
+document.getElementById('regel_std').addEventListener('input',sollMonatRechnen);
+
+// ── Ältere Jahre in den Tabellen einklappen (nur das Vorjahr, das laufende und das nächste Jahr bleiben offen) ──
+function alteJahre(btn,zu){
+  const t=document.getElementById(btn.dataset.tabelle), alt=[...t.querySelectorAll('tbody tr')].filter(tr=>+tr.dataset.year<cy-1);
+  const offen=zu===undefined?!t.classList.contains('zeige-alt'):!zu;
+  t.classList.toggle('zeige-alt',offen);
+  alt.forEach(tr=>tr.classList.add('alt-jahr'));
+  const von=alt.length?alt[0].dataset.year:'', bis=alt.length?alt[alt.length-1].dataset.year:'';
+  btn.style.display=alt.length?'':'none';
+  btn.textContent=offen?`▾ Ältere Jahre ausblenden`:`▸ Ältere Jahre anzeigen (${von===bis?von:von+'–'+bis})`;
+}
+function alteJahreStart(){ document.querySelectorAll('.jahre-umschalter').forEach(b=>alteJahre(b,true)); }
 
 // ── Gleitzeit Saldo auto ──────────────────────────────────────────────────
 function calcGzSaldo(){
@@ -421,6 +524,258 @@ function addPartner(n='',g=''){
   partnerBtnZeigen();
 }
 
+// ── Dokumente & Nachweise ────────────────────────────────────────────────
+// Liste der Felder steht in d._dokumente; die Dateien selbst liegen nur lokal in IndexedDB
+// (Datenbank „bruell-dokumente“, Schlüssel „<Pers.-Nr.>:<Feld-ID>“) – nie im Repo oder Tresor.
+const DOK_STANDARD=['Arbeitsvertrag','Lohnsteuerkarte / ELSTAM','Gesundheitszeugnis','Führerschein Kl. B','Erste-Hilfe-Kurs','Gasprüfung / Zertifikate'];
+let DOKS=[];
+function dokDB(){
+  return new Promise((ok,fehler)=>{
+    const r=indexedDB.open('bruell-dokumente',1);
+    r.onupgradeneeded=()=>r.result.createObjectStore('dateien');
+    r.onsuccess=()=>ok(r.result); r.onerror=()=>fehler(r.error);
+  });
+}
+async function dokDB_(art,fn){
+  const db=await dokDB();
+  return new Promise((ok,fehler)=>{
+    const t=db.transaction('dateien',art), req=fn(t.objectStore('dateien'));
+    t.oncomplete=()=>ok(req&&req.result); t.onerror=()=>fehler(t.error);
+  });
+}
+const dokKey=id=>PK_NR+':'+id;
+const dokEsc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function dokGroesse(b){ return b>1048576?(b/1048576).toFixed(1).replace('.',',')+' MB':Math.max(1,Math.round(b/1024))+' KB'; }
+function dokZeichnen(){
+  const box=document.getElementById('dokListe');
+  box.innerHTML=DOKS.map(x=>`<div class="dok-feld${x.datei?' hat-datei':''}" data-id="${x.id}">
+    <input class="dok-name" type="text" value="${dokEsc(x.name)}" placeholder="Bezeichnung" onchange="dokUmbenennen('${x.id}',this.value)">
+    ${x.datei
+      ?`<button type="button" class="dok-datei" onclick="dokOeffnen('${x.id}')" title="Öffnen">📄 ${dokEsc(x.datei.name)}<small>${dokGroesse(x.datei.groesse)} · ${dokEsc(x.datei.datum)}</small></button>
+        <label class="dok-knopf" title="Andere Datei hochladen">Ersetzen<input type="file" hidden onchange="dokDatei('${x.id}',this.files[0])"></label>`
+      :`<label class="dok-knopf dok-leer" title="Datei wählen" aria-label="Datei wählen">📩<input type="file" hidden onchange="dokDatei('${x.id}',this.files[0])"></label>${x.abgehakt?'<small class="dok-alt">bisher abgehakt</small>':''}`}
+    <button type="button" class="dok-weg" onclick="dokEntfernen('${x.id}')" title="Feld entfernen">×</button>
+  </div>`).join('');
+  box.querySelectorAll('.dok-feld').forEach(el=>{
+    el.addEventListener('dragover',e=>{e.preventDefault();el.classList.add('ziehen');});
+    el.addEventListener('dragleave',()=>el.classList.remove('ziehen'));
+    el.addEventListener('drop',e=>{e.preventDefault();el.classList.remove('ziehen');const f=e.dataTransfer.files[0];if(f)dokDatei(el.dataset.id,f);});
+  });
+}
+async function dokDatei(id,f){
+  if(window.PK_NUR_LESEN)return;
+  const x=DOKS.find(k=>k.id===id); if(!x||!f)return;
+  try{ await dokDB_('readwrite',st=>st.put(f,dokKey(id))); }
+  catch(e){ alert('Datei konnte nicht gespeichert werden: '+e); return; }
+  x.datei={name:f.name,groesse:f.size,datum:new Date().toLocaleDateString('de-DE')};
+  delete x.abgehakt;
+  dokZeichnen(); saveData();
+}
+async function dokOeffnen(id){
+  const w=window.open('','_blank');   // sofort öffnen, sonst blockt der Browser das Fenster
+  const f=await dokDB_('readonly',st=>st.get(dokKey(id))).catch(()=>null);
+  if(!f){ if(w)w.close(); alert('Die Datei liegt nicht auf diesem Rechner. Sie wurde an einem anderen Gerät hochgeladen.'); return; }
+  const url=URL.createObjectURL(f);
+  if(w) w.location.href=url; else location.href=url;
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+}
+async function dokEntfernen(id){
+  const x=DOKS.find(k=>k.id===id); if(!x)return;
+  if(!confirm(x.datei?`„${x.name||'Dokument'}“ mit der Datei ${x.datei.name} entfernen?`:`Feld „${x.name||'Dokument'}“ entfernen?`))return;
+  DOKS=DOKS.filter(k=>k.id!==id);
+  await dokDB_('readwrite',st=>st.delete(dokKey(id))).catch(()=>{});
+  dokZeichnen(); saveData();
+}
+function dokUmbenennen(id,name){ const x=DOKS.find(k=>k.id===id); if(x){x.name=name.trim();saveData();} }
+function addDokument(){
+  DOKS.push({id:'d'+Date.now().toString(36),name:''});
+  dokZeichnen();
+  const ins=document.querySelectorAll('#dokListe .dok-name'); ins[ins.length-1].focus();
+}
+function dokLaden(d){
+  try{ DOKS=d._dokumente?JSON.parse(d._dokumente):null; }catch(e){ DOKS=null; }
+  if(!DOKS) DOKS=DOK_STANDARD.map((n,i)=>({id:'dok'+(i+1),name:n,...(d['dok'+(i+1)]===true?{abgehakt:true}:{})}));
+  dokZeichnen();
+}
+
+// ── Lohnzettel: Ordner je Jahr, darin die Monate ──────────────────────────
+// Dateien wie die Dokumente nur lokal in IndexedDB (Schlüssel „<Nr>:lz-<JJJJ-MM>“), Liste in d._lohnzettel.
+// Hochladen dürfen die Geschäftsführung und Konten mit Freigabe „Lohnzettel hochladen“ (Lohnabrechnung → Einstellungen).
+const LZ_MONATE=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+let LZ=[], LZ_JAHRE_OFFEN=[];
+const lzDarf=()=>!window.PK_NUR_LESEN||!!window.PK_LZ_DARF;
+const lzText=m=>{const [j,mo]=m.split('-');return LZ_MONATE[+mo-1]+' '+j;};
+// Geschlossene Ordner merkt sich jeder Browser selbst (nur Anzeige)
+const LZ_ZU_KEY='lz-zu:'+PK_NR;
+const lzZu=()=>{try{return JSON.parse(localStorage.getItem(LZ_ZU_KEY)||'[]');}catch(e){return [];}};
+const lzZuSetzen=l=>{try{localStorage.setItem(LZ_ZU_KEY,JSON.stringify(l));}catch(e){}};
+function lzJahre(){
+  const h=new Date().getFullYear(), set=new Set(LZ.map(x=>+x.monat.slice(0,4)).concat(LZ_JAHRE_OFFEN)), zu=lzZu();
+  if(lzDarf()) set.add(h);
+  return [...set].filter(y=>!zu.includes(y)).sort((a,b)=>b-a);
+}
+/* Monat (und ggf. Jahr) aus dem Dateinamen: „Februar“, „Feb“, „2026-02“, „02_2026“, „Lohn 02.2026“ */
+const LZ_KURZ=[['januar','jan'],['februar','feb'],['märz','maerz','marz','mrz','mär','mar'],['april','apr'],['mai','may'],['juni','jun'],['juli','jul'],['august','aug'],['september','sept','sep'],['oktober','okt','oct'],['november','nov'],['dezember','dez','dec']];
+function lzAusName(name){
+  const t=name.toLowerCase().replace(/\.pdf$/,''), jahr=(t.match(/(?:^|\D)(20\d\d)(?!\d)/)||[])[1];
+  for(let i=0;i<12;i++) if(LZ_KURZ[i].some(k=>new RegExp('(^|[^a-zäöüß])'+k+'([^a-zäöüß]|$)').test(t))) return {monat:i+1,jahr:jahr?+jahr:0};
+  let m=t.match(/(20\d\d)[-_. ](0?[1-9]|1[0-2])(?!\d)/); if(m) return {monat:+m[2],jahr:+m[1]};
+  m=t.match(/(?:^|\D)(0?[1-9]|1[0-2])[-_. ](20\d\d)(?!\d)/); if(m) return {monat:+m[1],jahr:+m[2]};
+  m=t.match(/(?:^|\D)(20\d\d)(0[1-9]|1[0-2])(?!\d)/); if(m) return {monat:+m[2],jahr:+m[1]};
+  return {monat:0,jahr:jahr?+jahr:0};
+}
+function lzAuswahlZaehlen(){
+  const n=document.querySelectorAll('.lz-wahl:checked').length, b=document.querySelector('.lz-auswahl-laden');
+  if(b){ b.disabled=!n; b.textContent=n?`⬇ Ausgewählte herunterladen (${n})`:'⬇ Ausgewählte herunterladen'; }
+}
+function lzZeichnen(){
+  const box=document.getElementById('lzListe'), darf=lzDarf(), h=new Date(), zu=lzZu();
+  document.querySelectorAll('.lz-darf').forEach(el=>el.style.display=darf?'':'none');
+  document.querySelectorAll('.lz-lesen').forEach(el=>el.style.display=darf?'none':'');
+  const jahre=lzJahre();
+  // Auswahl „Ordner öffnen“: Uploader alle Jahre ab Einstellung, Mitarbeiter nur geschlossene Ordner mit Lohnzetteln
+  const wahl=document.getElementById('lzJahrWahl');
+  if(wahl){
+    const ein=((document.getElementById('einstellung')||{}).value||'').match(/(\d{4})\s*$/), von=Math.min(ein?+ein[1]:h.getFullYear()-5,h.getFullYear());
+    const moeglich=darf?[...Array(h.getFullYear()-von+1)].map((_,i)=>h.getFullYear()-i):[...new Set(LZ.map(x=>+x.monat.slice(0,4)))].sort((a,b)=>b-a);
+    const frei=moeglich.filter(y=>!jahre.includes(y));
+    wahl.innerHTML=frei.map(y=>`<option>${y}</option>`).join(''); wahl.disabled=false;
+    wahl.parentElement.style.display=frei.length?'':'none';
+  }
+  if(!jahre.length){ box.innerHTML=`<p class="dok-hinweis">${LZ.length?'Alle Ordner geschlossen – oben über „Ordner öffnen“ wieder anzeigen.':'Noch keine Lohnzettel.'}</p>`; lzAuswahlZaehlen(); return; }
+  box.innerHTML=jahre.map((y,i)=>{
+    const imJahr=LZ.filter(x=>x.monat.startsWith(y+'-')).sort((a,b)=>b.monat.localeCompare(a.monat));
+    return `<details class="lz-ordner" data-jahr="${y}"${i===0?' open':''}><summary>📁 <b>${y}</b><small>${imJahr.length} Lohnzettel</small>
+        ${imJahr.length?`<label class="lz-alle" title="Alle Lohnzettel ${y} auswählen" onclick="event.stopPropagation()"><input type="checkbox" onchange="lzAlle(${y},this.checked)"> alle</label>`:''}
+        <button type="button" class="lz-zu" onclick="event.preventDefault();event.stopPropagation();lzOrdnerZu(${y})" title="Ordner ${y} schließen (ausblenden)">✕ Ordner schließen</button></summary>
+      <div class="lz-monate">
+        ${darf?`<label class="lz-drop" data-jahr="${y}">📩 <span><b>Lohnzettel ${y} hinzufügen</b><small>PDFs hier hineinziehen oder klicken – auch mehrere auf einmal</small></span><input type="file" accept="application/pdf,.pdf" multiple hidden onchange="lzDateien(${y},[...this.files]);this.value=''"></label>`:''}
+        ${imJahr.map(x=>`<div class="lz-monat hat-datei">
+          <input type="checkbox" class="lz-wahl" data-monat="${x.monat}" aria-label="${lzText(x.monat)} auswählen" onchange="lzAuswahlZaehlen()">
+          <b>${LZ_MONATE[+x.monat.slice(5)-1]}</b>
+          <button type="button" class="dok-datei" onclick="lzOeffnen('${x.monat}')" title="Ansehen">📄 ${dokEsc(x.name)}<small>${dokGroesse(x.groesse)} · ${dokEsc(x.datum)}</small></button>
+          <button type="button" class="dok-knopf lz-laden" onclick="lzOeffnen('${x.monat}',true)" title="Herunterladen">⬇</button>
+          ${darf?`<button type="button" class="dok-weg" onclick="lzEntfernen('${x.monat}')" title="Lohnzettel entfernen">×</button>`:''}
+        </div>`).join('')||(darf?'':'<p class="dok-hinweis">Leer.</p>')}
+      </div></details>`;
+  }).join('');
+  if(darf) box.querySelectorAll('.lz-drop').forEach(el=>{
+    el.addEventListener('dragover',e=>{e.preventDefault();el.classList.add('ziehen');});
+    el.addEventListener('dragleave',()=>el.classList.remove('ziehen'));
+    el.addEventListener('drop',e=>{e.preventDefault();el.classList.remove('ziehen');lzDateien(+el.dataset.jahr,[...e.dataTransfer.files]);});
+  });
+  lzAuswahlZaehlen();
+}
+function lzAlle(y,an){ document.querySelectorAll(`.lz-ordner[data-jahr="${y}"] .lz-wahl`).forEach(c=>c.checked=an); lzAuswahlZaehlen(); }
+function lzOrdnerZu(y){
+  LZ_JAHRE_OFFEN=LZ_JAHRE_OFFEN.filter(x=>x!==y);
+  const zu=lzZu(); if(!zu.includes(y)) zu.push(y); lzZuSetzen(zu); lzZeichnen();
+}
+async function lzAuswahlLaden(){
+  const l=[...document.querySelectorAll('.lz-wahl:checked')].map(c=>c.dataset.monat);
+  for(const m of l){ await lzOeffnen(m,true); await new Promise(r=>setTimeout(r,400)); }
+}
+/* Mehrere PDFs für ein Jahr: Monat aus dem Dateinamen, sonst nachfragen */
+async function lzDateien(jahr,dateien){
+  if(!lzDarf())return;
+  const ok=[], fehl=[];
+  for(const f of dateien){
+    if(!/\.pdf$/i.test(f.name)&&f.type!=='application/pdf'){ fehl.push(f.name+' (keine PDF)'); continue; }
+    let {monat,jahr:j}=lzAusName(f.name);
+    if(j&&j!==jahr&&!confirm(`„${f.name}“ sieht nach ${j} aus, liegt aber im Ordner ${jahr}. Trotzdem unter ${jahr} ablegen?\n(Abbrechen = unter ${j} ablegen)`)) jahr=j;
+    if(!monat){
+      const a=prompt(`Monat für „${f.name}“ nicht erkannt.\nBitte Monat eingeben (1–12 oder z. B. Februar):`,'');
+      if(a===null){ fehl.push(f.name+' (übersprungen)'); continue; }
+      monat=+a||lzAusName(a).monat;
+      if(!(monat>=1&&monat<=12)){ fehl.push(f.name+' (Monat ungültig)'); continue; }
+    }
+    if(await lzHinzu(jahr+'-'+String(monat).padStart(2,'0'),f,true)) ok.push(LZ_MONATE[monat-1]+' '+jahr);
+  }
+  lzZeichnen(); lzSpeichern();
+  if(fehl.length) alert(`Hinzugefügt: ${ok.length?ok.join(', '):'nichts'}\nNicht hinzugefügt: ${fehl.join(', ')}`);
+}
+function lzJahrOeffnen(){
+  const y=+document.getElementById('lzJahrWahl').value; if(!y)return;
+  LZ_JAHRE_OFFEN.push(y); lzZuSetzen(lzZu().filter(x=>x!==y)); lzZeichnen();
+  const d=[...document.querySelectorAll('.lz-ordner')].find(x=>x.querySelector('summary b').textContent==String(y)); if(d){d.open=true;d.scrollIntoView({block:'nearest'});}
+}
+/* Nur die Lohnzettel-Liste in die gespeicherte Karte schreiben – andere ungespeicherte Eingaben bleiben unberührt */
+function lzSpeichern(){
+  let d={}; try{ d=JSON.parse(localStorage.getItem(SK)||'{}'); }catch(e){}
+  d._lohnzettel=JSON.stringify(LZ);
+  try{ localStorage.setItem(SK,JSON.stringify(d)); }catch(e){ alert('Speichern fehlgeschlagen: Browser-Speicher voll.'); }
+  if(window.BrüllStore) BrüllStore.set('mitarbeiter',_NR,d);
+}
+async function lzHinzu(monat,f,stapel){
+  if(!f||!lzDarf())return false;
+  if(LZ.some(x=>x.monat===monat)&&!confirm(`Für ${lzText(monat)} gibt es schon einen Lohnzettel. Durch „${f.name}“ ersetzen?`))return false;
+  try{ await dokDB_('readwrite',st=>st.put(f,dokKey('lz-'+monat))); }catch(e){ alert('Datei konnte nicht gespeichert werden: '+e); return false; }
+  LZ=LZ.filter(x=>x.monat!==monat).concat([{monat,name:f.name,groesse:f.size,datum:new Date().toLocaleDateString('de-DE')}]);
+  if(!stapel){ lzZeichnen(); lzSpeichern(); }
+  return true;
+}
+async function lzOeffnen(monat,laden){
+  const w=laden?null:window.open('','_blank');
+  const f=await dokDB_('readonly',st=>st.get(dokKey('lz-'+monat))).catch(()=>null);
+  if(!f){ if(w)w.close(); alert('Der Lohnzettel liegt nicht auf diesem Gerät. Bis zum Umzug auf den Mac mini sind die Dateien nur auf dem Rechner, auf dem sie hochgeladen wurden.'); return; }
+  const url=URL.createObjectURL(f);
+  if(laden){ const a=document.createElement('a'); a.href=url; a.download=`Lohnzettel ${monat} ${((document.getElementById('vorname')||{}).value||'')} ${((document.getElementById('nachname')||{}).value||'')}`.trim().replace(/\s+/g,' ')+'.pdf'; document.body.appendChild(a); a.click(); a.remove(); }
+  else if(w) w.location.href=url; else location.href=url;
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+}
+async function lzEntfernen(monat){
+  if(!lzDarf()||!confirm(`Lohnzettel ${lzText(monat)} entfernen?`))return;
+  await dokDB_('readwrite',st=>st.delete(dokKey('lz-'+monat))).catch(()=>{});
+  LZ=LZ.filter(x=>x.monat!==monat); lzZeichnen(); lzSpeichern();
+}
+
+// ── Zugang zum Dashboard (nur Geschäftsführung, Helfer in gesamt/personal.js) ──
+function zugangZeichnen(pw){
+  const box=document.getElementById('zugangInhalt'); if(!box||!window.pkZugang)return;
+  const k=pkZugang.konto(PK_NR), v=id=>(document.getElementById(id)||{}).value||'';
+  const neuPw=pw?`<p class="zugang-pw">Startpasswort: <b>${dokEsc(pw)}</b><small>Nur jetzt sichtbar – dem Mitarbeiter persönlich geben. Er muss es bei der ersten Anmeldung ändern.</small></p>`:'';
+  if(!k){
+    box.innerHTML=`<p class="dok-hinweis">Noch kein Zugang. Mit dem Zugang sieht der Mitarbeiter nur seine eigene Personalkarte und seine Lohnzettel – nur lesen, ohne Bewertung und interne Notizen.</p>
+      <div class="zugang-neu"><input type="text" id="zugangBenutzer" value="${dokEsc(pkZugang.vorschlag(v('vorname'),v('nachname')))}" placeholder="Benutzername" aria-label="Benutzername"><button type="button" class="dok-knopf" onclick="zugangAnlegen()">Zugang anlegen</button></div>`;
+    return;
+  }
+  const status=k.aktiv===false?'gesperrt':k.mussAendern?'Startpasswort noch nicht geändert':k.letzterLogin?'zuletzt angemeldet '+new Date(k.letzterLogin).toLocaleDateString('de-DE'):'noch nie angemeldet';
+  box.innerHTML=`<div class="zugang-da"><span><b>${dokEsc(k.benutzer)}</b><small>${dokEsc(pkZugang.titel(k.ebene))} · ${status}</small></span>
+    ${k.ebene==='mitarbeiter'?`<button type="button" class="dok-knopf" onclick="zugangReset()">Passwort zurücksetzen</button>
+    <button type="button" class="dok-knopf" onclick="zugangAktiv(${k.aktiv===false})">${k.aktiv===false?'Entsperren':'Sperren'}</button>`:'<small class="dok-hinweis">Konto aus Bad/Heizung – verwaltet unter Bad → Einrichtung → Konten.</small>'}</div>${neuPw}
+    <p class="dok-hinweis">Mit diesem Zugang sieht die Person nur ihre eigene Personalkarte (nur lesen).</p>`;
+}
+async function zugangAnlegen(){
+  const v=id=>(document.getElementById(id)||{}).value||'';
+  try{ const pw=await pkZugang.anlegen(PK_NR,v('zugangBenutzer'),(v('vorname')+' '+v('nachname')).trim()); zugangZeichnen(pw); }catch(e){ alert(e.message||e); }
+}
+async function zugangReset(){
+  const k=pkZugang.konto(PK_NR); if(!k||!confirm('Neues Startpasswort für '+k.benutzer+' erzeugen? Das alte gilt dann nicht mehr.'))return;
+  try{ zugangZeichnen(await pkZugang.zuruecksetzen(k.email)); }catch(e){ alert(e.message||e); }
+}
+function zugangAktiv(an){
+  const k=pkZugang.konto(PK_NR); if(!k)return;
+  try{ pkZugang.aktiv(k.email,an); zugangZeichnen(); }catch(e){ alert(e.message||e); }
+}
+
+// ── Nur lesen (eigene Karte eines Mitarbeiters) ───────────────────────────
+function nurLesen(){
+  document.body.classList.add('nur-lesen');
+  document.querySelectorAll('.nur-intern').forEach(el=>el.remove());
+  document.querySelectorAll('#main input, #main select, #main textarea').forEach(el=>{el.disabled=true;});
+  window.saveData=function(){};
+  const z=document.querySelector('.back-btn'); if(z) z.remove();
+  if(window.PK_NUR_LOHNZETTEL){
+    document.body.classList.add('nur-lohnzettel');
+    document.querySelectorAll('.tab-btn').forEach(b=>{ if(!/showTab\('lz'/.test(b.getAttribute('onclick')||'')) b.remove(); });
+    document.querySelectorAll('.tab-content').forEach(t=>{ if(t.id!=='tab-lz') t.remove(); });
+    showTab('lz',document.querySelector('.tab-btn'));
+    const l=document.createElement('a'); l.className='back-btn'; l.href='lohn.html'+location.search.replace(/[?&](nr|lz)=[^&]*/g,'').replace(/^&/,'?'); l.textContent='← Lohnzettel';
+    document.querySelector('.topbar-left').prepend(l);
+  }
+  lzZeichnen();
+}
+
 // ── Speichern ─────────────────────────────────────────────────────────────
 function saveData(){
   const d={};
@@ -448,6 +803,11 @@ function saveData(){
   });
   d['_kinder']=JSON.stringify(kinder);
 
+  // Dokumente (nur die Liste, die Dateien liegen in IndexedDB)
+  document.querySelectorAll('#dokListe .dok-name').forEach(el=>{const x=DOKS.find(k=>k.id===el.closest('.dok-feld').dataset.id);if(x)x.name=el.value.trim();});
+  d['_dokumente']=JSON.stringify(DOKS);
+  d['_lohnzettel']=JSON.stringify(LZ);
+
   // Ehe-/Lebenspartner(in)
   const pIns=document.querySelectorAll('#partnerListe > div input');
   d['_partner']=pIns.length?JSON.stringify({n:pIns[0].value||'',g:pIns[1].value||''}):'';
@@ -461,10 +821,20 @@ function saveData(){
       genommen: tr.querySelector('.url-genommen')?.value||'0',
       rest:     tr.querySelector('.url-rest')?.value||'30',
       uebertrag:tr.querySelector('.url-uebertrag')?.value||'0',
+      krank:    tr.querySelector('.url-krank')?.value||'',
+      sonder:   tr.querySelector('.url-sonder')?.value||'',
       bemerk:   tr.querySelector('.url-bemerk')?.value||'',
     });
   });
   d['_urlaub']=JSON.stringify(urlaubData);
+
+  // Überstunden je Jahr
+  const ueData=[];
+  document.querySelectorAll('#ueberBody tr').forEach(tr=>{
+    ueData.push({year:tr.dataset.year,uebertrag:tr.querySelector('.ue-uebertrag').value,plus:tr.querySelector('.ue-plus').value,
+      abbau:tr.querySelector('.ue-abbau').value,stand:tr.querySelector('.ue-stand').value,bemerk:tr.querySelector('.ue-bemerk').value});
+  });
+  d['_ueberstunden']=JSON.stringify(ueData);
 
   // Kleidungs-Tabelle
   const akData=[];
@@ -548,6 +918,13 @@ function loadData(){
     }catch(e){}
   }
 
+  // Dokumente & Nachweise, Lohnzettel
+  dokLaden(d);
+  try{ LZ=d._lohnzettel?JSON.parse(d._lohnzettel):[]; }catch(e){ LZ=[]; }
+  lzZeichnen();
+  if(!window.PK_NUR_LESEN) zugangZeichnen();
+  regelStdZeigen(false);
+
   // Ehe-/Lebenspartner(in)
   document.getElementById('partnerListe').innerHTML='';
   if(d._partner){
@@ -563,20 +940,40 @@ function loadData(){
     }catch(e){}
   }
 
+  // Überstunden je Jahr (ältere Karten: Werte aus „Überstunden gesamt / Abgebaut“ ins laufende Jahr)
+  try{
+    let ud=d._ueberstunden?JSON.parse(d._ueberstunden):null;
+    if(!ud&&(d.gz_ueber||d.gz_abbau)) ud=[{year:String(cy),plus:d.gz_ueber||'',abbau:d.gz_abbau||'',bemerk:'aus alter Karte übernommen'}];
+    (ud||[]).forEach(u=>{
+      const tr=document.querySelector(`#ueberBody tr[data-year="${u.year}"]`); if(!tr)return;
+      const z=v=>String(v||'').trim()?ueTxt(ueStd(v)):'';
+      if(!tr.querySelector('.ue-uebertrag').readOnly) tr.querySelector('.ue-uebertrag').value=z(u.uebertrag);
+      tr.querySelector('.ue-plus').value=z(u.plus); tr.querySelector('.ue-abbau').value=z(u.abbau); tr.querySelector('.ue-bemerk').value=u.bemerk||'';
+    });
+    calcUeber();
+  }catch(e){}
+
   // Urlaubs-Tabelle
   if(d._urlaub){
     try{
       const ud=JSON.parse(d._urlaub);
       document.querySelectorAll('#urlaubBody tr').forEach((tr,i)=>{
-        const u=ud[i]; if(!u)return;
-        if(tr.querySelector('.url-anspruch'))  tr.querySelector('.url-anspruch').value =u.anspruch;
-        if(tr.querySelector('.url-genommen'))  tr.querySelector('.url-genommen').value =u.genommen;
-        if(tr.querySelector('.url-rest'))      tr.querySelector('.url-rest').value     =u.rest;
-        if(tr.querySelector('.url-uebertrag')) tr.querySelector('.url-uebertrag').value=u.uebertrag;
-        if(tr.querySelector('.url-bemerk'))    tr.querySelector('.url-bemerk').value   =u.bemerk;
+        const u=ud.some(x=>x.year)?ud.find(x=>String(x.year)===tr.dataset.year):ud[i]; if(!u)return;   // nach Jahr, nicht nach Position
+        if(tr.querySelector('.url-anspruch'))  tr.querySelector('.url-anspruch').value =u.anspruch??'';
+        if(tr.querySelector('.url-genommen'))  tr.querySelector('.url-genommen').value =u.genommen??'';
+        if(tr.querySelector('.url-rest'))      tr.querySelector('.url-rest').value     =u.rest??'';
+        if(tr.querySelector('.url-uebertrag')) tr.querySelector('.url-uebertrag').value=u.uebertrag??'';
+        if(tr.querySelector('.url-bemerk'))    tr.querySelector('.url-bemerk').value   =u.bemerk??'';
+        tr.querySelector('.url-krank').value=u.krank||''; tr.querySelector('.url-sonder').value=u.sonder||'';
       });
+      calcUrlaub();
     }catch(e){}
   }
+  // ältere Karten: „Krankheitstage (lfd. Jahr)“ und „Sonderurlaub“ ins laufende Jahr übernehmen
+  { const tr=document.querySelector(`#urlaubBody tr[data-year="${cy}"]`);
+    if(tr&&d.krank&&!tr.querySelector('.url-krank').value) tr.querySelector('.url-krank').value=d.krank;
+    if(tr&&d.sonderurlaub&&!tr.querySelector('.url-sonder').value) tr.querySelector('.url-sonder').value=d.sonderurlaub; }
+  alteJahreStart();
 
   // Kleidungs-Tabelle
   if(d._ak_table){
@@ -619,6 +1016,9 @@ const ph=(window.BrüllStore?BrüllStore.getPhoto(_NR):null)||localStorage.getIt
 }
 loadData();
 applyPendingQty(SK);
+if(window.PK_NUR_LESEN) nurLesen();
+{ const tab={'#lohnzettel':'lz','#gleitzeit':'gz','#dokumente':'son'}[location.hash];   // Direktlinks auf einen Reiter
+  const b=tab&&[...document.querySelectorAll('.tab-btn')].find(x=>(x.getAttribute('onclick')||'').includes(`showTab('${tab}'`)); if(b) showTab(tab,b); }
 
 
 // ── Fahrzeugkarte-Sync (dynamisch via fz_fahrer) ────────────────────────────────

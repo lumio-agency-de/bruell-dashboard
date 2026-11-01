@@ -338,7 +338,7 @@
   function leiste(person) {
     $("#nav").innerHTML = `<a href="./${QS}" aria-current="page"><span class="nav-i i-cockpit" aria-hidden="true"></span>Übersicht</a>
       ${BEREICHE.map((b) => `<a href="${b.id}/${QS}#/cockpit"><span class="nav-i ${b.icon}" aria-hidden="true"></span>${esc(b.titel)}</a>`).join("")}
-      ${person.ebene === "geschaeftsfuehrung" ? `<a href="personal/${QS}"><span class="nav-i i-konten" aria-hidden="true"></span>Personal</a><a href="fahrzeuge/${QS}"><span class="nav-i i-einrichtung" aria-hidden="true"></span>Fahrzeuge</a><a href="betrieb/${QS}"><span class="nav-i i-kennzahlen" aria-hidden="true"></span>Betrieb</a><a href="bad/${QS}#/konten"><span class="nav-i i-einrichtung" aria-hidden="true"></span>Konten</a>` : ""}`;
+      ${person.ebene === "geschaeftsfuehrung" ? `<a href="personal/${QS}"><span class="nav-i i-konten" aria-hidden="true"></span>Personal</a><a href="fahrzeuge/${QS}"><span class="nav-i i-einrichtung" aria-hidden="true"></span>Fahrzeuge</a><a href="betrieb/${QS}"><span class="nav-i i-kennzahlen" aria-hidden="true"></span>Betrieb</a><a href="bad/${QS}#/konten"><span class="nav-i i-einrichtung" aria-hidden="true"></span>Konten</a>` : person.ebene !== "partner" ? `<a href="personal/karte.html${QS}"><span class="nav-i i-konten" aria-hidden="true"></span>Meine Personalkarte</a>` : ""}`;
     const ini = (person.name || "?").split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
     $("#ich").innerHTML = `<div class="ich"><span class="ich-k">${esc(ini)}</span><span><b>${esc(person.name)}</b><small>${esc({ geschaeftsfuehrung: "Geschäftsführung", planung: "Planung / Bearbeitung", monteur: "Monteur" }[person.ebene] || "")}</small></span></div>
       <div class="ich-aktionen"><button class="btn klein hell" data-aktion="abmelden">Abmelden</button></div>
@@ -351,6 +351,7 @@
     PERSON = ich();
     if (!PERSON || PERSON.mussAendern) return zumLogin();
     if (PERSON.ebene === "partner") return location.replace("bad/" + QS);   // Partner arbeiten direkt in ihren Einsätzen
+    if (PERSON.ebene === "mitarbeiter") return location.replace("personal/karte.html" + QS);   // nur die eigene Personalkarte
     try { localStorage.setItem("bruell:bereich", "uebersicht"); } catch (e) { /* egal */ }
     leiste(PERSON);
     const [bad, heizung] = await Promise.all(BEREICHE.map((b) => auszugHolen(b.id)));

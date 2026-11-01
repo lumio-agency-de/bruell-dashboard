@@ -82,6 +82,26 @@
 .abt-chip-label.checked-inhaber, .abt-chip-label.checked-meister { background: var(--akzent); border-color: var(--akzent); color: var(--tinte); }
 .cb-group { display: flex; align-items: center; gap: 8px; }
 .cb-group input { width: 18px; height: 18px; accent-color: var(--tinte); }
+/* Dokumente & Nachweise: ein Feld je Dokument, Datei per Klick öffnen */
+/* Regelarbeitszeit: Auswahl + Wochenstunden bei Teilzeit / variabel */
+.regel-zeile { display: flex; gap: 8px; }
+.gz-quelle { margin-top: 4px; font-size: .72rem; color: var(--leise); }
+.regel-zeile select { flex: 1 1 auto; min-width: 0; }
+.pk-card .regel-zeile input { flex: 0 0 120px; }
+.dok-hinweis { margin: 0 0 10px; font-size: .82rem; color: var(--leise); }
+.dok-liste { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 6px; }
+.dok-feld { display: flex; align-items: center; gap: 6px; padding: 5px 8px; border: 1px dashed var(--fuge-stark); border-radius: 12px; background: var(--tinte-weich); transition: border-color 150ms ease, background-color 150ms ease; }
+.dok-feld.hat-datei { border-style: solid; border-color: var(--fuge); }
+.dok-feld.ziehen { border-color: var(--akzent); background: color-mix(in oklab, var(--akzent) 10%, var(--tinte-weich)); }
+.pk-card .dok-feld .dok-name { flex: 1 1 120px; min-width: 0; font-weight: 600; font-size: .84rem; padding: 5px 8px !important; }
+.dok-datei { flex: 1 1 160px; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; background: #fff; border: 1px solid var(--fuge); border-radius: 8px; padding: 5px 9px; cursor: pointer; font: inherit; font-size: .84rem; color: var(--tinte); text-align: left; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.dok-datei:hover { border-color: var(--akzent); }
+.dok-datei small { font-size: .72rem; color: var(--leise); }
+.dok-knopf { flex: none; font-size: .8rem; font-weight: 600; padding: 5px 8px; border-radius: 8px; border: 1px solid var(--fuge-stark); background: #fff; cursor: pointer; color: var(--tinte); }
+.dok-knopf.dok-leer { font-size: 1.05rem; line-height: 1; padding: 5px 8px; }
+.dok-alt { flex: none; font-size: .72rem; color: var(--leise); }
+.dok-weg { flex: none; background: none; border: none; color: var(--rot, #c0392b); font-size: 17px; cursor: pointer; padding: 0 4px; }
+@media (max-width: 520px) { .dok-liste { grid-template-columns: 1fr; } .dok-feld { flex-wrap: wrap; } }
 /* Gleitzeit */
 .gz-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
 .gz-card { display: grid; gap: 6px; padding: 14px; border-radius: 16px; background: var(--tinte-weich); }
@@ -176,3 +196,102 @@ body { background: #fff !important; background-image: none !important; }
 .fz-offen summary { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 0; }
 .fz-offen[open] summary { margin-bottom: 8px; }
 @media (max-width: 640px) { .fz-tank-details, .fz-offen { overflow-x: auto; } }
+
+/* ---------- Lohnabrechnung (personal/lohn.html) ---------- */
+.nav a.nav-unter { margin: -2px 0 2px 22px; padding-top: 6px; padding-bottom: 6px; font-size: .9rem; }
+.i-lohn { width: 14px; height: 10px; border: 1.5px solid currentColor; border-radius: 2px; background: radial-gradient(circle, currentColor 1.6px, transparent 2px) center / 100% 100% no-repeat; }
+.lo-seite .seite { max-width: 1200px; }
+.lo-seite #lo-monat { width: auto; }
+.lo-schritte { list-style: none; margin: 0 0 16px; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; counter-reset: none; }
+.lo-schritt { display: grid; gap: 2px; padding: 10px 12px; border: 1px dashed var(--fuge-stark); border-radius: var(--radius); background: var(--blatt); }
+.lo-schritt b { font-size: .86rem; color: var(--tinte); }
+.lo-schritt small { font-size: .74rem; color: var(--leise); }
+.lo-schritt .lo-status { margin-top: 4px; justify-self: start; font-size: .72rem; font-weight: 700; padding: 1px 8px; border-radius: 99px; background: var(--tinte-weich); color: var(--leise); }
+.lo-schritt.fertig { border-style: solid; border-color: var(--gruen); }
+.lo-schritt.fertig .lo-status { background: var(--gruen-weich); color: var(--gruen); }
+.lo-kpis { margin-bottom: 16px; }
+.lo-bankblock + .lo-bankblock, .lo-konten { margin-top: 16px; }
+.lo-tab { width: 100%; border-collapse: collapse; font-size: .88rem; }
+.lo-tab th { text-align: left; font-size: .68rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--leise); padding: 6px; white-space: nowrap; }
+.lo-tab td { padding: 6px; border-top: 1px solid var(--fuge); vertical-align: middle; }
+.lo-tab td small { display: block; font-size: .72rem; color: var(--leise); }
+.lo-tab td a { text-decoration: none; color: var(--tinte); }
+.lo-tab td a:hover b { text-decoration: underline; }
+.lo-tab .r { text-align: right; white-space: nowrap; }
+.lo-tab .lo-mitte { text-align: center; }
+.lo-tab tfoot td { border-top: 2px solid var(--fuge-stark); }
+.lo-tab .lo-betrag { width: 120px; text-align: right; font-variant-numeric: tabular-nums; }
+.lo-tab .lo-bank { width: auto; min-width: 150px; }
+.lo-tab tr.lo-erledigt td { background: color-mix(in oklab, var(--gruen-weich) 55%, transparent); }
+.lo-tab .lo-warn { color: var(--rot); font-weight: 600; }
+.lo-haken { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: .82rem; text-align: left; }
+.lo-haken input { width: 18px; height: 18px; accent-color: var(--gruen); }
+.lo-zettel { color: var(--leise); }
+.lo-zettel.da { color: var(--gruen); font-weight: 700; text-decoration: none; font-size: .82rem; }
+.lo-aktion { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.lo-konten summary { cursor: pointer; list-style: none; }
+.lo-konten summary::-webkit-details-marker { display: none; }
+.lo-konten summary::before { content: "▸"; margin-right: 4px; transition: transform 150ms ease; display: inline-block; }
+.lo-konten[open] summary::before { transform: rotate(90deg); }
+@media (max-width: 820px) { .lo-schritte { grid-template-columns: 1fr 1fr; } .lo-kpis { grid-template-columns: 1fr 1fr; } }
+.lo-scroll { overflow-x: auto; }
+
+/* ---------- Personalkarte: Lohnzettel, Zugang, Nur-lesen-Ansicht ---------- */
+.lz-jahr-neu, .zugang-neu { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+.pk-card .lz-jahr-neu select { width: auto; }
+.pk-card .zugang-neu input { width: 220px; }
+.lz-liste { display: grid; gap: 8px; max-width: 860px; }
+.lz-ordner { border: 1px solid var(--fuge-stark); border-radius: 12px; background: var(--blatt); }
+.lz-ordner > summary { cursor: pointer; list-style: none; display: flex; align-items: baseline; gap: 8px; padding: 10px 12px; font-size: .95rem; }
+.lz-ordner > summary::-webkit-details-marker { display: none; }
+.lz-ordner > summary small { font-size: .74rem; color: var(--leise); }
+.lz-ordner[open] > summary { border-bottom: 1px solid var(--fuge); }
+.lz-monate { display: grid; gap: 6px; padding: 10px 12px; }
+.lz-monat { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border: 1px dashed var(--fuge-stark); border-radius: 10px; background: var(--tinte-weich); transition: border-color 150ms ease, background-color 150ms ease; }
+.lz-monat.hat-datei { border-style: solid; border-color: var(--fuge); }
+.lz-monat.ziehen { border-color: var(--akzent); background: color-mix(in oklab, var(--akzent) 10%, var(--tinte-weich)); }
+.lz-monat > b { flex: 0 0 90px; font-size: .86rem; }
+.lz-monat .dok-knopf.dok-leer { flex: none; font-size: .8rem; }
+.lz-monat .lz-laden { flex: none; }
+.zugang-da { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.zugang-da > span { display: grid; margin-right: 8px; }
+.zugang-da small { font-size: .74rem; color: var(--leise); }
+.zugang-pw { margin: 10px 0 0; padding: 10px 12px; border-radius: 12px; background: var(--akzent-weich); }
+.zugang-pw b { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1.05rem; letter-spacing: .04em; }
+.zugang-pw small { display: block; font-size: .74rem; color: var(--leise); }
+.nur-lesen .btn-save, .nur-lesen .lz-gf, .nur-lesen .dok-feld .dok-weg, .nur-lesen .dok-feld .dok-knopf.dok-leer, .nur-lesen .dok-feld label.dok-knopf,
+.nur-lesen .pk-card button[onclick^="add"], .nur-lesen .pk-card button[onclick*="remove"], .nur-lesen #partnerBtn,
+.nur-lesen .pk-card a[href*="fahrzeuge/"] { display: none !important; }
+.nur-lesen .photo-slot, .nur-lesen .stars { pointer-events: none; }
+.nur-lesen .pk-card input:disabled, .nur-lesen .pk-card select:disabled, .nur-lesen .pk-card textarea:disabled { opacity: 1; color: var(--tinte); -webkit-text-fill-color: var(--tinte); cursor: default; }
+.nur-lesen .dok-feld:not(.hat-datei) { display: none; }
+.lo-einst { margin-top: 16px; }
+.lo-rechte { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; }
+.lo-rechte label { display: flex; align-items: baseline; gap: 8px; cursor: pointer; }
+.lo-rechte input { width: 18px; height: 18px; accent-color: var(--tinte); align-self: center; }
+.lo-rechte small { color: var(--leise); font-size: .76rem; }
+a.lo-zettel { text-decoration: none; }
+.lz-leiste { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+.lz-leiste .lz-jahr-neu { margin: 0; }
+.lz-auswahl-laden:disabled { opacity: .5; cursor: default; }
+.lz-ordner > summary .lz-alle { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; font-size: .78rem; color: var(--leise); cursor: pointer; }
+.lz-ordner > summary .lz-zu { margin-left: 8px; background: none; border: 1px solid transparent; border-radius: 8px; padding: 3px 8px; font: inherit; font-size: .76rem; color: var(--leise); cursor: pointer; }
+.lz-ordner > summary .lz-alle + .lz-zu { margin-left: 8px; }
+.lz-ordner > summary small + .lz-zu { margin-left: auto; }
+.lz-ordner > summary .lz-zu:hover { border-color: var(--fuge-stark); color: var(--tinte); }
+.lz-drop { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border: 1.5px dashed var(--fuge-stark); border-radius: 12px; cursor: pointer; font-size: 1.3rem; transition: border-color 150ms ease, background-color 150ms ease; }
+.lz-drop span { display: grid; font-size: .86rem; }
+.lz-drop small { font-size: .74rem; color: var(--leise); }
+.lz-drop:hover, .lz-drop.ziehen { border-color: var(--akzent); background: color-mix(in oklab, var(--akzent) 10%, transparent); }
+.lz-monat .lz-wahl { width: 18px; height: 18px; flex: none; accent-color: var(--tinte); }
+/* Gleitzeit & Urlaub: enge Jahrestabellen, ältere Jahre einklappbar */
+.dt-eng th, .dt-eng td { width: 1%; white-space: nowrap; padding-left: 4px; padding-right: 4px; }
+.dt-eng th:last-child, .dt-eng td:last-child { width: auto; }
+.dt-eng th { white-space: normal; line-height: 1.2; }
+.pk-card .dt-eng td input { width: 76px !important; padding-left: 8px !important; padding-right: 6px !important; }
+.pk-card .dt-eng td:last-child input { width: 100% !important; min-width: 120px; }
+.dt-eng tr.alt-jahr { display: none; }
+.dt-eng.zeige-alt tr.alt-jahr { display: table-row; }
+.jahre-umschalter { display: inline-block; margin: 0 0 6px; background: none; border: none; padding: 2px 0; font: inherit; font-size: .8rem; font-weight: 600; color: var(--leise); cursor: pointer; }
+.jahre-umschalter:hover { color: var(--tinte); }
+.pk-card .gz-card input[type="month"] { font-size: .95rem !important; font-family: inherit !important; padding-left: 8px !important; padding-right: 6px !important; }

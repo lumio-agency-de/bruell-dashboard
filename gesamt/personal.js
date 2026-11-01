@@ -18,29 +18,67 @@ var PK_NR = (new URLSearchParams(location.search).get("nr") || "").replace(/\D/g
   const lesen = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } };
   const qs = (extra) => { const p = new URLSearchParams(QS); for (const [k, v] of Object.entries(extra || {})) p.set(k, v); const s = p.toString(); return s ? "?" + s : ""; };
 
-  /* ---------- Anmeldung: nur Geschäftsführung ---------- */
+  /* ---------- Anmeldung ----------
+     Geschäftsführung: alles. Alle anderen (auch Ebene „mitarbeiter“ = nur Personalkarte): nur die
+     EIGENE Personalkarte, nur lesen. Verknüpfung Konto → Karte über konto.pk, sonst Kürzel oder Name.
+     Achtung: Auf GitHub Pages ist das nur Bedienung, kein Schutz – echte Rechte erst auf dem Mac mini. */
   function ich() {
     let email = null;
     try { email = JSON.parse(sessionStorage.getItem("bruell:sitzung")); } catch (e) { /* egal */ }
     email = email || lesen("bruell:sitzung", null);
     const k = email && lesen("bruell:konten", []).find((x) => x.email === email && x.aktiv !== false);
-    return k ? { id: k.id, name: k.name || k.benutzer, ebene: k.ebene } : null;
+    return k ? { id: k.id, name: k.name || k.benutzer, ebene: k.ebene, email: k.email, pk: k.pk ? String(k.pk) : "", mussAendern: !!k.mussAendern, lohnzettel: !!k.lohnzettel } : null;
+  }
+  const EBENE_TITEL = { geschaeftsfuehrung: "Geschäftsführung", planung: "Planung / Bearbeitung", monteur: "Monteur", mitarbeiter: "Mitarbeiter", partner: "Partner" };
+  const norm = (t) => String(t || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  /* Personalnummer zu einem Konto */
+  function pkVon(k) {
+    if (k.pk) return String(k.pk);
+    const l = Object.keys(localStorage).filter((x) => /^pk_\d+$/.test(x)).map((x) => ({ nr: x.slice(3), d: lesen(x, {}) }));
+    const t = l.find((x) => k.id && norm(x.d.kuerzel) === norm(k.id)) || l.find((x) => k.name && norm((x.d.vorname || "") + " " + (x.d.nachname || "")) === norm(k.name));
+    return t ? t.nr : "";
+  }
+  /* Konto zu einer Personalkarte (für „Zugang zum Dashboard“) */
+  function kontoVon(nr) {
+    const l = lesen("bruell:konten", []);
+    return l.find((k) => String(k.pk || "") === String(nr)) || l.find((k) => k.ebene !== "partner" && !k.pk && pkVon(k) === String(nr)) || null;
   }
   const PERSON = ich();
-  if (!PERSON) { try { sessionStorage.setItem("bruell:zurueck", "1"); } catch (e) { /* egal */ } location.replace("../bad/" + QS); return; }
-  if (PERSON.ebene !== "geschaeftsfuehrung") { location.replace("../" + QS); return; }
+  if (!PERSON || PERSON.mussAendern) { try { sessionStorage.setItem("bruell:zurueck", "1"); } catch (e) { /* egal */ } location.replace("../bad/" + QS); return; }   // Startpasswort wird bei der Anmeldung geändert
+  const GF = PERSON.ebene === "geschaeftsfuehrung";
+  /* Freigabe „Lohnzettel hochladen“ (Lohnabrechnung → Einstellungen): Seite Lohnzettel + Reiter Lohnzettel fremder Karten */
+  const LZ_FREI = !GF && PERSON.lohnzettel, HIER = document.body.dataset.bereich || "";
+  if (!GF) PERSON.pk = pkVon(PERSON);
+  if (LZ_FREI && HIER === "lohn") window.LOHN_NUR_ZETTEL = true;
+  else if (LZ_FREI && document.body.classList.contains("karte-seite") && PK_NR !== PERSON.pk && new URLSearchParams(location.search).has("lz")) { window.PK_NUR_LESEN = window.PK_NUR_LOHNZETTEL = window.PK_LZ_DARF = true; }
+  else if (!GF) {
+    if (!PERSON.pk) {
+      if (PERSON.ebene !== "mitarbeiter") { location.replace("../" + QS); return; }
+      document.addEventListener("DOMContentLoaded", () => { document.body.innerHTML = '<main class="main"><div class="seite"><div class="panel startfeld"><h2>Keine Personalkarte verknüpft</h2><p>Bitte an die Geschäftsführung wenden.</p></div></div></main>'; });
+      return;
+    }
+    if (!document.body.classList.contains("karte-seite") || PK_NR !== PERSON.pk) { location.replace("../personal/karte.html" + qs({ nr: PERSON.pk })); return; }
+    window.PK_NUR_LESEN = true;
+    if (LZ_FREI) window.PK_LZ_DARF = true;
+  }
 
   /* ---------- Leiste ---------- */
   function leiste() {
     const ini = (PERSON.name || "?").split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
     const hier = document.body.dataset.bereich || "personal";
-    const nav = [["../", "Übersicht", "i-cockpit"], ["../bad/", "Bad", "i-projekte"], ["../heizung/", "Heizung", "i-projekte"],
-      ["../personal/", "Personal", "i-konten", hier === "personal"], ["../fahrzeuge/", "Fahrzeuge", "i-einrichtung", hier === "fahrzeuge"], ["../betrieb/", "Betrieb", "i-kennzahlen", hier === "betrieb"]];
-    $("#rail").innerHTML = `<a class="marke" href="../${QS}"><img class="marke-logo" src="../bad/app/img/logo.svg" alt=""><span class="marke-text"><strong>Brüll GmbH</strong><small>${{ fahrzeuge: "Fahrzeuge", betrieb: "Betriebsmonitor" }[hier] || "Personal"}</small></span></a>
-      <nav class="nav">${nav.map(([h, t, i, an]) => `<a href="${h}${QS}"${an ? ' aria-current="page"' : ""}><span class="nav-i ${i}" aria-hidden="true"></span>${t}</a>`).join("")}</nav>
-      <div class="speicher"><div class="ich"><span class="ich-k">${esc(ini)}</span><span><b>${esc(PERSON.name)}</b><small>Geschäftsführung</small></span></div>
+    const eigene = ["../personal/karte.html" + qs({ nr: PERSON.pk }), "Meine Personalkarte", "i-konten", true];
+    const nav = !GF ? [...(PERSON.ebene === "mitarbeiter" ? [] : [["../", "Übersicht", "i-cockpit"], ["../bad/", "Bad", "i-projekte"], ["../heizung/", "Heizung", "i-projekte"]]),
+        ...(PERSON.pk ? [[eigene[0], eigene[1], eigene[2], hier !== "lohn" && PK_NR === PERSON.pk]] : []), ...(LZ_FREI ? [["../personal/lohn.html", "Lohnzettel", "i-lohn", hier === "lohn" || !!window.PK_NUR_LOHNZETTEL]] : [])]
+      : [["../", "Übersicht", "i-cockpit"], ["../bad/", "Bad", "i-projekte"], ["../heizung/", "Heizung", "i-projekte"],
+      ["../personal/", "Personal", "i-konten", hier === "personal"],
+      /* Unterpunkt nur im Bereich Personal sichtbar */
+      ...(hier === "personal" || hier === "lohn" ? [["../personal/lohn.html", "Lohnabrechnung", "i-lohn", hier === "lohn", "nav-unter"]] : []),
+      ["../fahrzeuge/", "Fahrzeuge", "i-einrichtung", hier === "fahrzeuge"], ["../betrieb/", "Betrieb", "i-kennzahlen", hier === "betrieb"]];
+    $("#rail").innerHTML = `<a class="marke" href="../${QS}"><img class="marke-logo" src="../bad/app/img/logo.svg" alt=""><span class="marke-text"><strong>Brüll GmbH</strong><small>${{ fahrzeuge: "Fahrzeuge", betrieb: "Betriebsmonitor", lohn: "Lohnabrechnung" }[hier] || "Personal"}</small></span></a>
+      <nav class="nav">${nav.map(([h, t, i, an, kl]) => `<a href="${h.includes("?") ? h : h + QS}"${kl ? ` class="${kl}"` : ""}${an ? ' aria-current="page"' : ""}><span class="nav-i ${i}" aria-hidden="true"></span>${t}</a>`).join("")}</nav>
+      <div class="speicher"><div class="ich"><span class="ich-k">${esc(ini)}</span><span><b>${esc(PERSON.name)}</b><small>${esc(EBENE_TITEL[PERSON.ebene] || "")}</small></span></div>
         <div class="ich-aktionen"><button class="btn klein hell" type="button" id="abmelden">Abmelden</button></div>
-        <p class="modus">${DEMO ? "Demo – Daten nur in diesem Browser" : hier === "betrieb" ? "Betriebszahlen – vertraulich" : "Personaldaten – vertraulich"}</p></div>`;
+        <p class="modus">${!GF ? (LZ_FREI ? "Lohnzettel hochladen freigegeben" : "Nur lesen") + (DEMO ? " · Demo" : "") : DEMO ? "Demo – Daten nur in diesem Browser" : hier === "betrieb" ? "Betriebszahlen – vertraulich" : "Personaldaten – vertraulich"}</p></div>`;
     $("#abmelden").addEventListener("click", () => {
       try { localStorage.removeItem("bruell:sitzung"); sessionStorage.removeItem("bruell:sitzung"); sessionStorage.setItem("bruell:zurueck", "1"); } catch (e) { /* egal */ }
       location.replace("../bad/" + QS);
@@ -51,10 +89,10 @@ var PK_NR = (new URLSearchParams(location.search).get("nr") || "").replace(/\D/g
   const jahr = new Date().getFullYear();
   const urlaub = (gen) => JSON.stringify([...Array(5)].map((_, i) => { const y = jahr - 3 + i, g = y < jahr ? 30 : y === jahr ? gen : 0; return { year: String(y), anspruch: "30", genommen: String(g), rest: String(30 - g), uebertrag: "0", bemerk: "" }; }));
   const DEMO_MA = [
-    { nr: 901, vorname: "Max", nachname: "Muster", position: "Monteur – Bad", abt: ["bad_sanitaer"], kuerzel: "MM", gz_soll: "40:00", gz_ist: "43:30", gen: 12, einstellung: "01.03.2019", stars: [4, 5, 4, 3, 4] },
-    { nr: 902, vorname: "Erika", nachname: "Beispiel", position: "Büro – Bad", abt: ["buero", "bad_sanitaer"], kuerzel: "EB", gz_soll: "23:00", gz_ist: "22:15", gen: 18, einstellung: "15.08.2021", stars: [5, 5, 5, 5, 4] },
-    { nr: 903, vorname: "Tom", nachname: "Vorlage", position: "Heizungsbauer", abt: ["heizung", "kundendienst"], kuerzel: "TV", gz_soll: "40:00", gz_ist: "38:00", gen: 22, einstellung: "01.09.2016", stars: [5, 4, 4, 4, 5] },
-    { nr: 904, vorname: "Lena", nachname: "Probe", position: "Auszubildende", abt: ["ausbildung", "bad_sanitaer"], kuerzel: "LP", gz_soll: "40:00", gz_ist: "40:00", gen: 9, einstellung: "01.09.2025", stars: [3, 4, 5, 4, 4] },
+    { nr: 901, vorname: "Max", nachname: "Muster", position: "Monteur – Bad", abt: ["bad_sanitaer"], kuerzel: "MM", gz_soll: "173:20", gz_ist: "176:50", gen: 12, einstellung: "01.03.2019", stars: [4, 5, 4, 3, 4] },
+    { nr: 902, vorname: "Erika", nachname: "Beispiel", position: "Büro – Bad", abt: ["buero", "bad_sanitaer"], kuerzel: "EB", gz_soll: "99:40", gz_ist: "98:55", gen: 18, einstellung: "15.08.2021", stars: [5, 5, 5, 5, 4] },
+    { nr: 903, vorname: "Tom", nachname: "Vorlage", position: "Heizungsbauer", abt: ["heizung", "kundendienst"], kuerzel: "TV", gz_soll: "173:20", gz_ist: "171:20", gen: 22, einstellung: "01.09.2016", stars: [5, 4, 4, 4, 5] },
+    { nr: 904, vorname: "Lena", nachname: "Probe", position: "Auszubildende", abt: ["ausbildung", "bad_sanitaer"], kuerzel: "LP", gz_soll: "173:20", gz_ist: "173:20", gen: 9, einstellung: "01.09.2025", stars: [3, 4, 5, 4, 4] },
   ];
   /* Echte Mitarbeiter vorladen: vollständig aus personal/daten-lokal.js (nur auf dem eigenen Rechner),
      sonst Name/Position/Abteilung aus personal/team.js. Vorhandene Karten werden nie überschrieben. */
@@ -101,8 +139,8 @@ var PK_NR = (new URLSearchParams(location.search).get("nr") || "").replace(/\D/g
     if (!DEMO || Object.keys(localStorage).some((k) => /^pk_\d+$/.test(k))) return;
     for (const m of DEMO_MA) {
       const [fach, zuv, team, kund, init] = m.stars, toMin = (v) => { const [h, mi] = v.split(":"); return +h * 60 + +mi; }, s = toMin(m.gz_ist) - toMin(m.gz_soll);
-      const d = { vorname: m.vorname, nachname: m.nachname, position: m.position, kuerzel: m.kuerzel, einstellung: m.einstellung, regelarbeitszeit: m.gz_soll.startsWith("23") ? "23std" : "40std",
-        stammlohnart: m.position.startsWith("Auszu") ? "azubi" : m.gz_soll.startsWith("23") ? "teilzeit" : "normalstunden", gz_soll: m.gz_soll, gz_ist: m.gz_ist, gz_saldo: (s < 0 ? "-" : "") + Math.floor(Math.abs(s) / 60) + ":" + String(Math.abs(s) % 60).padStart(2, "0"),
+      const d = { vorname: m.vorname, nachname: m.nachname, position: m.position, kuerzel: m.kuerzel, einstellung: m.einstellung, regelarbeitszeit: m.gz_soll.startsWith("99") ? "23std" : "40std",
+        stammlohnart: m.position.startsWith("Auszu") ? "azubi" : m.gz_soll.startsWith("99") ? "teilzeit" : "normalstunden", gz_soll: m.gz_soll, gz_ist: m.gz_ist, gz_saldo: (s < 0 ? "-" : "") + Math.floor(Math.abs(s) / 60) + ":" + String(Math.abs(s) % 60).padStart(2, "0"),
         krank: "2", abteilung_multi: JSON.stringify(m.abt), abteilung: m.abt[0], _urlaub: urlaub(m.gen), _kinder: "[]", _ak_table: JSON.stringify([["Arbeitshose", "AH-01", "Brüll Navy", "52", "2"], ["T-Shirt", "TS-02", "Logo", "L", "4"]]),
         _wz_table: "[]", _ak_bestellung_rows: "[]", stars_fach: fach, stars_zuv: zuv, stars_team: team, stars_kund: kund, stars_init: init, email: m.vorname.toLowerCase() + "@beispiel.de" };
       try { localStorage.setItem("pk_" + m.nr, JSON.stringify(d)); } catch (e) { /* voll */ }
@@ -162,6 +200,48 @@ var PK_NR = (new URLSearchParams(location.search).get("nr") || "").replace(/\D/g
     };
     naechste(0);
   }
+
+  /* ---------- Zugang zum Dashboard für eine Personalkarte (nur Geschäftsführung) ----------
+     Gleiches Kontoformat wie die Anmeldung in Bad/Heizung (bruell:konten, Prüfsumme statt Passwort).
+     Neue Konten bekommen die Ebene „mitarbeiter“: nur die eigene Personalkarte, nur lesen. */
+  const kontoEmail = (b) => { const x = String(b || "").trim().toLowerCase(); return x.includes("@") ? x : `${x}@konto.bad-dashboard.de`; };
+  const zufall = (n) => [...crypto.getRandomValues(new Uint8Array(n))].map((b) => b.toString(36).padStart(2, "0")).join("").slice(0, n);
+  async function pruefsumme(salz, pw) {
+    const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(salz + "|" + pw));
+    return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, "0")).join("");
+  }
+  const startPasswort = () => { const z = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789", r = crypto.getRandomValues(new Uint8Array(10)); return [...r].map((b) => z[b % z.length]).join(""); };
+  window.pkZugang = GF ? {
+    konto: kontoVon,
+    titel: (e) => EBENE_TITEL[e] || e || "",
+    vorschlag: (vorname, nachname) => (norm(vorname).replace(/[^a-z]/g, "") + "." + norm(nachname).replace(/[^a-z]/g, "")).replace(/^\.|\.$/g, ""),
+    async anlegen(nr, benutzer, name) {
+      benutzer = String(benutzer || "").trim().toLowerCase();
+      if (!/^[a-z0-9._-]{3,}$/.test(benutzer)) throw new Error("Benutzername: mindestens 3 Zeichen, nur a–z, 0–9, Punkt, Strich.");
+      const l = lesen("bruell:konten", []), email = kontoEmail(benutzer);
+      if (l.some((k) => k.email === email)) throw new Error("Benutzername schon vergeben.");
+      const pw = startPasswort(), salz = zufall(24);
+      l.push({ email, benutzer, id: "pk-" + nr, pk: String(nr), ebene: "mitarbeiter", name, formulare: [], salz, hash: await pruefsumme(salz, pw), aktiv: true, mussAendern: true });
+      localStorage.setItem("bruell:konten", JSON.stringify(l));
+      return pw;
+    },
+    async zuruecksetzen(email) {
+      const l = lesen("bruell:konten", []), k = l.find((x) => x.email === email); if (!k) throw new Error("Konto nicht gefunden.");
+      const pw = startPasswort(); k.salz = zufall(24); k.hash = await pruefsumme(k.salz, pw); k.mussAendern = true;
+      localStorage.setItem("bruell:konten", JSON.stringify(l)); return pw;
+    },
+    /* Freigabe „Lohnzettel hochladen“ */
+    lohnzettel(email, an) {
+      const l = lesen("bruell:konten", []), k = l.find((x) => x.email === email); if (!k) return;
+      k.lohnzettel = !!an; localStorage.setItem("bruell:konten", JSON.stringify(l));
+    },
+    alle: () => lesen("bruell:konten", []),
+    aktiv(email, an) {
+      const l = lesen("bruell:konten", []), k = l.find((x) => x.email === email); if (!k) return;
+      if (k.email === PERSON.email) throw new Error("Das eigene Konto kann nicht gesperrt werden.");
+      k.aktiv = an; localStorage.setItem("bruell:konten", JSON.stringify(l));
+    },
+  } : null;
 
   /* ---------- Personalkarte: Kopfzeile aus den Daten ---------- */
   window.pkKopfAktualisieren = function () {

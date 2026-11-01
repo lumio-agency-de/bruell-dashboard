@@ -74,4 +74,6 @@ html[data-thema="dunkel"] .pk-card input:not([type="checkbox"]):not([type="radio
 html[data-thema="dunkel"] .abt-chip-label { background: var(--feld) !important; }
 html[data-thema="dunkel"] .abt-chip-label[class*="checked-"] { background: var(--flaeche-stark) !important; }
 html[data-thema="dunkel"] .abt-chip-label.checked-inhaber, html[data-thema="dunkel"] .abt-chip-label.checked-meister { color: #18181b !important; }
+html[data-thema="dunkel"] .dok-datei { background: var(--feld) !important; }
+html[data-thema="dunkel"] .dok-knopf { background: var(--feld) !important; }
 html[data-thema="dunkel"] .fz-schild { background: var(--feld) !important; }

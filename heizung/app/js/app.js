@@ -2489,7 +2489,7 @@
         S.einstellungen = neu; await Daten.einstellungenSpeichern(S.einstellungen);
         for (const k of S.konten || []) {
           const m = mitgliedZu(k.id);
-          if (!m) { if (k.aktiv && k.id !== S.ich.id) await Daten.kontoAktiv(k.email, false); continue; }
+          if (!m) { if (k.ebene !== "mitarbeiter" && k.aktiv && k.id !== S.ich.id) await Daten.kontoAktiv(k.email, false); continue; }   // Personalkarten-Zugänge (Ebene „mitarbeiter“) nicht sperren
           const forms = m.ebene === "partner" ? partnerFormulare(m.gewerk) : [];
           if (m.ebene !== k.ebene || m.name !== k.name || m.ebene === "partner") await Daten.kontoAendern(k.id, m.ebene, m.name, forms);
         }

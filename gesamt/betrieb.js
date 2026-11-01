@@ -57,11 +57,17 @@
     return 85;
   }
   const isoAus = (de) => { const m = String(de || "").match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/); return m ? `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}` : (/^\d{4}-\d\d-\d\d$/.test(de || "") ? de : ""); };
+  /* Wochenstunden aus der Personalkarte: feste Auswahl oder eigene Stunden bei „Teilzeit / variabel“ */
+  function wochenStdVon(d) {
+    const r = d.regelarbeitszeit || "", eigen = parseFloat(String(d.regel_std || "").replace(",", "."));
+    if (r === "teilzeit") return eigen > 0 ? eigen : 23;
+    return parseFloat(r) || 40;
+  }
   function personenAusPersonal() {
     return Object.keys(localStorage).filter((k) => /^pk_\d+$/.test(k)).map((k) => ({ nr: k.slice(3), d: lesen(k, {}) }))
       .filter((x) => x.d && (x.d.vorname || x.d.nachname)).sort((a, b) => +a.nr - +b.nr)
       .map((x) => ({ nr: x.nr, name: ((x.d.vorname || "") + " " + (x.d.nachname || "")).trim(), rolle: x.d.position || "",
-        wochenStd: /teilzeit|23/.test(x.d.regelarbeitszeit || "") ? 23 : 40, produktiv: produktivVon(x.d.position), lohnJahr: 0,
+        wochenStd: wochenStdVon(x.d), produktiv: produktivVon(x.d.position), lohnJahr: 0,
         eintritt: isoAus(x.d.einstellung), austritt: isoAus(x.d.austritt) }));
   }
   function leer() {
