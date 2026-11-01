@@ -16,8 +16,7 @@
    ========================================================================== */
 (function () {
   "use strict";
-  const box = document.getElementById("bu-inhalt");
-  if (!box) return;
+  const box = document.getElementById("bu-inhalt");   // nur auf der Buchhaltungsseite; der Abgleich selbst läuft auch auf den Bankseiten
   const $ = (s, r = document) => r.querySelector(s);
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const lesen = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } };
@@ -40,78 +39,8 @@
   const KONTEN = { sparkasse: "Sparkasse", raiba: "Raiffeisenbank" };
   let filterUm = "pruefen", filterRe = "offen", BERICHT = "";
 
-  /* ---------- Kontoauszug lesen ---------- */
-  function camt(xml) {
-    const doc = new DOMParser().parseFromString(xml, "application/xml"), t = (el, n) => el ? [...el.getElementsByTagNameNS("*", n)] : [], eins = (el, n) => t(el, n)[0];
-    const kontoIban = iban((eins(eins(doc, "Acct"), "IBAN") || {}).textContent);
-    return t(doc, "Ntry").flatMap((n) => {
-      const betrag = cent(parseFloat((eins(n, "Amt") || {}).textContent || "0")), soll = ((eins(n, "CdtDbtInd") || {}).textContent || "") === "DBIT";
-      const datum = isoDatum(((eins(eins(n, "BookgDt"), "Dt") || eins(eins(n, "BookgDt"), "DtTm") || eins(eins(n, "ValDt"), "Dt")) || {}).textContent);
-      const details = t(n, "TxDtls"), liste = details.length ? details : [n];
-      return liste.map((d) => {
-        const teil = details.length > 1 && eins(d, "Amt") ? cent(parseFloat(eins(d, "Amt").textContent)) : betrag;
-        const gegen = soll ? eins(d, "Cdtr") || eins(d, "CdtrAcct") : eins(d, "Dbtr") || eins(d, "DbtrAcct");
-        const gegenKto = soll ? eins(d, "CdtrAcct") : eins(d, "DbtrAcct");
-        return { datum, betrag: soll ? -teil : teil, name: ((eins(gegen, "Nm") || {}).textContent || "").trim(), iban: iban((eins(gegenKto, "IBAN") || {}).textContent),
-          zweck: t(d, "Ustrd").map((u) => u.textContent).join(" ").replace(/\s+/g, " ").trim() || ((eins(n, "AddtlNtryInf") || {}).textContent || "").trim(), kontoIban };
-      });
-    });
-  }
-  function csvZeilen(text) {
-    const kopf = text.split(/\r?\n/).find((z) => z.trim()) || "", trenn = (kopf.match(/;/g) || []).length >= (kopf.match(/,/g) || []).length ? ";" : ",";
-    const zeilen = [], feld = []; let f = "", q = false, z = [];
-    for (let i = 0; i < text.length; i++) {
-      const c = text[i];
-      if (q) { if (c === '"' && text[i + 1] === '"') { f += '"'; i++; } else if (c === '"') q = false; else f += c; }
-      else if (c === '"') q = true; else if (c === trenn) { z.push(f); f = ""; } else if (c === "\n" || c === "\r") { if (c === "\r" && text[i + 1] === "\n") i++; z.push(f); f = ""; if (z.some((x) => x.trim())) zeilen.push(z); z = []; } else f += c;
-    }
-    z.push(f); if (z.some((x) => x.trim())) zeilen.push(z);
-    void feld; return zeilen;
-  }
-  function spalte(kopf, ...muster) { for (const m of muster) { const i = kopf.findIndex((h) => m.test(norm(h).trim())); if (i >= 0) return i; } return -1; }
-  function bankCsv(text) {
-    const z = csvZeilen(text); let k = z.findIndex((r) => r.some((h) => /buchungstag|buchungsdatum/.test(norm(h)))); if (k < 0) throw new Error("CSV: Spalte „Buchungstag“ nicht gefunden");
-    const kopf = z[k], i = {
-      datum: spalte(kopf, /^buchungstag$/, /buchungstag/, /buchungsdatum/),
-      betrag: spalte(kopf, /^betrag/, /^umsatz/), soll: spalte(kopf, /^soll/), haben: spalte(kopf, /^haben/),
-      name: spalte(kopf, /beguenstigter\/zahlungspflichtiger/, /name zahlungsbeteiligter/, /zahlungsempfanger|empfanger\/zahlungspflichtiger/, /^name$/, /auftraggeber/),
-      iban: spalte(kopf, /iban zahlungsbeteiligter/, /kontonummer\/iban/, /^iban$/, /empfanger.*iban|iban.*empfanger/),
-      zweck: spalte(kopf, /verwendungszweck/, /^zweck/), konto: spalte(kopf, /iban auftragskonto/, /^auftragskonto$/),
-    };
-    if (i.betrag < 0 && i.soll < 0) throw new Error("CSV: Spalte „Betrag“ nicht gefunden");
-    return z.slice(k + 1).filter((r) => r[i.datum]).map((r) => ({ datum: isoDatum(r[i.datum]), betrag: i.betrag >= 0 ? cent(r[i.betrag]) : cent(r[i.haben]) - Math.abs(cent(r[i.soll])),
-      name: (r[i.name] || "").trim(), iban: iban(r[i.iban]), zweck: (r[i.zweck] || "").replace(/\s+/g, " ").trim(), kontoIban: iban(r[i.konto]) })).filter((u) => u.datum && u.betrag);
-  }
-  /* Bank-CSV kommt oft in Windows-Zeichensatz (Umlaute) – erst UTF-8 versuchen, sonst windows-1252 */
-  async function text(f) { const b = await f.arrayBuffer(); try { return new TextDecoder("utf-8", { fatal: true }).decode(b); } catch (e) { return new TextDecoder("windows-1252").decode(b); } }
-  const lohnKonten = () => lesen("lohn:konten", {});
-  function kontoVon(kontoIban, wahl) {
-    const k = lohnKonten();
-    for (const key of Object.keys(KONTEN)) if (kontoIban && k[key] && iban(k[key].iban) === kontoIban) return key;
-    return wahl;
-  }
-  async function zipLesen(datei) {
-    if (!window.zip) await new Promise((ok, f) => { const s = document.createElement("script"); s.src = "../gesamt/vendor/zip.min.js"; s.onload = ok; s.onerror = f; document.head.appendChild(s); });
-    window.zip.configure({ useWebWorkers: false });
-    const r = new window.zip.ZipReader(new window.zip.BlobReader(datei)), raus = [];
-    for (const e of await r.getEntries()) if (!e.directory) raus.push(new File([await e.getData(new window.zip.BlobWriter())], e.filename.split("/").pop()));
-    await r.close(); return raus;
-  }
-  async function auszugEinlesen(dateien, wahl) {
-    let neu = 0, doppelt = 0, liste = [];
-    for (const f of dateien) { if (/\.zip$/i.test(f.name)) liste.push(...await zipLesen(f)); else liste.push(f); }
-    for (const f of liste) {
-      const inhalt = await text(f), um = /\.xml$/i.test(f.name) || /^\s*<\?xml|<Document/i.test(inhalt.slice(0, 300)) ? camt(inhalt) : bankCsv(inhalt);
-      for (const u of um) {
-        const konto = kontoVon(u.kontoIban, wahl), id = hash([konto, u.datum, u.betrag, u.name, u.zweck].join("|"));
-        if (UM.some((x) => x.id === id)) { doppelt++; continue; }
-        UM.push({ id, konto, datum: u.datum, betrag: u.betrag, name: u.name, iban: u.iban, zweck: u.zweck, status: "", rechnungen: [], hinweis: "" }); neu++;
-      }
-    }
-    abgleichen(); sichern();
-    BERICHT = `Kontoauszug: ${neu} neue Umsätze eingelesen${doppelt ? `, ${doppelt} schon vorhanden (übersprungen)` : ""}.`;
-    zeichnen();
-  }
+  /* Kontoauszüge werden unter Betrieb → Bank eingelesen (gesamt/bank.js); hier nur die CSV-Hilfen für Rechnungen */
+  const { csvZeilen, spalte, text } = window.Bank.hilfe;
 
   /* ---------- Rechnungen lesen ---------- */
   function rechnungenCsv(text, art) {
@@ -179,6 +108,10 @@
     }
   }
 
+  /* Abgleich von außen (Bankseite nach dem Einlesen) */
+  window.BuchAbgleich = () => { RE = lesen("buch:rechnungen", []); UM = lesen("buch:umsaetze", []); abgleichen(); sichern(); };
+  if (!box) return;
+
   /* ---------- Darstellung ---------- */
   const STATUS = { auto: ["abgeglichen", "ok"], manuell: ["von Hand zugeordnet", "ok"], regel: ["Regel", "regel"], ohne: ["ohne Rechnung (geprüft)", "regel"], pruefen: ["prüfen", "pruefen"] };
   const reNr = (id) => { const r = RE.find((x) => x.id === id); return r ? r : null; };
@@ -199,9 +132,8 @@
       </div>
       ${BERICHT ? `<p class="bu-bericht">${esc(BERICHT)} <button type="button" class="btn klein still" data-a="bericht-zu">✕</button></p>` : ""}
       <section class="panel bu-import"><div class="bu-drops">
-        <label class="lo-drop" data-drop="auszug">🏦 <span><b>Kontoauszug einlesen</b><small>CAMT (XML/ZIP) oder CSV aus dem Online-Banking. Konto:
-          <select data-kontowahl onclick="event.stopPropagation()">${Object.entries(KONTEN).map(([k, t]) => `<option value="${k}">${t}</option>`).join("")}</select> (wird über die IBAN erkannt, wenn hinterlegt)</small></span>
-          <input type="file" accept=".xml,.csv,.zip,.txt" multiple hidden data-datei="auszug"></label>
+        <div class="bu-banken">🏦 <span><b>Kontoauszüge</b><small>werden unter <a href="bank-sparkasse.html${location.search}">Bank → Sparkasse</a> und <a href="bank-raiba.html${location.search}">Bank → Raiffeisenbank</a> eingelesen und hier automatisch abgeglichen.</small>
+          ${Object.entries(KONTEN).map(([k, t]) => { const l = UM.filter((u) => u.konto === k), d = l.map((u) => u.datum).sort().pop(); return `<small>${t}: ${l.length} Umsätze${d ? ", bis " + datumDE(d) : ""}</small>`; }).join("")}</span></div>
         <label class="lo-drop" data-drop="aus">🧾 <span><b>Ausgangsrechnungen (an Kunden)</b><small>CSV, z. B. Export „Offene Posten“ aus KWP</small></span><input type="file" accept=".csv,.txt" multiple hidden data-datei="aus"></label>
         <label class="lo-drop" data-drop="ein">📥 <span><b>Eingangsrechnungen (Lieferanten)</b><small>CSV-Liste</small></span><input type="file" accept=".csv,.txt" multiple hidden data-datei="ein"></label>
       </div></section>
@@ -239,8 +171,7 @@
   /* ---------- Bedienung ---------- */
   async function dateien(art, l) {
     try {
-      if (art === "auszug") await auszugEinlesen(l, ($("[data-kontowahl]", box) || {}).value || "sparkasse");
-      else { const alle = []; for (const f of l) alle.push(...rechnungenCsv(await text(f), art)); rechnungenDazu(alle); }
+      const alle = []; for (const f of l) alle.push(...rechnungenCsv(await text(f), art)); rechnungenDazu(alle);
     } catch (e) { BERICHT = "Einlesen fehlgeschlagen: " + (e.message || e); zeichnen(); }
   }
   box.addEventListener("change", (e) => { const t = e.target; if (t.dataset.datei && t.files.length) { const l = [...t.files]; t.value = ""; dateien(t.dataset.datei, l); } });
@@ -272,5 +203,6 @@
     if (["zuordnen", "ohne", "loesen", "re-weg"].includes(b.dataset.a)) { abgleichen(); sichern(); zeichnen(); }
   });
 
+  abgleichen(); sichern();
   zeichnen();
 })();

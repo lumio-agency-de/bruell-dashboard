@@ -7,8 +7,8 @@
   <title>Brüll · Raiffeisenbank</title>
   <link rel="icon" href="../bad/app/img/logo.svg">
   <link rel="stylesheet" href="../bad/app/css/app.css?v=202610242000">
-  <link rel="stylesheet" href="../gesamt/personal.css?v=202611012300">
-  <link rel="stylesheet" href="../gesamt/dunkel-auto.css?v=202611012300">
+  <link rel="stylesheet" href="../gesamt/personal.css?v=202611020930">
+  <link rel="stylesheet" href="../gesamt/dunkel-auto.css?v=202611020930">
   <link rel="stylesheet" href="../gesamt/thema.css?v=202610252020">
   <link rel="stylesheet" href="../gesamt/mobil.css?v=202610252020">
   <script src="../gesamt/thema.js?v=202610252020"></script>
@@ -17,8 +17,7 @@
   <div class="shell">
     <aside class="rail" aria-label="Hauptnavigation" id="rail"></aside>
     <main class="main" id="main" tabindex="-1"><div class="seite"><header class="kopf"><div><p class="eyebrow">Betrieb · Bank · vertraulich</p><h1>Raiffeisenbank</h1><p class="unter leise">Firmenkonto bei der Raiffeisenbank.</p></div></header>
-      <section class="panel bt-entwurf"><h2 class="panel-titel">Noch im Aufbau <small>Vorschlag – sagt uns, was hier rein soll</small></h2>
-        <div class="panel-innen"><ul><li>Kontostand und Verlauf des Firmenkontos bei der Raiffeisenbank</li><li>Kontoumsätze dieses Kontos (aus dem eingelesenen Kontoauszug, Buchhaltung)</li><li>Überweisungen von diesem Konto: Löhne (SEPA-Datei aus der Lohnabrechnung) und Lieferantenrechnungen</li><li>Daueraufträge und Lastschriften im Blick</li></ul></div></section></div></main>
+      <div id="bk-inhalt" class="bk-inhalt"></div></div></main>
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="../personal/team.js"></script>
@@ -27,6 +26,9 @@
 <script src="../personal/daten-tresor.js?v=1792953619395" onerror="this.remove()"></script>
 <script src="../gesamt/tresor.js?v=202610271200"></script>
 <script src="../gesamt/personal.js?v=202611012300"></script>
+<script src="../gesamt/bank.js?v=202611020930"></script>
+<script src="../gesamt/buchhaltung.js?v=202611020930"></script>
+<script>Bank.seite(document.getElementById("bk-inhalt"), "raiba");</script>
 <script src="../gesamt/tabs.js?v=202610252020"></script>
 </body>
 </html>

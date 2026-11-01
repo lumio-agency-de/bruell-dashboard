@@ -7,8 +7,8 @@
   <title>Brüll · Bank</title>
   <link rel="icon" href="../bad/app/img/logo.svg">
   <link rel="stylesheet" href="../bad/app/css/app.css?v=202610242000">
-  <link rel="stylesheet" href="../gesamt/personal.css?v=202611012300">
-  <link rel="stylesheet" href="../gesamt/dunkel-auto.css?v=202611012300">
+  <link rel="stylesheet" href="../gesamt/personal.css?v=202611020930">
+  <link rel="stylesheet" href="../gesamt/dunkel-auto.css?v=202611020930">
   <link rel="stylesheet" href="../gesamt/thema.css?v=202610252020">
   <link rel="stylesheet" href="../gesamt/mobil.css?v=202610252020">
   <script src="../gesamt/thema.js?v=202610252020"></script>
@@ -16,9 +16,8 @@
 <body class="personal-seite bt-seite" data-bereich="betrieb" data-unter="bank">
   <div class="shell">
     <aside class="rail" aria-label="Hauptnavigation" id="rail"></aside>
-    <main class="main" id="main" tabindex="-1"><div class="seite"><header class="kopf"><div><p class="eyebrow">Betrieb · vertraulich</p><h1>Bank</h1><p class="unter leise">Sparkasse und Raiffeisenbank im Blick.</p></div></header>
-      <section class="panel bt-entwurf"><h2 class="panel-titel">Noch im Aufbau <small>Vorschlag – sagt uns, was hier rein soll</small></h2>
-        <div class="panel-innen"><ul><li>Kontostände beider Firmenkonten</li><li>Kontoumsätze einlesen (CSV oder CAMT-Datei aus dem Online-Banking)</li><li>Zahlungseingänge automatisch den offenen Rechnungen zuordnen</li><li>Überweisungen vorbereiten (wie bei den Löhnen als SEPA-Datei)</li></ul></div></section></div></main>
+    <main class="main" id="main" tabindex="-1"><div class="seite"><header class="kopf"><div><p class="eyebrow">Betrieb · vertraulich</p><h1>Bank</h1><p class="unter leise">Kontostände, Eingänge und Ausgänge beider Firmenkonten. Kontoauszüge liest du bei der jeweiligen Bank ein.</p></div></header>
+      <div id="bk-inhalt" class="bk-inhalt"></div></div></main>
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="../personal/team.js"></script>
@@ -27,6 +26,9 @@
 <script src="../personal/daten-tresor.js?v=1792953619395" onerror="this.remove()"></script>
 <script src="../gesamt/tresor.js?v=202610271200"></script>
 <script src="../gesamt/personal.js?v=202611012300"></script>
+<script src="../gesamt/bank.js?v=202611020930"></script>
+<script src="../gesamt/buchhaltung.js?v=202611020930"></script>
+<script>Bank.seite(document.getElementById("bk-inhalt"), null);</script>
 <script src="../gesamt/tabs.js?v=202610252020"></script>
 </body>
 </html>

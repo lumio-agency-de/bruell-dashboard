@@ -402,3 +402,39 @@ a.lo-zettel { text-decoration: none; }
 .bu-neu input[name="nr"], .bu-neu input[name="betrag"] { width: 130px; }
 @media (max-width: 900px) { .bu-drops { grid-template-columns: 1fr; } }
 .nav a.nav-unter.nav-unter2 { margin-left: 44px; font-size: .86rem; padding-top: 4px; padding-bottom: 4px; }
+
+/* ---------- Bank: Statistik (Farben geprüft: hell #2a78d6 / #eb6834, dunkel #3987e5 / #d95926) ---------- */
+:root { --bk-ein: #2a78d6; --bk-aus: #eb6834; }
+html[data-thema="dunkel"] { --bk-ein: #3987e5; --bk-aus: #d95926; }
+.bk-inhalt { display: grid; gap: 16px; }
+.bk-inhalt .lo-kpis { margin: 0; }
+.bk-inhalt a.kpi { text-decoration: none; color: inherit; }
+.bk-zeitraum { justify-self: start; }
+.bk-chart { position: relative; }
+.bk-chart svg { width: 100%; height: auto; max-height: 300px; display: block; }
+.bk-chart .gitter { stroke: var(--fuge); stroke-width: 1; }
+.bk-chart .basis { stroke: var(--fuge-stark); stroke-width: 1; }
+.bk-chart .achse { font-size: 11px; fill: var(--leise); }
+.bk-chart path.bk-ein, .bk-legende i.bk-ein, .bk-tip i.bk-ein, .bk-top i.bk-ein { fill: var(--bk-ein); background: var(--bk-ein); }
+.bk-chart path.bk-aus, .bk-legende i.bk-aus, .bk-tip i.bk-aus, .bk-top i.bk-aus { fill: var(--bk-aus); background: var(--bk-aus); }
+.bk-hit { fill: transparent; }
+.bk-monat.an .bk-hit { fill: color-mix(in oklab, var(--tinte) 6%, transparent); }
+.bk-legende { display: flex; gap: 16px; font-size: .8rem; color: var(--leise); margin-bottom: 4px; }
+.bk-legende span, .bk-tip span { display: inline-flex; align-items: center; gap: 6px; }
+.bk-legende i, .bk-tip i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.bk-tip { position: absolute; z-index: 5; pointer-events: none; display: grid; gap: 3px; min-width: 180px; padding: 8px 10px; border-radius: 10px; background: var(--blatt); border: 1px solid var(--fuge-stark); box-shadow: var(--schatten); font-size: .8rem; color: var(--tinte); }
+.bk-tip span b { margin-left: auto; padding-left: 10px; }
+.bk-tabelle { margin-top: 8px; font-size: .84rem; }
+.bk-tabelle summary { cursor: pointer; color: var(--leise); }
+.bk-zwei { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.bk-top { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.bk-top li { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) 112px; gap: 10px; align-items: center; font-size: .86rem; }
+.bk-top-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bk-top-balken { height: 10px; border-radius: 5px; background: var(--tinte-weich); overflow: hidden; }
+.bk-top-balken i { display: block; height: 100%; border-radius: 0 4px 4px 0; }
+.bk-top b { font-variant-numeric: tabular-nums; font-size: .84rem; text-align: right; }
+.bk-suche { max-width: 360px; margin-bottom: 10px; }
+.bu-banken { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 1.5px solid var(--fuge); border-radius: 12px; font-size: 1.4rem; }
+.bu-banken span { display: grid; gap: 2px; font-size: .9rem; }
+.bu-banken small { font-size: .76rem; color: var(--leise); }
+@media (max-width: 760px) { .bk-zwei { grid-template-columns: 1fr; } }
