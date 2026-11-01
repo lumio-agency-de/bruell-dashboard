@@ -375,3 +375,29 @@ a.lo-zettel { text-decoration: none; }
 .wz-gesamt-tipp { font-size: .76rem; font-weight: 600; color: var(--leise); }
 .wz-gesamt > .wz-liste { padding: 0 8px 8px; gap: 6px; }
 .wz-karte > summary { padding: 7px 12px; }
+
+/* ---------- Betrieb: Unterseiten ---------- */
+.i-unter { width: 6px; height: 6px; margin: 0 4px; border-radius: 50%; background: currentColor; opacity: .6; }
+.bt-entwurf ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.bt-seite .seite { max-width: 1100px; }
+.bt-seite #bu-inhalt { display: grid; gap: 16px; }
+.bu-drops { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.bu-import { padding: 12px; }
+.bu-drops .lo-drop { font-size: 1.4rem; }
+.bu-drops select { font: inherit; font-size: .76rem; padding: 1px 4px; border-radius: 6px; border: 1px solid var(--fuge-stark); }
+.bu-bericht { margin: 0; padding: 8px 12px; border-radius: 10px; background: var(--akzent-weich); }
+.bu-filter { margin-bottom: 10px; }
+.bu-tab td small { display: block; }
+.bu-zweck { max-width: 420px; white-space: normal; }
+.bu-minus { color: var(--rot); }
+.bu-st { display: inline-block; font-size: .72rem; font-weight: 700; padding: 1px 8px; border-radius: 99px; background: var(--tinte-weich); color: var(--leise); white-space: nowrap; }
+.bu-st.ok { background: var(--gruen-weich); color: var(--gruen); }
+.bu-st.pruefen { background: color-mix(in oklab, var(--rot) 14%, var(--blatt)); color: var(--rot); }
+.bu-st.offen { background: var(--akzent-weich); color: var(--akzent-text); }
+.bu-tab tr.bu-pruefen td { background: color-mix(in oklab, var(--rot) 6%, transparent); }
+.bu-aktion { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.bu-aktion select { max-width: 280px; font: inherit; font-size: .8rem; padding: 4px 6px; border-radius: 8px; border: 1px solid var(--fuge-stark); background: #fff; }
+.bu-neu { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.bu-neu input, .bu-neu select { font: inherit; font-size: .84rem; padding: 5px 8px; border-radius: 8px; border: 1px solid var(--fuge-stark); background: #fff; min-width: 0; }
+.bu-neu input[name="nr"], .bu-neu input[name="betrag"] { width: 130px; }
+@media (max-width: 900px) { .bu-drops { grid-template-columns: 1fr; } }

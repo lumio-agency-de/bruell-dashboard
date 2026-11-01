@@ -66,6 +66,9 @@ var PK_NR = (new URLSearchParams(location.search).get("nr") || "").replace(/\D/g
   function leiste() {
     const ini = (PERSON.name || "?").split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
     const hier = document.body.dataset.bereich || "personal";
+    const UNTER = document.body.dataset.unter || "";
+    const BETRIEB_UNTER = [["buchhaltung", "../betrieb/buchhaltung.html", "Buchhaltung"], ["bank", "../betrieb/bank.html", "Bank"], ["monitor", "../betrieb/", "Betriebsmonitor"],
+      ["monat", "../betrieb/monat.html", "Auswertung Monat"], ["jahr", "../betrieb/jahr.html", "Auswertung Jahr"], ["abschluss", "../betrieb/abschluss.html", "Jahresabschluss"]];
     const eigene = ["../personal/karte.html" + qs({ nr: PERSON.pk }), "Meine Personalkarte", "i-konten", true];
     const nav = !GF ? [...(PERSON.ebene === "mitarbeiter" ? [] : [["../", "Übersicht", "i-cockpit"], ["../bad/", "Bad", "i-projekte"], ["../heizung/", "Heizung", "i-projekte"]]),
         ...(PERSON.pk ? [[eigene[0], eigene[1], eigene[2], hier !== "lohn" && PK_NR === PERSON.pk]] : []), ...(LZ_FREI ? [["../personal/lohn.html", "Lohnzettel", "i-lohn", hier === "lohn" || !!window.PK_NUR_LOHNZETTEL]] : [])]
@@ -73,8 +76,10 @@ var PK_NR = (new URLSearchParams(location.search).get("nr") || "").replace(/\D/g
       ["../personal/", "Personal", "i-konten", hier === "personal"],
       /* Unterpunkt nur im Bereich Personal sichtbar */
       ...(hier === "personal" || hier === "lohn" ? [["../personal/lohn.html", "Lohnabrechnung", "i-lohn", hier === "lohn", "nav-unter"]] : []),
-      ["../fahrzeuge/", "Fahrzeuge", "i-einrichtung", hier === "fahrzeuge"], ["../lager/", "Werkzeuge", "i-werkzeug", hier === "werkzeuge"], ["../betrieb/", "Betrieb", "i-kennzahlen", hier === "betrieb"]];
-    $("#rail").innerHTML = `<a class="marke" href="../${QS}"><img class="marke-logo" src="../bad/app/img/logo.svg" alt=""><span class="marke-text"><strong>Brüll GmbH</strong><small>${{ fahrzeuge: "Fahrzeuge", werkzeuge: "Werkzeuge", betrieb: "Betriebsmonitor", lohn: "Lohnabrechnung" }[hier] || "Personal"}</small></span></a>
+      ["../fahrzeuge/", "Fahrzeuge", "i-einrichtung", hier === "fahrzeuge"], ["../lager/", "Werkzeuge", "i-werkzeug", hier === "werkzeuge"], ["../betrieb/", "Betrieb", "i-kennzahlen", hier === "betrieb" && !UNTER],
+      /* Unterpunkte nur im Bereich Betrieb sichtbar; der Betriebsmonitor bleibt unter betrieb/ */
+      ...(hier === "betrieb" ? BETRIEB_UNTER.map(([u, h, t]) => [h, t, "i-unter", UNTER === u, "nav-unter"]) : [])];
+    $("#rail").innerHTML = `<a class="marke" href="../${QS}"><img class="marke-logo" src="../bad/app/img/logo.svg" alt=""><span class="marke-text"><strong>Brüll GmbH</strong><small>${{ fahrzeuge: "Fahrzeuge", werkzeuge: "Werkzeuge", betrieb: "Betrieb", lohn: "Lohnabrechnung" }[hier] || "Personal"}</small></span></a>
       <nav class="nav">${nav.map(([h, t, i, an, kl]) => `<a href="${h.includes("?") ? h : h + QS}"${kl ? ` class="${kl}"` : ""}${an ? ' aria-current="page"' : ""}><span class="nav-i ${i}" aria-hidden="true"></span>${t}</a>`).join("")}</nav>
       <div class="speicher"><div class="ich"><span class="ich-k">${esc(ini)}</span><span><b>${esc(PERSON.name)}</b><small>${esc(EBENE_TITEL[PERSON.ebene] || "")}</small></span></div>
         <div class="ich-aktionen"><button class="btn klein hell" type="button" id="abmelden">Abmelden</button></div>
