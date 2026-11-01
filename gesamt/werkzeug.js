@@ -144,7 +144,11 @@ window.Werkzeug = (function () {
             ${lager.length ? `<select data-aus-lager aria-label="Aus dem Firmenlager ausgeben"><option value="">Aus dem Firmenlager ausgeben …</option>${lager.map((w) => `<option value="${w.id}">${esc(titel(w))}</option>`).join("")}</select>` : ""}</div>`)
         : `<div class="wz-aktionen"><div class="wz-filter">${[["lager", "Im Firmenlager"], ["aus", "Ausgegeben"], ["alle", "Alle"]].map(([k, t]) => `<button type="button" data-filter="${k}" class="${filter === k ? "an" : ""}">${t} <small>${alle().filter((w) => k === "lager" ? !w.bei : k === "aus" ? !!w.bei : true).length}</small></button>`).join("")}</div>
             <input type="search" class="eingabe" data-suche placeholder="Suchen: Nummer, Name, Seriennr. …" value="${esc(suche)}"><button type="button" class="btn jetzt" data-neu>+ Werkzeug ins Firmenlager</button></div>`;
-      box.innerHTML = kopf + (l.length ? `<div class="wz-liste">${l.map((w) => karte(w, { ...o, zeigeBei: !istKarte })).join("")}</div>`
+      /* Ganze Liste einklappbar (Zustand merkt sich der Browser je Karte bzw. für das Lager) */
+      const zuKey = "wz-liste-zu:" + (istKarte ? o.bei : "lager"), zu = !o.offen && localStorage.getItem(zuKey) !== "0";
+      const vorschau = l.slice(0, 4).map(titel).join(" · ") + (l.length > 4 ? " …" : "");
+      box.innerHTML = kopf + (l.length ? `<details class="wz-gesamt" data-zukey="${zuKey}"${zu ? "" : " open"}><summary><b>${l.length} ${l.length === 1 ? "Werkzeug" : "Werkzeuge"}</b><small>${esc(vorschau)}</small><span class="wz-gesamt-tipp">${zu ? "aufklappen" : "einklappen"}</span></summary>
+          <div class="wz-liste">${l.map((w) => karte(w, { ...o, zeigeBei: !istKarte })).join("")}</div></details>`
         : `<p class="leise wz-leer">${istKarte ? "Diesem Mitarbeiter ist kein Werkzeug ausgegeben." : suche ? "Keine Treffer." : filter === "lager" ? "Im Firmenlager ist noch kein Werkzeug eingetragen." : "Kein Werkzeug."}</p>`)
         + ["kostenart", "gruppe", "lieferant"].map((k) => `<datalist id="wz-liste-${k}">${listenwerte(k).map((v) => `<option value="${esc(v)}">`).join("")}</datalist>`).join("");
       l.forEach((w) => bildZeigen(box, w.id));
@@ -175,6 +179,11 @@ window.Werkzeug = (function () {
         else t.value = "";
       }
     });
+    box.addEventListener("toggle", (e) => {
+      const d = e.target; if (!d.classList || !d.classList.contains("wz-gesamt")) return;
+      try { localStorage.setItem(d.dataset.zukey, d.open ? "0" : "1"); } catch (x) { /* egal */ }
+      const t = d.querySelector(".wz-gesamt-tipp"); if (t) t.textContent = d.open ? "einklappen" : "aufklappen";
+    }, true);
     box.addEventListener("input", (e) => { if (e.target.matches("[data-suche]")) { suche = e.target.value.trim().toLowerCase(); const p = e.target.selectionStart; zeichnen(); const s = box.querySelector("[data-suche]"); s.focus(); s.setSelectionRange(p, p); } });
     box.addEventListener("click", async (e) => {
       const b = e.target.closest("button"); if (!b) return;

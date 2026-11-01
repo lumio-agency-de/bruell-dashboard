@@ -366,3 +366,12 @@ a.lo-zettel { text-decoration: none; }
 .wz-summe { margin: 10px 0 0; font-size: .86rem; }
 .wz-leer { margin: 6px 0; }
 @media (max-width: 760px) { .wz-st { grid-template-columns: 1fr; } .wz-felder, .wz-form { grid-template-columns: 1fr 1fr; } }
+.wz-gesamt { border: 1px solid var(--fuge-stark); border-radius: 12px; background: var(--tinte-weich); }
+.wz-gesamt > summary { list-style: none; cursor: pointer; display: flex; align-items: baseline; gap: 10px; padding: 10px 14px; }
+.wz-gesamt > summary::-webkit-details-marker { display: none; }
+.wz-gesamt > summary::before { content: "▸"; color: var(--leise); transition: transform 150ms ease; }
+.wz-gesamt[open] > summary::before { transform: rotate(90deg); }
+.wz-gesamt > summary small { flex: 1; min-width: 0; font-size: .78rem; color: var(--leise); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wz-gesamt-tipp { font-size: .76rem; font-weight: 600; color: var(--leise); }
+.wz-gesamt > .wz-liste { padding: 0 8px 8px; gap: 6px; }
+.wz-karte > summary { padding: 7px 12px; }
