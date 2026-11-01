@@ -7,8 +7,8 @@
 <title>Brüll · Personalkarte</title>
 <link rel="icon" href="../bad/app/img/logo.svg">
 <link rel="stylesheet" href="../bad/app/css/app.css?v=202610242000">
-<link rel="stylesheet" href="../gesamt/personal.css?v=202611011200">
-  <link rel="stylesheet" href="../gesamt/dunkel-auto.css?v=202611011200">
+<link rel="stylesheet" href="../gesamt/personal.css?v=202611011800">
+  <link rel="stylesheet" href="../gesamt/dunkel-auto.css?v=202611011800">
   <link rel="stylesheet" href="../gesamt/thema.css?v=202610252020">
   <link rel="stylesheet" href="../gesamt/mobil.css?v=202610252020">
   <script src="../gesamt/thema.js?v=202610252020"></script>
@@ -67,6 +67,7 @@
 <div class="form-group"><label>Bank</label><input id="bank" type="text"/></div>
 <div class="form-group"><label>IBAN</label><input id="iban" type="text"/></div>
 <div class="form-group"><label>BIC / Bankleitzahl</label><input id="bic" type="text"/></div>
+<div class="form-group"><label>Lohn wird bezahlt von</label><select id="lohn_bank" title="Von welchem Firmenkonto der Lohn überwiesen wird (Personal → Lohnabrechnung)"><option value="">– bitte wählen –</option><option value="sparkasse">Sparkasse</option><option value="raiba">Raiffeisenbank</option></select></div>
 </div>
 <div class="sec" style="margin-top:28px;">Beschäftigung</div>
 <div class="form-grid">
@@ -101,9 +102,6 @@
 <div class="gz-card"><div class="gz-label">Saldo (±)</div><input id="gz_saldo" type="text" readonly/></div>
 <div class="gz-card"><div class="gz-label">Überstunden-Konto aktuell</div><input id="gz_konto" type="text" readonly title="Übertrag Vorjahr + Monats-Salden + manuelle Überstunden − abgebaut (laufendes Jahr)"/></div>
 </div>
-<div class="sec" style="margin-top:22px;">Monate <span id="gz_jahr_text"></span></div>
-<p class="dok-hinweis">Ist-Stunden je Monat oben eintragen (Kommazahl in Viertelstunden, z. B. 171,25). Monat oben mit ‹ › wechseln oder hier anklicken. Jeder Monats-Saldo läuft automatisch ins Überstunden-Konto.</p>
-<table class="dt dt-eng gz-monate"><thead><tr><th>Monat</th><th>Soll</th><th>Ist</th><th>Saldo</th><th></th></tr></thead><tbody id="gzMonBody"></tbody></table>
 <div class="sec" style="margin-top:28px;">Überstunden je Jahr</div>
 <p class="dok-hinweis">Stunden als Kommazahl in Viertelstunden, z. B. 1,25 · 1,5 · -8. „Monats-Salden“ kommt automatisch aus den Monaten oben. „Überstunden (manuell)“ für Jahre ohne Monatswerte oder Korrekturen. Stand = Übertrag + Monats-Salden + manuell − abgebaut, er wird automatisch ins nächste Jahr übertragen. Nur beim ersten Jahr lässt sich der Übertrag als Startwert eintragen.</p>
 <button type="button" class="jahre-umschalter" data-tabelle="ueberTab" onclick="alteJahre(this)"></button>
@@ -439,6 +437,7 @@ function calcGzSaldo(nurAnzeigen){
   calcUeber(); gzTabelle();
 }
 function gzTabelle(){
+  if(!document.getElementById('gzMonBody'))return;   // Monatsübersicht ausgeblendet
   const k=document.getElementById('gz_monat').value, j=+k.slice(0,4), h=new Date(), bis=j<h.getFullYear()?12:j===h.getFullYear()?h.getMonth()+1:0;
   const monate=new Set(); for(let m=1;m<=bis;m++) monate.add(m);
   Object.keys(GZ).filter(x=>x.startsWith(j+'-')).forEach(x=>monate.add(+x.slice(5)));
@@ -959,7 +958,7 @@ function loadData(){
   if(!window.PK_NUR_LESEN) zugangZeichnen();
   // Gleitzeit je Monat (ältere Karten: einzelner Ist-Wert → in seinen Monat übernehmen)
   try{ GZ=d._gleitzeit?JSON.parse(d._gleitzeit):{}; }catch(e){ GZ={}; }
-  if(!d._gleitzeit&&String(d.gz_ist||'').trim()){ const h=new Date(), k=/^\d{4}-\d{2}$/.test(d.gz_monat||'')?d.gz_monat:h.getFullYear()+'-'+String(h.getMonth()+1).padStart(2,'0'); GZ[k]={ist:ueTxt(ueStd(d.gz_ist))}; }
+  if(!d._gleitzeit&&String(d.gz_ist||'').trim()&&ueStd(d.gz_ist)!==0){   /* „0:00“ aus alten Karten nicht übernehmen */ const h=new Date(), k=/^\d{4}-\d{2}$/.test(d.gz_monat||'')?d.gz_monat:h.getFullYear()+'-'+String(h.getMonth()+1).padStart(2,'0'); GZ[k]={ist:ueTxt(ueStd(d.gz_ist))}; }
   { const h=new Date(); document.getElementById('gz_monat').value=h.getFullYear()+'-'+String(h.getMonth()+1).padStart(2,'0'); }   // Karte öffnet im laufenden Monat
   regelStdZeigen(false);
 
