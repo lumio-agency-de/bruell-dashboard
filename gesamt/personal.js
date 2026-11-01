@@ -78,7 +78,9 @@ var PK_NR = (new URLSearchParams(location.search).get("nr") || "").replace(/\D/g
       ...(hier === "personal" || hier === "lohn" ? [["../personal/lohn.html", "Lohnabrechnung", "i-lohn", hier === "lohn", "nav-unter"]] : []),
       ["../fahrzeuge/", "Fahrzeuge", "i-einrichtung", hier === "fahrzeuge"], ["../lager/", "Werkzeuge", "i-werkzeug", hier === "werkzeuge"], ["../betrieb/", "Betrieb", "i-kennzahlen", hier === "betrieb" && !UNTER],
       /* Unterpunkte nur im Bereich Betrieb sichtbar; der Betriebsmonitor bleibt unter betrieb/ */
-      ...(hier === "betrieb" ? BETRIEB_UNTER.map(([u, h, t]) => [h, t, "i-unter", UNTER === u, "nav-unter"]) : [])];
+      ...(hier === "betrieb" ? BETRIEB_UNTER.flatMap(([u, h, t]) => [[h, t, "i-unter", UNTER === u, "nav-unter"],
+        /* unter „Bank“ die beiden Firmenkonten, sichtbar sobald man im Bankbereich ist */
+        ...(u === "bank" && /^bank/.test(UNTER) ? [["../betrieb/bank-sparkasse.html", "Sparkasse", "i-unter", UNTER === "bank-sparkasse", "nav-unter nav-unter2"], ["../betrieb/bank-raiba.html", "Raiffeisenbank", "i-unter", UNTER === "bank-raiba", "nav-unter nav-unter2"]] : [])]) : [])];
     $("#rail").innerHTML = `<a class="marke" href="../${QS}"><img class="marke-logo" src="../bad/app/img/logo.svg" alt=""><span class="marke-text"><strong>Brüll GmbH</strong><small>${{ fahrzeuge: "Fahrzeuge", werkzeuge: "Werkzeuge", betrieb: "Betrieb", lohn: "Lohnabrechnung" }[hier] || "Personal"}</small></span></a>
       <nav class="nav">${nav.map(([h, t, i, an, kl]) => `<a href="${h.includes("?") ? h : h + QS}"${kl ? ` class="${kl}"` : ""}${an ? ' aria-current="page"' : ""}><span class="nav-i ${i}" aria-hidden="true"></span>${t}</a>`).join("")}</nav>
       <div class="speicher"><div class="ich"><span class="ich-k">${esc(ini)}</span><span><b>${esc(PERSON.name)}</b><small>${esc(EBENE_TITEL[PERSON.ebene] || "")}</small></span></div>

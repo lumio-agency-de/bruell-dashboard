@@ -401,3 +401,4 @@ a.lo-zettel { text-decoration: none; }
 .bu-neu input, .bu-neu select { font: inherit; font-size: .84rem; padding: 5px 8px; border-radius: 8px; border: 1px solid var(--fuge-stark); background: #fff; min-width: 0; }
 .bu-neu input[name="nr"], .bu-neu input[name="betrag"] { width: 130px; }
 @media (max-width: 900px) { .bu-drops { grid-template-columns: 1fr; } }
+.nav a.nav-unter.nav-unter2 { margin-left: 44px; font-size: .86rem; padding-top: 4px; padding-bottom: 4px; }
