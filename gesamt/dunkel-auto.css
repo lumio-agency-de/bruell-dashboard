@@ -77,3 +77,4 @@ html[data-thema="dunkel"] .abt-chip-label.checked-inhaber, html[data-thema="dunk
 html[data-thema="dunkel"] .dok-datei { background: var(--feld) !important; }
 html[data-thema="dunkel"] .dok-knopf { background: var(--feld) !important; }
 html[data-thema="dunkel"] .fz-schild { background: var(--feld) !important; }
+html[data-thema="dunkel"] .monat-wahl { background: var(--feld) !important; }

@@ -294,4 +294,12 @@ a.lo-zettel { text-decoration: none; }
 .dt-eng.zeige-alt tr.alt-jahr { display: table-row; }
 .jahre-umschalter { display: inline-block; margin: 0 0 6px; background: none; border: none; padding: 2px 0; font: inherit; font-size: .8rem; font-weight: 600; color: var(--leise); cursor: pointer; }
 .jahre-umschalter:hover { color: var(--tinte); }
-.pk-card .gz-card input[type="month"] { font-size: .95rem !important; font-family: inherit !important; padding-left: 8px !important; padding-right: 6px !important; }
+.monat-wahl { display: flex; align-items: center; justify-content: space-between; gap: 4px; min-height: 46px; padding: 4px; border-radius: 12px; background: #fff; border: 1px solid var(--fuge-stark); }
+.monat-wahl b { font: 400 .95rem/1.15 var(--serif); text-align: center; flex: 1; min-width: 0; }
+.monat-wahl button { flex: none; width: 26px; height: 34px; border: none; border-radius: 8px; background: var(--tinte-weich); color: var(--tinte); font-size: 1.2rem; cursor: pointer; }
+.monat-wahl button:hover { background: var(--fuge); }
+.pk-card .gz-card input.minus, .gz-monate td.minus { color: var(--rot) !important; -webkit-text-fill-color: var(--rot); }
+.gz-monate tbody tr { cursor: pointer; }
+.gz-monate tbody tr:hover td { background: var(--tinte-weich); }
+.gz-monate tr.gz-aktiv td { background: color-mix(in oklab, var(--akzent) 14%, transparent); }
+.gz-monate td { font-variant-numeric: tabular-nums; }
