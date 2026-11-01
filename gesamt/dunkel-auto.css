@@ -78,3 +78,5 @@ html[data-thema="dunkel"] .dok-datei { background: var(--feld) !important; }
 html[data-thema="dunkel"] .dok-knopf { background: var(--feld) !important; }
 html[data-thema="dunkel"] .fz-schild { background: var(--feld) !important; }
 html[data-thema="dunkel"] .monat-wahl { background: var(--feld) !important; }
+html[data-thema="dunkel"] .wz-filter button.an { background: var(--flaeche-stark) !important; }
+html[data-thema="dunkel"] .wz-feld input, html[data-thema="dunkel"] .wz-feld select, html[data-thema="dunkel"] .wz-form input, html[data-thema="dunkel"] .wz-form select { background: var(--feld) !important; }

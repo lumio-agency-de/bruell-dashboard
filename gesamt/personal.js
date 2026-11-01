@@ -73,8 +73,8 @@ var PK_NR = (new URLSearchParams(location.search).get("nr") || "").replace(/\D/g
       ["../personal/", "Personal", "i-konten", hier === "personal"],
       /* Unterpunkt nur im Bereich Personal sichtbar */
       ...(hier === "personal" || hier === "lohn" ? [["../personal/lohn.html", "Lohnabrechnung", "i-lohn", hier === "lohn", "nav-unter"]] : []),
-      ["../fahrzeuge/", "Fahrzeuge", "i-einrichtung", hier === "fahrzeuge"], ["../betrieb/", "Betrieb", "i-kennzahlen", hier === "betrieb"]];
-    $("#rail").innerHTML = `<a class="marke" href="../${QS}"><img class="marke-logo" src="../bad/app/img/logo.svg" alt=""><span class="marke-text"><strong>Brüll GmbH</strong><small>${{ fahrzeuge: "Fahrzeuge", betrieb: "Betriebsmonitor", lohn: "Lohnabrechnung" }[hier] || "Personal"}</small></span></a>
+      ["../fahrzeuge/", "Fahrzeuge", "i-einrichtung", hier === "fahrzeuge"], ["../lager/", "Werkzeuge", "i-werkzeug", hier === "werkzeuge"], ["../betrieb/", "Betrieb", "i-kennzahlen", hier === "betrieb"]];
+    $("#rail").innerHTML = `<a class="marke" href="../${QS}"><img class="marke-logo" src="../bad/app/img/logo.svg" alt=""><span class="marke-text"><strong>Brüll GmbH</strong><small>${{ fahrzeuge: "Fahrzeuge", werkzeuge: "Werkzeuge", betrieb: "Betriebsmonitor", lohn: "Lohnabrechnung" }[hier] || "Personal"}</small></span></a>
       <nav class="nav">${nav.map(([h, t, i, an, kl]) => `<a href="${h.includes("?") ? h : h + QS}"${kl ? ` class="${kl}"` : ""}${an ? ' aria-current="page"' : ""}><span class="nav-i ${i}" aria-hidden="true"></span>${t}</a>`).join("")}</nav>
       <div class="speicher"><div class="ich"><span class="ich-k">${esc(ini)}</span><span><b>${esc(PERSON.name)}</b><small>${esc(EBENE_TITEL[PERSON.ebene] || "")}</small></span></div>
         <div class="ich-aktionen"><button class="btn klein hell" type="button" id="abmelden">Abmelden</button></div>

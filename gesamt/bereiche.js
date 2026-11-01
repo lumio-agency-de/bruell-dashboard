@@ -31,7 +31,7 @@
     } catch (e) { /* ohne */ }
   })();
   const k0 = konto();
-  if (k0 && k0.ebene === "geschaeftsfuehrung") EINTRAEGE.push(["personal", "Personal", "i-konten"], ["fahrzeuge", "Fahrzeuge", "i-einrichtung"], ["betrieb", "Betrieb", "i-kennzahlen"]);
+  if (k0 && k0.ebene === "geschaeftsfuehrung") EINTRAEGE.push(["personal", "Personal", "i-konten"], ["fahrzeuge", "Fahrzeuge", "i-einrichtung"], ["lager", "Werkzeuge", "i-werkzeug"], ["betrieb", "Betrieb", "i-kennzahlen"]);
   else if (k0 && k0.ebene !== "partner") EINTRAEGE.push(["personal/karte.html", "Meine Personalkarte", "i-konten"]);
   function mitarbeiterWeiter() {
     const k = konto();

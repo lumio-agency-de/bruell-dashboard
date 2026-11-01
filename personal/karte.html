@@ -7,8 +7,8 @@
 <title>Brüll · Personalkarte</title>
 <link rel="icon" href="../bad/app/img/logo.svg">
 <link rel="stylesheet" href="../bad/app/css/app.css?v=202610242000">
-<link rel="stylesheet" href="../gesamt/personal.css?v=202611011800">
-  <link rel="stylesheet" href="../gesamt/dunkel-auto.css?v=202611011800">
+<link rel="stylesheet" href="../gesamt/personal.css?v=202611011930">
+  <link rel="stylesheet" href="../gesamt/dunkel-auto.css?v=202611011930">
   <link rel="stylesheet" href="../gesamt/thema.css?v=202610252020">
   <link rel="stylesheet" href="../gesamt/mobil.css?v=202610252020">
   <script src="../gesamt/thema.js?v=202610252020"></script>
@@ -173,7 +173,8 @@
 <!-- WERKZEUG -->
 <div class="tab-content" id="tab-wz">
 <div class="sec">Ausgegebenes Werkzeug &amp; Geräte</div>
-<table class="dt"><thead><tr><th>Bezeichnung</th><th>Serien-Nr.</th><th>Ausgabe</th><th>Rückgabe</th><th>Zustand</th></tr></thead><tbody id="wz-tbody"></tbody></table>
+<p class="dok-hinweis lz-gf">Je Werkzeug: Stammdaten · Ausgabe · Rücknahme · Reparatur/Kosten. Zurückgenommenes Werkzeug kommt ins Firmenlager (Menü „Werkzeuge“).</p>
+<div id="wzBereich"></div>
 <div style="margin-top:16px;"><div class="sec">Schlüssel &amp; Zugänge</div>
 <div class="form-grid">
 <div class="form-group"><div class="cb-group"><input id="key_buero" type="checkbox"/><label for="key_buero">Büroschlüssel ausgegeben</label></div></div>
@@ -218,7 +219,8 @@
 <script>document.write('<script src="fotos-lokal.js" onerror="this.remove()"><\/script>')</script>
 <script src="../personal/daten-tresor.js?v=1792953619395" onerror="this.remove()"></script>
 <script src="../gesamt/tresor.js?v=202610271200"></script>
-<script src="../gesamt/personal.js?v=202610302100"></script>
+<script src="../gesamt/werkzeug.js?v=202611011930"></script>
+<script src="../gesamt/personal.js?v=202611011930"></script>
 <script>
 /* ===== Funktionen der Personalkarte (aus der Vorlage übernommen) ===== */
 function applyPendingQty() {}
@@ -1054,6 +1056,11 @@ const ph=(window.BrüllStore?BrüllStore.getPhoto(_NR):null)||localStorage.getIt
 loadData();
 applyPendingQty(SK);
 if(window.PK_NUR_LESEN) nurLesen();
+// Werkzeug & Geräte (gemeinsame Liste mit dem Firmenlager, gesamt/werkzeug.js); alte Tabelle einmalig übernehmen
+if(window.Werkzeug&&document.getElementById('wzBereich')){
+  try{ Werkzeug.uebernehmen(PK_NR,(JSON.parse(localStorage.getItem(SK)||'{}'))._wz_table); }catch(e){}
+  Werkzeug.einbauen(document.getElementById('wzBereich'),{bei:PK_NR,nurLesen:!!window.PK_NUR_LESEN});
+}
 { const tab={'#lohnzettel':'lz','#gleitzeit':'gz','#dokumente':'son'}[location.hash];   // Direktlinks auf einen Reiter
   const b=tab&&[...document.querySelectorAll('.tab-btn')].find(x=>(x.getAttribute('onclick')||'').includes(`showTab('${tab}'`)); if(b) showTab(tab,b); }
 
