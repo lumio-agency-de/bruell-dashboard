@@ -110,87 +110,136 @@ window.Bank = (function () {
     return { neu, doppelt, anderes, dateien: liste.length };
   }
 
-  /* ---------- Bankseite: Einlesen + Statistik ---------- */
+  /* ---------- Bankseite (Aufbau nach Vorlage): Kontoverlauf · Einnahmen/Ausgaben je Monat ·
+     Ausgaben · Einnahmen (Ring + Liste) · Umsätze. Umbuchungen zwischen den Firmenkonten zählen nicht. ---------- */
   const STATUS = { auto: ["abgeglichen", "ok"], manuell: ["von Hand", "ok"], regel: ["ohne Rechnung", "regel"], ohne: ["ohne Rechnung", "regel"], pruefen: ["prüfen", "pruefen"], "": ["noch nicht abgeglichen", "regel"] };
-  const MON = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
+  const MON = ["Jan", "Feb", "März", "Apr", "Mai", "Juni", "Juli", "Aug", "Sept", "Okt", "Nov", "Dez"];
+  /* Kategorienfarben (geprüft, hell/dunkel über CSS-Variablen --bk-1 … --bk-7), Sonstige grau */
+  const FARBEN = 7;
+  const tsd = (c) => { const e = Math.abs(c) / 100; return (c < 0 ? "-" : "") + (e >= 1000 ? (e / 1000).toLocaleString("de-DE", { maximumFractionDigits: e >= 10000 ? 0 : 1 }) + " Tsd. €" : Math.round(e).toLocaleString("de-DE") + " €"); };
+  const euroRund = (c) => Math.round(c / 100).toLocaleString("de-DE") + " €";
+  function zeitraumVon(z) {
+    const h = new Date(), m = (d) => d.toISOString().slice(0, 10);
+    if (z === "letzter") { const a = new Date(h.getFullYear(), h.getMonth() - 1, 1), b = new Date(h.getFullYear(), h.getMonth(), 0); return [m(new Date(a - a.getTimezoneOffset() * 6e4)), m(new Date(b - b.getTimezoneOffset() * 6e4))]; }
+    if (z === "dieser") return [h.getFullYear() + "-" + String(h.getMonth() + 1).padStart(2, "0") + "-01", "9999"];
+    if (z === "jahr") return [h.getFullYear() + "-01-01", "9999"];
+    const a = new Date(h.getFullYear(), h.getMonth() - 11, 1); return [a.getFullYear() + "-" + String(a.getMonth() + 1).padStart(2, "0") + "-01", "9999"];
+  }
+  const ZR = [["letzter", "Letzter Monat"], ["dieser", "Dieser Monat"], ["jahr", "Dieses Jahr"], ["12", "Letzte 12 Monate"]];
   function seite(box, konto) {
-    let suche = "", zeitraum = "12", bericht = "", mehr = false;
+    let suche = "", bericht = "", zrAus = "letzter", zrEin = "letzter", verlauf = "12";
+    const firmenIbans = () => Object.values(lesen("lohn:konten", {})).map((k) => iban(k && k.iban)).filter(Boolean);
     const UMk = () => lesen(KEY, []).filter((u) => !konto || u.konto === konto);
-    function monate() {
-      const h = new Date(), l = [];
-      for (let i = 11; i >= 0; i--) { const d = new Date(h.getFullYear(), h.getMonth() - i, 1); l.push(d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0")); }
-      return l;
+    const umbuchung = (u) => !!u.iban && firmenIbans().includes(u.iban);
+    function monate() { const h = new Date(), l = []; for (let i = 11; i >= 0; i--) { const d = new Date(h.getFullYear(), h.getMonth() - i, 1); l.push(d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0")); } return l; }
+    /* Kontostand je Tag rückwärts aus dem letzten bekannten Saldo */
+    function standVerlauf(alle) {
+      const saldi = lesen(SALDO, {}), ks = konto ? [konto] : Object.keys(KONTEN).filter((k) => saldi[k]);
+      if (!ks.length || ks.some((k) => !saldi[k])) return null;
+      const tage = [...new Set(alle.map((u) => u.datum).concat(ks.map((k) => saldi[k].datum)))].sort(), punkte = {};
+      ks.forEach((k) => {
+        const s = saldi[k], l = alle.filter((u) => u.konto === k);
+        const stand = (d) => s.betrag - l.filter((u) => u.datum > d && u.datum <= s.datum).reduce((a, u) => a + u.betrag, 0) + l.filter((u) => u.datum > s.datum && u.datum <= d).reduce((a, u) => a + u.betrag, 0);
+        tage.forEach((d) => { punkte[d] = (punkte[d] || 0) + stand(d); });
+      });
+      return Object.entries(punkte).sort((a, b) => a[0].localeCompare(b[0]));
     }
-    function diagramm(um) {
-      const ms = monate(), daten = ms.map((m) => { const l = um.filter((u) => u.datum.startsWith(m)); return { m, ein: l.filter((u) => u.betrag > 0).reduce((a, u) => a + u.betrag, 0), aus: -l.filter((u) => u.betrag < 0).reduce((a, u) => a + u.betrag, 0) }; });
-      const max = Math.max(1, ...daten.flatMap((d) => [d.ein, d.aus])), W = 720, H = 220, L = 56, B = 26, T = 10, bw = (W - L - 8) / 12, sk = (v) => (H - B - T) * v / max;
-      const ticks = [0, 0.5, 1].map((f) => Math.round(max * f));
-      return `<div class="bk-chart"><div class="bk-legende"><span><i class="bk-ein"></i>Eingänge</span><span><i class="bk-aus"></i>Ausgänge</span></div>
-        <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Eingänge und Ausgänge der letzten 12 Monate">
-          ${ticks.map((t) => `<line class="gitter" x1="${L}" x2="${W - 4}" y1="${H - B - sk(t)}" y2="${H - B - sk(t)}"/><text class="achse" x="${L - 6}" y="${H - B - sk(t) + 4}" text-anchor="end">${esc(euroKurz(t))}</text>`).join("")}
-          ${daten.map((d, i) => { const x = L + i * bw, w = Math.max(4, bw / 2 - 5);
-            const balken = (v, dx, kl) => v ? `<path class="${kl}" d="M${x + dx},${H - B} v${-Math.max(0, sk(v) - 4)} q0,-4 4,-4 h${w - 8} q4,0 4,4 v${Math.max(0, sk(v) - 4)} z"/>` : "";
-            return `<g class="bk-monat" data-tip="${esc(MON[+d.m.slice(5) - 1] + " " + d.m.slice(0, 4))}|${esc(euro(d.ein))}|${esc(euro(d.aus))}|${esc(euro(d.ein - d.aus))}">
-              <rect class="bk-hit" x="${x}" y="${T}" width="${bw}" height="${H - B - T}"/>${balken(d.ein, 3, "bk-ein")}${balken(d.aus, 3 + w + 2, "bk-aus")}
-              <text class="achse" x="${x + bw / 2}" y="${H - 8}" text-anchor="middle">${MON[+d.m.slice(5) - 1]}</text></g>`; }).join("")}
-          <line class="basis" x1="${L}" x2="${W - 4}" y1="${H - B}" y2="${H - B}"/></svg><div class="bk-tip" hidden></div>
-        <details class="bk-tabelle"><summary>Als Tabelle</summary><table class="lo-tab"><thead><tr><th>Monat</th><th class="r">Eingänge</th><th class="r">Ausgänge</th><th class="r">Saldo</th></tr></thead><tbody>
-          ${daten.slice().reverse().map((d) => `<tr><td>${MON[+d.m.slice(5) - 1]} ${d.m.slice(0, 4)}</td><td class="r">${euro(d.ein)}</td><td class="r">${euro(d.aus)}</td><td class="r">${euro(d.ein - d.aus)}</td></tr>`).join("")}</tbody></table></details></div>`;
+    function panelVerlauf(alle) {
+      const pts0 = standVerlauf(alle);
+      if (!pts0) return `<p class="leise">Der Kontostand kommt aus dem Kontoauszug (CAMT-Schlussbilanz oder CSV-Spalte „Saldo nach Buchung“). ${konto ? "" : "Für die Summe braucht es den Stand beider Konten."}</p>`;
+      const ab = (() => { const h = new Date(); const d = new Date(h.getFullYear(), h.getMonth() - +verlauf, h.getDate()); return d.toISOString().slice(0, 10); })();
+      const pts = pts0.filter(([d]) => d >= ab); if (pts.length < 2) return '<p class="leise">Zu wenige Buchungen im Zeitraum.</p>';
+      const W = 560, H = 210, L = 8, R = 62, T = 10, B = 26, vs = pts.map((p) => p[1]), min = Math.min(...vs), max = Math.max(...vs), sp = max - min || 1;
+      const t0 = new Date(pts[0][0]).getTime(), t1 = new Date(pts[pts.length - 1][0]).getTime() || t0 + 1;
+      const x = (d) => L + (W - L - R) * (new Date(d).getTime() - t0) / (t1 - t0 || 1), y = (v) => T + (H - T - B) * (1 - (v - min) / sp);
+      const linie = pts.map(([d, v], i) => (i ? "L" : "M") + x(d).toFixed(1) + "," + y(v).toFixed(1)).join(" ");
+      const ticks = [max, min + sp * 2 / 3, min + sp / 3, min], xt = [0, 0.25, 0.5, 0.75, 1].map((f) => pts[Math.round(f * (pts.length - 1))][0]);
+      return `<div class="bk-chart bk-verlauf"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Kontoverlauf">
+        ${ticks.map((v) => `<line class="gitter" x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/><text class="achse" x="${W - R + 6}" y="${y(v) + 4}">${esc(tsd(v))}</text>`).join("")}
+        <path class="bk-flaeche" d="${linie} L${x(pts[pts.length - 1][0])},${H - B} L${x(pts[0][0])},${H - B} Z"/><path class="bk-linie" d="${linie}"/>
+        ${xt.map((d, i) => `<text class="achse" x="${x(d)}" y="${H - 8}" text-anchor="${i === 0 ? "start" : i === xt.length - 1 ? "end" : "middle"}">${datumDE(d).replace(/^0/, "").replace(/\.0/, ".")}</text>`).join("")}
+        <g class="bk-punkte">${pts.map(([d, v]) => `<circle cx="${x(d)}" cy="${y(v)}" r="7" data-tip="${esc(datumDE(d))}|Kontostand|${esc(euro(v))}"/>`).join("")}</g></svg><div class="bk-tip" hidden></div></div>`;
     }
-    function top(um, vz) {
-      const s = {}; um.filter((u) => vz > 0 ? u.betrag > 0 : u.betrag < 0).forEach((u) => { const n = (u.name || "(ohne Namen)").trim(); s[n] = (s[n] || 0) + Math.abs(u.betrag); });
-      const l = Object.entries(s).sort((a, b) => b[1] - a[1]).slice(0, 6), max = l.length ? l[0][1] : 1;
-      return l.length ? `<ul class="bk-top">${l.map(([n, v]) => `<li><span class="bk-top-name">${esc(n)}</span><span class="bk-top-balken"><i class="${vz > 0 ? "bk-ein" : "bk-aus"}" style="width:${Math.max(2, Math.round(v / max * 100))}%"></i></span><b>${euro(v)}</b></li>`).join("")}</ul>` : '<p class="leise">Keine Umsätze im Zeitraum.</p>';
+    function panelMonate(alle) {
+      const ms = monate(), d = ms.map((m) => { const l = alle.filter((u) => u.datum.startsWith(m) && !umbuchung(u)); return { m, ein: l.filter((u) => u.betrag > 0).reduce((a, u) => a + u.betrag, 0), aus: -l.filter((u) => u.betrag < 0).reduce((a, u) => a + u.betrag, 0) }; });
+      const ein = d.reduce((a, x) => a + x.ein, 0), aus = d.reduce((a, x) => a + x.aus, 0), max = Math.max(1, ...d.flatMap((x) => [x.ein, x.aus]));
+      const W = 560, H = 190, B = 22, T = 6, bw = W / 12, sk = (v) => (H - B - T) * v / max;
+      const balken = (x, w, v, kl) => v ? `<path class="${kl}" d="M${x},${H - B} v${-Math.max(0, sk(v) - 3)} q0,-3 3,-3 h${w - 6} q3,0 3,3 v${Math.max(0, sk(v) - 3)} z"/>` : "";
+      return `<div class="bk-chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Einnahmen und Ausgaben je Monat">
+        ${d.map((x, i) => { const w = (bw - 10) / 2; return `<g class="bk-monat" data-tip="${esc(MON[+x.m.slice(5) - 1] + " " + x.m.slice(0, 4))}|Einnahmen|${esc(euro(x.ein))}|Ausgaben|${esc(euro(x.aus))}|Ergebnis|${esc(euro(x.ein - x.aus))}">
+          <rect class="bk-hit" x="${i * bw}" y="0" width="${bw}" height="${H - B}"/>${balken(i * bw + 4, w, x.ein, "bk-ein")}${balken(i * bw + 6 + w, w, x.aus, "bk-aus")}
+          <text class="achse" x="${i * bw + bw / 2}" y="${H - 6}" text-anchor="middle">${MON[+x.m.slice(5) - 1]} ${x.m.slice(2, 4)}</text></g>`; }).join("")}
+        <line class="basis" x1="0" x2="${W}" y1="${H - B}" y2="${H - B}"/></svg><div class="bk-tip" hidden></div>
+        <p class="bk-summen"><span><i class="bk-ein"></i>Einnahmen <b>${euroRund(ein)}</b></span><span><i class="bk-aus"></i>Ausgaben <b>${euroRund(aus)}</b></span><span>Ergebnis <b class="${ein - aus < 0 ? "bu-minus" : "bk-plus"}">${euroRund(ein - aus)}</b></span><span>Ø je Monat <b class="${ein - aus < 0 ? "bu-minus" : "bk-plus"}">${euroRund((ein - aus) / 12)}</b></span></p>
+        <details class="bk-tabelle"><summary>Als Tabelle</summary><table class="lo-tab"><thead><tr><th>Monat</th><th class="r">Einnahmen</th><th class="r">Ausgaben</th><th class="r">Ergebnis</th></tr></thead><tbody>
+          ${d.slice().reverse().map((x) => `<tr><td>${MON[+x.m.slice(5) - 1]} ${x.m.slice(0, 4)}</td><td class="r">${euro(x.ein)}</td><td class="r">${euro(x.aus)}</td><td class="r">${euro(x.ein - x.aus)}</td></tr>`).join("")}</tbody></table></details></div>`;
+    }
+    function panelRing(alle, vz, zr) {
+      const [von, bis] = zeitraumVon(zr), l = alle.filter((u) => u.datum >= von && u.datum <= bis && (vz > 0 ? u.betrag > 0 : u.betrag < 0) && !umbuchung(u));
+      const g = {}; l.forEach((u) => { const n = (u.name || "(ohne Namen)").trim(), k = norm(n); g[k] = g[k] || { n, s: 0, z: 0 }; g[k].s += Math.abs(u.betrag); g[k].z++; });
+      const sort = Object.values(g).sort((a, b) => b.s - a.s), ges = sort.reduce((a, x) => a + x.s, 0);
+      if (!ges) return '<p class="leise">Keine Buchungen im Zeitraum.</p>';
+      const teile = sort.slice(0, FARBEN).map((x, i) => ({ ...x, f: "bk-" + (i + 1) }));
+      if (sort.length > FARBEN) { const r = sort.slice(FARBEN); teile.push({ n: `Sonstige (${r.length} weitere)`, s: r.reduce((a, x) => a + x.s, 0), z: 0, f: "bk-rest" }); }
+      const R = 70, r = 48, C = 90; let w0 = -Math.PI / 2;
+      const bogen = (s) => { const w = s / ges * Math.PI * 2, w1 = w0 + w, gross = w > Math.PI ? 1 : 0, p = (a, rr) => `${(C + rr * Math.cos(a)).toFixed(2)},${(C + rr * Math.sin(a)).toFixed(2)}`;
+        const d = w >= Math.PI * 2 - 1e-6 ? `M${C},${C - R} A${R},${R} 0 1 1 ${C - 0.01},${C - R} L${C - 0.01},${C - r} A${r},${r} 0 1 0 ${C},${C - r} Z` : `M${p(w0, R)} A${R},${R} 0 ${gross} 1 ${p(w1, R)} L${p(w1, r)} A${r},${r} 0 ${gross} 0 ${p(w0, r)} Z`; w0 = w1; return d; };
+      return `<div class="bk-ring"><svg viewBox="0 0 180 180" role="img" aria-label="${vz > 0 ? "Einnahmen" : "Ausgaben"} nach Name">
+          ${teile.map((x) => `<path class="${x.f}" d="${bogen(x.s)}" data-tip="${esc(x.n)}|${vz > 0 ? "Einnahmen" : "Ausgaben"}|${esc(euro(x.s))} · ${Math.round(x.s / ges * 1000) / 10} %"/>`).join("")}
+          <text x="90" y="84" text-anchor="middle" class="bk-ring-klein">Gesamt</text><text x="90" y="104" text-anchor="middle" class="bk-ring-gross">${esc(tsd(ges))}</text></svg>
+        <ul class="bk-top">${teile.map((x) => `<li><span class="bk-top-name"><i class="${x.f}"></i>${esc(x.n)}${x.z > 1 ? ` (${x.z}×)` : ""}</span><b>${euroRund(x.s)} · ${(x.s / ges * 100).toLocaleString("de-DE", { maximumFractionDigits: 1 })} %</b>
+          <span class="bk-top-balken"><i class="${x.f}" style="width:${Math.max(1, x.s / teile[0].s * 100)}%"></i></span></li>`).join("")}</ul></div><div class="bk-tip" hidden></div>`;
     }
     function zeichnen() {
-      const alle = UMk().sort((a, b) => b.datum.localeCompare(a.datum)), saldi = lesen(SALDO, {}), h = new Date();
-      const von = zeitraum === "monat" ? h.toISOString().slice(0, 7) : zeitraum === "jahr" ? String(h.getFullYear()) : monate()[0];
-      const imZ = alle.filter((u) => zeitraum === "12" ? u.datum >= von + "-01" : u.datum.startsWith(von));
-      const ein = imZ.filter((u) => u.betrag > 0).reduce((a, u) => a + u.betrag, 0), aus = imZ.filter((u) => u.betrag < 0).reduce((a, u) => a + u.betrag, 0);
-      const pruefen = alle.filter((u) => u.status === "pruefen").length;
-      const liste = alle.filter((u) => !suche || norm([u.name, u.zweck, u.datum, (u.betrag / 100).toFixed(2)].join(" ")).includes(norm(suche)));
-      const stand = (k) => saldi[k] ? `${euro(saldi[k].betrag)}` : "–", standDatum = (k) => saldi[k] ? `Stand ${datumDE(saldi[k].datum)}` : "aus dem nächsten Kontoauszug";
-      const kopfKpi = konto
-        ? `<div class="kpi"><span class="kpi-titel">Kontostand</span><span class="kpi-zahl klein">${stand(konto)}</span><span class="kpi-unter">${standDatum(konto)}</span></div>`
-        : Object.keys(KONTEN).map((k) => `<a class="kpi" href="bank-${k}.html${location.search}"><span class="kpi-titel">${KONTEN[k]}</span><span class="kpi-zahl klein">${stand(k)}</span><span class="kpi-unter">${standDatum(k)}</span></a>`).join("");
+      const alle = UMk().sort((a, b) => b.datum.localeCompare(a.datum)), saldi = lesen(SALDO, {});
+      const pruefen = alle.filter((u) => u.status === "pruefen").length, ganz = lesen(SALDO, {});
+      const liste = alle.filter((u) => !suche || norm([u.name, u.zweck, datumDE(u.datum), (u.betrag / 100).toFixed(2).replace(".", ",")].join(" ")).includes(norm(suche)));
+      const stand = konto ? (saldi[konto] ? euro(saldi[konto].betrag) : "–") : (Object.keys(KONTEN).every((k) => ganz[k]) ? euro(Object.keys(KONTEN).reduce((a, k) => a + ganz[k].betrag, 0)) : "–");
+      const standUnter = konto ? (saldi[konto] ? `Stand ${datumDE(saldi[konto].datum)}` : "aus dem nächsten Kontoauszug") : Object.keys(KONTEN).map((k) => `${KONTEN[k]} ${ganz[k] ? euro(ganz[k].betrag) : "–"}`).join(" · ");
+      const zrWahl = (art, w) => `<select class="bk-wahl" data-zr="${art}">${ZR.map(([k, t]) => `<option value="${k}"${k === w ? " selected" : ""}>${t}</option>`).join("")}</select>`;
+      const kontoText = konto ? KONTEN[konto] : "beide Firmenkonten";
       box.innerHTML = `
-        ${konto ? `<section class="panel lo-import"><label class="lo-drop" data-drop>🏦 <span><b>Kontoauszug ${KONTEN[konto]} einlesen</b><small>CAMT (XML oder ZIP) oder CSV aus dem Online-Banking der ${KONTEN[konto]}. Schon eingelesene Umsätze werden übersprungen. Die Buchhaltung gleicht die Umsätze danach automatisch mit den Rechnungen ab.</small></span><input type="file" accept=".xml,.csv,.zip,.txt" multiple hidden data-datei></label>
+        ${konto ? `<section class="panel lo-import"><label class="lo-drop" data-drop>🏦 <span><b>Kontoauszug ${KONTEN[konto]} einlesen</b><small>CAMT (XML oder ZIP) oder CSV aus dem Online-Banking. Schon eingelesene Umsätze werden übersprungen; die Buchhaltung gleicht danach automatisch ab.</small></span><input type="file" accept=".xml,.csv,.zip,.txt" multiple hidden data-datei></label>
           ${bericht ? `<p class="bu-bericht">${esc(bericht)}</p>` : ""}</section>` : ""}
-        <div class="bk-zeitraum wz-filter">${[["monat", "Dieser Monat"], ["jahr", "Dieses Jahr"], ["12", "Letzte 12 Monate"]].map(([k, t]) => `<button type="button" data-zr="${k}" class="${zeitraum === k ? "an" : ""}">${t}</button>`).join("")}</div>
-        <div class="kpis vier lo-kpis">
-          ${kopfKpi}
-          <div class="kpi"><span class="kpi-titel">Eingänge</span><span class="kpi-zahl klein">${euro(ein)}</span><span class="kpi-unter">${imZ.filter((u) => u.betrag > 0).length} Buchungen</span></div>
-          <div class="kpi"><span class="kpi-titel">Ausgänge</span><span class="kpi-zahl klein">${euro(-aus)}</span><span class="kpi-unter">${imZ.filter((u) => u.betrag < 0).length} Buchungen</span></div>
-          ${konto ? `<a class="kpi${pruefen ? " alarm" : ""}" href="buchhaltung.html${location.search}"><span class="kpi-titel">In der Buchhaltung prüfen</span><span class="kpi-zahl klein">${pruefen}</span><span class="kpi-unter">Umsätze ohne passende Rechnung →</span></a>` : ""}
+        <div class="kpis vier lo-kpis bk-kpis">
+          <div class="kpi"><span class="kpi-titel">Kontostand${konto ? "" : " gesamt"}</span><span class="kpi-zahl klein">${stand}</span><span class="kpi-unter">${standUnter}</span></div>
+          <a class="kpi${pruefen ? " alarm" : ""}" href="buchhaltung.html${location.search}"><span class="kpi-titel">In der Buchhaltung prüfen</span><span class="kpi-zahl klein">${pruefen}</span><span class="kpi-unter">Umsätze ohne passende Rechnung →</span></a>
         </div>
-        <section class="panel"><h2 class="panel-titel">Eingänge und Ausgänge je Monat <small>letzte 12 Monate${konto ? "" : " · beide Konten"}</small></h2><div class="panel-innen">${alle.length ? diagramm(alle) : '<p class="leise">Noch kein Kontoauszug eingelesen.</p>'}</div></section>
-        <div class="bk-zwei">
-          <section class="panel"><h2 class="panel-titel">Größte Zahler <small>${zeitraum === "monat" ? "dieser Monat" : zeitraum === "jahr" ? "dieses Jahr" : "12 Monate"}</small></h2><div class="panel-innen">${top(imZ, 1)}</div></section>
-          <section class="panel"><h2 class="panel-titel">Größte Empfänger <small>${zeitraum === "monat" ? "dieser Monat" : zeitraum === "jahr" ? "dieses Jahr" : "12 Monate"}</small></h2><div class="panel-innen">${top(imZ, -1)}</div></section>
-        </div>
-        <section class="panel"><h2 class="panel-titel">Umsätze <span class="zahl">${alle.length}</span></h2><div class="panel-innen">
-          <input type="search" class="eingabe bk-suche" data-suche placeholder="Suchen: Name, Verwendungszweck, Betrag …" value="${esc(suche)}">
-          ${liste.length ? `<div class="lo-scroll"><table class="lo-tab bu-tab"><thead><tr><th>Datum</th>${konto ? "" : "<th>Konto</th>"}<th>Name / Verwendungszweck</th><th class="r">Betrag</th><th>Buchhaltung</th></tr></thead><tbody>
-            ${liste.slice(0, mehr ? 1000 : 60).map((u) => { const [st, kl] = STATUS[u.status || ""] || STATUS[""]; return `<tr class="${u.status === "pruefen" ? "bu-pruefen" : ""}"><td>${datumDE(u.datum)}</td>${konto ? "" : `<td><small>${KONTEN[u.konto] || "–"}</small></td>`}<td><b>${esc(u.name || "–")}</b><small class="bu-zweck">${esc(u.zweck)}</small></td><td class="r ${u.betrag < 0 ? "bu-minus" : ""}">${euro(u.betrag)}</td><td><span class="bu-st ${kl}">${st}</span>${u.hinweis ? `<small>${esc(u.hinweis)}</small>` : ""}</td></tr>`; }).join("")}
-          </tbody></table></div>${liste.length > 60 && !mehr ? `<button type="button" class="btn klein still" data-mehr>Alle ${liste.length} anzeigen</button>` : ""}` : `<p class="leise">${alle.length ? "Keine Treffer." : "Noch keine Umsätze."}</p>`}
-        </div></section>`;
+        ${alle.length ? `<div class="bk-raster">
+          <section class="panel bk-p-verlauf"><div class="bk-kopf"><h2>Kontoverlauf</h2><small>${konto ? "Kontostand" : "Summe der Kontostände"} aus den Kontoauszügen · ${kontoText}</small>
+            <select class="bk-wahl" data-verlauf>${[["3", "3 Monate"], ["6", "6 Monate"], ["12", "12 Monate"]].map(([k, t]) => `<option value="${k}"${k === verlauf ? " selected" : ""}>${t}</option>`).join("")}</select></div>${panelVerlauf(alle)}</section>
+          <section class="panel bk-p-monate"><div class="bk-kopf"><h2>Einnahmen und Ausgaben je Monat</h2><small>Letzte 12 Monate · Umbuchungen zwischen den Firmenkonten zählen nicht · ${kontoText}</small></div>${panelMonate(alle)}</section>
+          <section class="panel bk-p-aus"><div class="bk-kopf"><h2>Ausgaben</h2><small>Ohne Umbuchungen zwischen den Firmenkonten</small>${zrWahl("aus", zrAus)}</div>${panelRing(alle, -1, zrAus)}</section>
+          <section class="panel bk-p-um"><div class="bk-kopf"><h2>Umsätze</h2><small>Aus den Kontoauszügen · neueste zuerst</small>
+            <input type="search" class="bk-wahl bk-suche" data-suche placeholder="Suchen: Name, Verwendungszweck, Betrag …" value="${esc(suche)}"></div>
+            <div class="bk-umliste">${liste.length ? `<table class="lo-tab bu-tab"><thead><tr><th>Datum</th><th>Empfänger / Auftraggeber</th><th class="r">Betrag</th></tr></thead><tbody>
+              ${liste.slice(0, 400).map((u) => { const [st, kl] = STATUS[u.status || ""] || STATUS[""]; return `<tr class="${u.status === "pruefen" ? "bu-pruefen" : ""}" title="Buchhaltung: ${esc(st)}${u.hinweis ? " – " + esc(u.hinweis) : ""}"><td>${datumDE(u.datum)}${konto ? "" : `<small>${KONTEN[u.konto] || ""}</small>`}</td><td><b>${esc(u.name || "–")}</b><small class="bu-zweck">${esc(u.zweck)}</small></td><td class="r"><span class="${u.betrag < 0 ? "bu-minus" : ""}">${euro(u.betrag)}</span>${u.status === "pruefen" ? '<small class="lo-warn">prüfen</small>' : umbuchung(u) ? "<small>Umbuchung</small>" : ""}</td></tr>`; }).join("")}
+              </tbody></table>` : '<p class="leise">Keine Treffer.</p>'}</div></section>
+          <section class="panel bk-p-ein"><div class="bk-kopf"><h2>Einnahmen</h2><small>Ohne Umbuchungen zwischen den Firmenkonten</small>${zrWahl("ein", zrEin)}</div>${panelRing(alle, 1, zrEin)}</section>
+        </div>` : `<section class="panel"><div class="panel-innen" style="padding-top:16px"><p class="leise">Noch kein Kontoauszug eingelesen${konto ? " – oben hineinziehen" : " – unter Bank → Sparkasse oder Raiffeisenbank"}.</p></div></section>`}`;
     }
-    box.addEventListener("change", async (e) => { if (e.target.matches("[data-datei]") && e.target.files.length) { const l = [...e.target.files]; e.target.value = ""; await laden(l); } });
+    box.addEventListener("change", async (e) => {
+      const t = e.target;
+      if (t.matches("[data-datei]") && t.files.length) { const l = [...t.files]; t.value = ""; return laden(l); }
+      if (t.dataset.zr === "aus") { zrAus = t.value; zeichnen(); } if (t.dataset.zr === "ein") { zrEin = t.value; zeichnen(); }
+      if (t.matches("[data-verlauf]")) { verlauf = t.value; zeichnen(); }
+    });
     box.addEventListener("dragover", (e) => { const d = e.target.closest("[data-drop]"); if (d) { e.preventDefault(); d.classList.add("ziehen"); } });
     box.addEventListener("dragleave", (e) => { const d = e.target.closest("[data-drop]"); if (d) d.classList.remove("ziehen"); });
     box.addEventListener("drop", (e) => { const d = e.target.closest("[data-drop]"); if (!d) return; e.preventDefault(); d.classList.remove("ziehen"); if (e.dataTransfer.files.length) laden([...e.dataTransfer.files]); });
-    box.addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; if (b.dataset.zr) { zeitraum = b.dataset.zr; zeichnen(); } if (b.hasAttribute("data-mehr")) { mehr = true; zeichnen(); } });
     box.addEventListener("input", (e) => { if (e.target.matches("[data-suche]")) { suche = e.target.value; const p = e.target.selectionStart; zeichnen(); const s = box.querySelector("[data-suche]"); s.focus(); s.setSelectionRange(p, p); } });
-    /* Tooltip im Diagramm */
+    /* Tooltips: Monatsbalken, Verlaufspunkte, Ringsegmente */
     box.addEventListener("pointermove", (e) => {
-      const g = e.target.closest(".bk-monat"), tip = box.querySelector(".bk-tip"); if (!tip) return;
-      box.querySelectorAll(".bk-monat.an").forEach((x) => x !== g && x.classList.remove("an"));
-      if (!g) { tip.hidden = true; return; }
-      g.classList.add("an"); const [m, ein, aus, sa] = g.dataset.tip.split("|"), r = box.querySelector(".bk-chart").getBoundingClientRect();
-      tip.innerHTML = `<b>${m}</b><span><i class="bk-ein"></i>Eingänge <b>${ein}</b></span><span><i class="bk-aus"></i>Ausgänge <b>${aus}</b></span><span>Saldo <b>${sa}</b></span>`;
-      tip.hidden = false; tip.style.left = Math.min(r.width - 190, Math.max(0, e.clientX - r.left + 12)) + "px"; tip.style.top = Math.max(0, e.clientY - r.top - 20) + "px";
+      const ziel = e.target.closest("[data-tip]"), panel = e.target.closest(".panel"), tip = panel && panel.querySelector(".bk-tip");
+      box.querySelectorAll(".an[data-tip]").forEach((x) => x !== ziel && x.classList.remove("an"));
+      box.querySelectorAll(".bk-tip").forEach((t) => { if (t !== tip || !ziel) t.hidden = true; });
+      if (!ziel || !tip) return;
+      ziel.classList.add("an"); const f = ziel.dataset.tip.split("|"), r = tip.parentElement.getBoundingClientRect();
+      let html = `<b>${f[0]}</b>`; for (let i = 1; i < f.length; i += 2) html += `<span>${/Einnahmen/.test(f[i]) && f.length > 3 ? '<i class="bk-ein"></i>' : /Ausgaben/.test(f[i]) && f.length > 3 ? '<i class="bk-aus"></i>' : ""}${f[i]} <b>${f[i + 1]}</b></span>`;
+      tip.innerHTML = html; tip.hidden = false;
+      tip.style.left = Math.min(r.width - 200, Math.max(0, e.clientX - r.left + 14)) + "px"; tip.style.top = Math.max(0, e.clientY - r.top - 10) + "px";
     });
-    box.addEventListener("pointerleave", () => { const tip = box.querySelector(".bk-tip"); if (tip) tip.hidden = true; box.querySelectorAll(".bk-monat.an").forEach((x) => x.classList.remove("an")); });
+    box.addEventListener("pointerleave", () => { box.querySelectorAll(".bk-tip").forEach((t) => { t.hidden = true; }); box.querySelectorAll(".an[data-tip]").forEach((x) => x.classList.remove("an")); });
     async function laden(l) {
       try { const r = await einlesen(l, konto); bericht = `${r.neu} neue Umsätze eingelesen${r.doppelt ? `, ${r.doppelt} schon vorhanden` : ""}${r.anderes ? `. Achtung: ${r.anderes} Umsätze gehören laut IBAN zum anderen Firmenkonto und wurden dort abgelegt.` : "."}`; }
       catch (err) { bericht = "Einlesen fehlgeschlagen: " + (err.message || err); }

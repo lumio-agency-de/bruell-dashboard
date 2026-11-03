@@ -64,6 +64,7 @@
   /* ---------- Abgleich ---------- */
   const MA = () => Object.keys(localStorage).filter((k) => /^pk_\d+$/.test(k)).map((k) => lesen(k, {})).filter((d) => d.nachname);
   const REGELN = [
+    ["Umbuchung zwischen den Firmenkonten", (u) => !!u.iban && Object.values(lesen("lohn:konten", {})).some((k) => k && k.iban && k.iban.replace(/\s+/g, "").toUpperCase() === u.iban)],
     ["Lohn / Gehalt", (u) => u.betrag < 0 && (/lohn|gehalt|\bsala\b/i.test(u.zweck) || MA().some((d) => norm(u.name).includes(norm(d.nachname)) && norm(u.name).includes(norm(d.vorname || "")) ))],
     ["Bankentgelt", (u) => /entgelt|kontofuhrung|kontofuehrung|abschluss|zinsen|gebuhr|gebuehr|porto/i.test(norm(u.zweck + " " + u.name)) && Math.abs(u.betrag) < 50000 && !u.iban],
     ["Finanzamt / Steuer", (u) => /finanzamt|bundeskasse|steuerverwaltung/i.test(norm(u.name + " " + u.zweck))],
