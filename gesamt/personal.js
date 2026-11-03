@@ -84,8 +84,9 @@ var PK_NR = (new URLSearchParams(location.search).get("nr") || "").replace(/\D/g
     $("#rail").innerHTML = `<a class="marke" href="../${QS}"><img class="marke-logo" src="../bad/app/img/logo.svg" alt=""><span class="marke-text"><strong>Brüll GmbH</strong><small>${{ fahrzeuge: "Fahrzeuge", werkzeuge: "Werkzeuge", betrieb: "Betrieb", lohn: "Lohnabrechnung" }[hier] || "Personal"}</small></span></a>
       <nav class="nav">${nav.map(([h, t, i, an, kl]) => `<a href="${h.includes("?") ? h : h + QS}"${kl ? ` class="${kl}"` : ""}${an ? ' aria-current="page"' : ""}><span class="nav-i ${i}" aria-hidden="true"></span>${t}</a>`).join("")}</nav>
       <div class="speicher"><div class="ich"><span class="ich-k">${esc(ini)}</span><span><b>${esc(PERSON.name)}</b><small>${esc(EBENE_TITEL[PERSON.ebene] || "")}</small></span></div>
-        <div class="ich-aktionen"><button class="btn klein hell" type="button" id="abmelden">Abmelden</button></div>
+        <div class="ich-aktionen"><button class="btn klein hell" type="button" id="pw-aendern">Passwort ändern</button><button class="btn klein hell" type="button" id="abmelden">Abmelden</button></div>
         <p class="modus">${!GF ? (LZ_FREI ? "Lohnzettel hochladen freigegeben" : "Nur lesen") + (DEMO ? " · Demo" : "") : DEMO ? "Demo – Daten nur in diesem Browser" : hier === "betrieb" ? "Betriebszahlen – vertraulich" : "Personaldaten – vertraulich"}</p></div>`;
+    $("#pw-aendern").addEventListener("click", () => window.BruellPasswort && window.BruellPasswort.oeffnen());
     $("#abmelden").addEventListener("click", () => {
       try { localStorage.removeItem("bruell:sitzung"); sessionStorage.removeItem("bruell:sitzung"); sessionStorage.setItem("bruell:zurueck", "1"); } catch (e) { /* egal */ }
       location.replace("../bad/" + QS);

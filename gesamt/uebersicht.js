@@ -341,7 +341,7 @@
       ${person.ebene === "geschaeftsfuehrung" ? `<a href="personal/${QS}"><span class="nav-i i-konten" aria-hidden="true"></span>Personal</a><a href="fahrzeuge/${QS}"><span class="nav-i i-einrichtung" aria-hidden="true"></span>Fahrzeuge</a><a href="lager/${QS}"><span class="nav-i i-werkzeug" aria-hidden="true"></span>Werkzeuge</a><a href="betrieb/${QS}"><span class="nav-i i-kennzahlen" aria-hidden="true"></span>Betrieb</a><a href="bad/${QS}#/konten"><span class="nav-i i-einrichtung" aria-hidden="true"></span>Konten</a>` : person.ebene !== "partner" ? `<a href="personal/karte.html${QS}"><span class="nav-i i-konten" aria-hidden="true"></span>Meine Personalkarte</a>` : ""}`;
     const ini = (person.name || "?").split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
     $("#ich").innerHTML = `<div class="ich"><span class="ich-k">${esc(ini)}</span><span><b>${esc(person.name)}</b><small>${esc({ geschaeftsfuehrung: "Geschäftsführung", planung: "Planung / Bearbeitung", monteur: "Monteur" }[person.ebene] || "")}</small></span></div>
-      <div class="ich-aktionen"><button class="btn klein hell" data-aktion="abmelden">Abmelden</button></div>
+      <div class="ich-aktionen"><button class="btn klein hell" data-aktion="passwort">Passwort ändern</button><button class="btn klein hell" data-aktion="abmelden">Abmelden</button></div>
       ${DEMO ? '<p class="modus">Demo – Daten nur in diesem Browser</p>' : ""}`;
   }
 
@@ -365,6 +365,7 @@
     const a = e.target.closest("[data-aktion]"); if (!a) return;
     const akt = a.dataset.aktion;
     if (akt === "abmelden") return abmelden();
+    if (akt === "passwort") return window.BruellPasswort && window.BruellPasswort.oeffnen();
     if (akt === "w-bearbeiten") { BEARBEITEN = !BEARBEITEN; return zeichnen(); }
     if (akt === "w-groesse" || akt === "w-schieben" || akt === "w-zuruecksetzen") {
       const lay = layoutVon(PERSON), id = a.dataset.id;

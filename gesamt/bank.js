@@ -110,6 +110,38 @@ window.Bank = (function () {
     return { neu, doppelt, anderes, dateien: liste.length };
   }
 
+  /* ---------- Beispieldaten (nur Demo): 12 Monate frei erfundene Umsätze für beide Konten ----------
+     Kennung „demo-…“ → lassen sich gezielt wieder entfernen, echte Auszüge bleiben unberührt. */
+  const DEMO = new URLSearchParams(location.search).has("demo");
+  const istBeispiel = (u) => String(u.id).startsWith("demo-");
+  function beispielLaden() {
+    let s = 20261103; const zz = () => (s = (s * 1103515245 + 12345) % 2147483648) / 2147483648;   // fester Zufall → immer gleiche Daten
+    const iso = (d) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    const KUNDEN = ["Mueller Hans", "Klein Eva", "Bau GmbH Maier", "Schmidt Petra", "Weber Thomas", "Fischer Anna", "Hausverwaltung Sommer", "Wagner Jürgen"];
+    const FEST = [["Telekom Deutschland GmbH", 4, 23000, "Mobilfunk und Festnetz"], ["VW Leasing GmbH", 1, 231400, "Leasingrate Fahrzeuge"], ["Holger Weiss Steuerberater", 28, 17899, "Buchhaltung Monat"]];
+    const LIEF = [["Adolf Wuerth GmbH", 60000, 140000], ["Viega GmbH", 50000, 160000], ["Hansgrohe SE", 30000, 120000], ["Shell Deutschland", 60000, 140000]];
+    const UM = lesen(KEY, []).filter((u) => !istBeispiel(u)), saldi = lesen(SALDO, {}), h = new Date();
+    let nr = 100;
+    for (const konto of Object.keys(KONTEN)) {
+      const f = konto === "sparkasse" ? 1 : 0.45, neu = [];
+      for (let i = 11; i >= 0; i--) {
+        const tag = (t) => { const d = new Date(h.getFullYear(), h.getMonth() - i, t); return d > h ? null : iso(d); };
+        for (let k = 0; k < 3 + Math.floor(zz() * 3); k++) { const d = tag(2 + Math.floor(zz() * 26)); if (d) neu.push({ datum: d, betrag: Math.round((250000 + zz() * 900000) * f), name: KUNDEN[Math.floor(zz() * KUNDEN.length)], zweck: `Rechnung RE-${d.slice(0, 4)}-${nr++}` }); }
+        for (const [name, t, b, zweck] of FEST) { const d = tag(t); if (d && (konto === "sparkasse" || name.startsWith("Telekom"))) neu.push({ datum: d, betrag: -Math.round(b * (konto === "sparkasse" ? 1 : 0.5)), name, zweck }); }
+        for (const [name, a, b] of LIEF) if (zz() < 0.8) { const d = tag(3 + Math.floor(zz() * 25)); if (d) neu.push({ datum: d, betrag: -Math.round((a + zz() * (b - a)) * f), name, zweck: `Rg ${4000 + Math.floor(zz() * 6000)}` }); }
+        const d = tag(28); if (d && konto === "sparkasse") neu.push({ datum: d, betrag: -Math.round(1400000 + zz() * 200000), name: "Löhne und Gehälter", zweck: `Lohn ${MON[new Date(d).getMonth()]} ${d.slice(0, 4)}` });
+        const e = tag(30); if (e) neu.push({ datum: e, betrag: -Math.round(1500 + zz() * 2500), name: KONTEN[konto], zweck: "Kontoführung / Entgelte" });
+      }
+      neu.forEach((u, i) => UM.push({ id: `demo-${konto}-${i}`, konto, iban: "", status: "", rechnungen: [], hinweis: "", ...u }));
+      saldi[konto] = { datum: iso(h), betrag: Math.round((konto === "sparkasse" ? 4800000 : 1900000) + zz() * 500000), eingelesen: iso(h), beispiel: true };
+    }
+    schreiben(KEY, UM); schreiben(SALDO, saldi);
+  }
+  function beispielEntfernen() {
+    schreiben(KEY, lesen(KEY, []).filter((u) => !istBeispiel(u)));
+    const saldi = lesen(SALDO, {}); for (const k of Object.keys(saldi)) if (saldi[k] && saldi[k].beispiel) delete saldi[k]; schreiben(SALDO, saldi);
+  }
+
   /* ---------- Bankseite (Aufbau nach Vorlage): Kontoverlauf · Einnahmen/Ausgaben je Monat ·
      Ausgaben · Einnahmen (Ring + Liste) · Umsätze. Umbuchungen zwischen den Firmenkonten zählen nicht. ---------- */
   const STATUS = { auto: ["abgeglichen", "ok"], manuell: ["von Hand", "ok"], regel: ["ohne Rechnung", "regel"], ohne: ["ohne Rechnung", "regel"], pruefen: ["prüfen", "pruefen"], "": ["noch nicht abgeglichen", "regel"] };
@@ -200,7 +232,7 @@ window.Bank = (function () {
       const kontoText = konto ? KONTEN[konto] : "beide Firmenkonten";
       box.innerHTML = `
         ${konto ? `<section class="panel lo-import"><label class="lo-drop" data-drop>🏦 <span><b>Kontoauszug ${KONTEN[konto]} einlesen</b><small>CAMT (XML oder ZIP) oder CSV aus dem Online-Banking. Schon eingelesene Umsätze werden übersprungen; die Buchhaltung gleicht danach automatisch ab.</small></span><input type="file" accept=".xml,.csv,.zip,.txt" multiple hidden data-datei></label>
-          ${bericht ? `<p class="bu-bericht">${esc(bericht)}</p>` : ""}</section>` : ""}
+          ${bericht ? `<p class="bu-bericht">${esc(bericht)}</p>` : ""}${DEMO && lesen(KEY, []).some(istBeispiel) ? `<p class="bu-bericht">Erfundene Beispieldaten (Demo). <button type="button" class="btn klein still" data-beispiel="weg">Beispieldaten entfernen</button></p>` : ""}</section>` : ""}
         <div class="kpis vier lo-kpis bk-kpis">
           <div class="kpi"><span class="kpi-titel">Kontostand${konto ? "" : " gesamt"}</span><span class="kpi-zahl klein">${stand}</span><span class="kpi-unter">${standUnter}</span></div>
           <a class="kpi${pruefen ? " alarm" : ""}" href="buchhaltung.html${location.search}"><span class="kpi-titel">In der Buchhaltung prüfen</span><span class="kpi-zahl klein">${pruefen}</span><span class="kpi-unter">Umsätze ohne passende Rechnung →</span></a>
@@ -216,13 +248,18 @@ window.Bank = (function () {
               ${liste.slice(0, 400).map((u) => { const [st, kl] = STATUS[u.status || ""] || STATUS[""]; return `<tr class="${u.status === "pruefen" ? "bu-pruefen" : ""}" title="Buchhaltung: ${esc(st)}${u.hinweis ? " – " + esc(u.hinweis) : ""}"><td>${datumDE(u.datum)}${konto ? "" : `<small>${KONTEN[u.konto] || ""}</small>`}</td><td><b>${esc(u.name || "–")}</b><small class="bu-zweck">${esc(u.zweck)}</small></td><td class="r"><span class="${u.betrag < 0 ? "bu-minus" : ""}">${euro(u.betrag)}</span>${u.status === "pruefen" ? '<small class="lo-warn">prüfen</small>' : umbuchung(u) ? "<small>Umbuchung</small>" : ""}</td></tr>`; }).join("")}
               </tbody></table>` : '<p class="leise">Keine Treffer.</p>'}</div></section>
           <section class="panel bk-p-ein"><div class="bk-kopf"><h2>Einnahmen</h2><small>Ohne Umbuchungen zwischen den Firmenkonten</small>${zrWahl("ein", zrEin)}</div>${panelRing(alle, 1, zrEin)}</section>
-        </div>` : `<section class="panel"><div class="panel-innen" style="padding-top:16px"><p class="leise">Noch kein Kontoauszug eingelesen${konto ? " – oben hineinziehen" : " – unter Bank → Sparkasse oder Raiffeisenbank"}.</p></div></section>`}`;
+        </div>` : `<section class="panel"><div class="panel-innen" style="padding-top:16px"><p class="leise">Noch kein Kontoauszug eingelesen${konto ? " – oben hineinziehen" : " – unter Bank → Sparkasse oder Raiffeisenbank"}.</p>${DEMO ? `<p><button type="button" class="btn" data-beispiel="laden">Beispieldaten laden (12 Monate, erfunden)</button></p>` : ""}</div></section>`}`;
     }
     box.addEventListener("change", async (e) => {
       const t = e.target;
       if (t.matches("[data-datei]") && t.files.length) { const l = [...t.files]; t.value = ""; return laden(l); }
       if (t.dataset.zr === "aus") { zrAus = t.value; zeichnen(); } if (t.dataset.zr === "ein") { zrEin = t.value; zeichnen(); }
       if (t.matches("[data-verlauf]")) { verlauf = t.value; zeichnen(); }
+    });
+    box.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-beispiel]"); if (!b) return;
+      if (b.dataset.beispiel === "laden") beispielLaden(); else beispielEntfernen();
+      bericht = ""; if (window.BuchAbgleich) window.BuchAbgleich(); zeichnen();
     });
     box.addEventListener("dragover", (e) => { const d = e.target.closest("[data-drop]"); if (d) { e.preventDefault(); d.classList.add("ziehen"); } });
     box.addEventListener("dragleave", (e) => { const d = e.target.closest("[data-drop]"); if (d) d.classList.remove("ziehen"); });
