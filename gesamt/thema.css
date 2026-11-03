@@ -44,3 +44,8 @@ html[data-thema="dunkel"] .thema-knopf .sonne { display: block; }
 html[data-thema="dunkel"] .tb-nr { color: var(--akzent-text); background: color-mix(in oklab, var(--akzent) 18%, transparent); }
 @media (max-width: 760px) { .thema-knopf { top: 9px; right: 8px; width: 34px; height: 34px; background: var(--blatt); box-shadow: -14px 0 12px -2px var(--blatt); } .rail { padding-right: 52px !important; } .topbar { padding-right: 52px !important; } }
 html[data-thema="dunkel"] [style*="color:#1a3c6e"] { color: #9cc0f5 !important; }
+
+/* Menü-Symbole der Gesamt-Bereiche (überall geladen, damit Übersicht/Bad/Heizung sie auch kennen) */
+.i-lohn { width: 14px; height: 10px; border: 1.5px solid currentColor; border-radius: 2px; background: radial-gradient(circle, currentColor 1.6px, transparent 2px) center / 100% 100% no-repeat; }
+.i-werkzeug { width: 14px; height: 14px; background: linear-gradient(45deg, transparent 42%, currentColor 42%, currentColor 58%, transparent 58%); border-radius: 2px; box-shadow: inset 0 0 0 1.5px currentColor; }
+.i-unter { width: 6px; height: 6px; margin: 0 4px; border-radius: 50%; background: currentColor; opacity: .6; }
