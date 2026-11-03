@@ -24,4 +24,20 @@
   /* Andere Tabs/Seiten ziehen mit */
   window.addEventListener("storage", (e) => { if (e.key === KEY && e.newValue) { setzen(e.newValue); const b = document.querySelector(".thema-knopf"); if (b) b.setAttribute("aria-pressed", e.newValue === "dunkel"); } });
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", knopf); else knopf();
+
+  /* Schneller Seitenwechsel: Menü-Ziele werden beim Zeigen mit der Maus (bzw. beim Antippen) vorab geladen.
+     Gesamt-Seiten fertig vorbereitet (prerender); Bad/Heizung nur abgerufen, damit dort nichts
+     „im Hintergrund“ startet (z. B. Schreibschutz eines Projekts). Browser ohne Unterstützung ignorieren das. */
+  if (HTMLScriptElement.supports && HTMLScriptElement.supports("speculationrules")) {
+    /* Muster als Objekt: Abfrage (?demo=1) und Anker (#/…) sind dann automatisch beliebig */
+    const app = { href_matches: { pathname: "(.*)/(bad|heizung)/(.*)" } };
+    const aus = [{ href_matches: { pathname: "(.*)/kunde.html" } }, { selector_matches: "[data-kein-vorladen]" }];
+    const s = document.createElement("script");
+    s.type = "speculationrules";
+    s.textContent = JSON.stringify({
+      prerender: [{ where: { and: [{ href_matches: { pathname: "/*" } }, { not: app }, ...aus.map((a) => ({ not: a }))] }, eagerness: "moderate" }],
+      prefetch: [{ where: { and: [app, ...aus.map((a) => ({ not: a }))] }, eagerness: "moderate" }],
+    });
+    document.head.appendChild(s);
+  }
 })();

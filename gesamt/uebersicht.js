@@ -79,8 +79,11 @@
     66: ["🌧️", "Eisregen"], 67: ["🌧️", "Eisregen"], 71: ["🌨️", "leichter Schnee"], 73: ["🌨️", "Schnee"], 75: ["❄️", "starker Schnee"], 77: ["🌨️", "Schneegriesel"],
     80: ["🌦️", "Schauer"], 81: ["🌧️", "Schauer"], 82: ["⛈️", "heftige Schauer"], 85: ["🌨️", "Schneeschauer"], 86: ["🌨️", "Schneeschauer"], 95: ["⛈️", "Gewitter"], 96: ["⛈️", "Gewitter"], 99: ["⛈️", "Gewitter"],
   };
+  /* Wetter 15 Minuten merken (sessionStorage) → beim Neuzeichnen/Seitenwechsel sofort da, keine Doppelabfrage */
   async function wetterLaden() {
     const el = $("#wetter"); if (!el) return;
+    let gemerkt = null; try { gemerkt = JSON.parse(sessionStorage.getItem("bruell:wetter")); } catch (e) { /* egal */ }
+    if (gemerkt && Date.now() - gemerkt.zeit < 9e5) { el.innerHTML = gemerkt.html; return; }
     try {
       const u = `https://api.open-meteo.com/v1/forecast?latitude=${ORT.lat}&longitude=${ORT.lon}&current=temperature_2m,weather_code,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Europe%2FBerlin&forecast_days=4`;
       const w = await (await fetch(u)).json();
@@ -92,6 +95,7 @@
       el.innerHTML = `<div class="wt-jetzt"><span class="wt-sym" aria-hidden="true">${jetztSym}</span><b class="wt-temp">${Math.round(c.temperature_2m)}°</b></div>
         <small class="wt-text">${esc(jetztText)} · ${esc(ORT.name)}</small>
         <div class="wt-tage">${d.time.map((t, i) => `<span><small>${i === 0 ? "Heute" : WT[new Date(t + "T12:00").getDay()].slice(0, 2)}</small><i aria-hidden="true">${sym(d.weather_code[i])[0]}</i><b>${Math.round(d.temperature_2m_max[i])}°</b><small>${Math.round(d.temperature_2m_min[i])}°${d.precipitation_probability_max[i] >= 30 ? ` · ${d.precipitation_probability_max[i]} %` : ""}</small></span>`).join("")}</div>`;
+      try { sessionStorage.setItem("bruell:wetter", JSON.stringify({ zeit: Date.now(), html: el.innerHTML })); } catch (e) { /* egal */ }
     } catch (e) { el.innerHTML = `<p class="leise klein-text">Wetter gerade nicht erreichbar.</p>`; }
   }
 
@@ -354,8 +358,13 @@
     if (PERSON.ebene === "mitarbeiter") return location.replace("personal/karte.html" + QS);   // nur die eigene Personalkarte
     try { localStorage.setItem("bruell:bereich", "uebersicht"); } catch (e) { /* egal */ }
     leiste(PERSON);
+    /* Sofort den zuletzt geladenen Stand zeigen (je Person), frische Auszüge ersetzen ihn, sobald sie da sind */
+    const CACHE = "bruell:auszug-cache:" + PERSON.id + (DEMO ? ":demo" : ""), alt = lesen(CACHE, null);
+    if (alt && alt.bad && alt.heizung) { AUSZUEGE = alt; zeichnen(); }
     const [bad, heizung] = await Promise.all(BEREICHE.map((b) => auszugHolen(b.id)));
+    if (alt && alt.bad && alt.heizung && [bad, heizung].every((a) => a && a.fehler)) return;   // offline o. Ä.: alten Stand stehen lassen
     AUSZUEGE = { bad, heizung };
+    if (!bad.fehler && !heizung.fehler) schreiben(CACHE, AUSZUEGE);
     if ([bad, heizung].every((a) => a && a.fehler)) { $("#main").innerHTML = `<div class="seite"><div class="panel startfeld"><h2>Bereiche nicht erreichbar</h2><p>Bitte neu laden oder erneut anmelden.</p><button class="btn" data-aktion="abmelden">Neu anmelden</button></div></div>`; return; }
     zeichnen();
   }
