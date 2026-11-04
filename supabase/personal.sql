@@ -137,3 +137,12 @@ create or replace function public.personal_fotos() returns jsonb language sql st
 $$;
 revoke all on function public.personal_fotos() from public, anon;
 grant execute on function public.personal_fotos() to authenticated;
+
+-- Welche Dokumente/Lohnzettel gibt es? { "dokumente/<Nr>/<Feld>": Stand, "lohnzettel/<Nr>/lz-JJJJ-MM": Stand }
+-- Läuft mit den Rechten des Angemeldeten → GF alle, sonst nur die eigenen (+ alle Lohnzettel bei Freigabe).
+create or replace function public.personal_dateien() returns jsonb language sql stable security invoker set search_path = public, storage as $$
+  select coalesce(jsonb_object_agg(name, coalesce(updated_at, created_at)), '{}'::jsonb)
+  from storage.objects where bucket_id = 'personal' and (name like 'dokumente/%' or name like 'lohnzettel/%')
+$$;
+revoke all on function public.personal_dateien() from public, anon;
+grant execute on function public.personal_dateien() to authenticated;

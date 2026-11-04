@@ -1,0 +1,30 @@
+-- Zugriffsregeln Fahrzeuge (läuft nach personal-test.sql; Konten daniel/max/erika/moritz gibt es dort schon)
+begin; set local role authenticated; select _als('daniel@konto.bad-dashboard.de');
+insert into fahrzeuge (nr, daten) values ('1', '{"fz_kennzeichen":"BB-XX 1","fz_fahrer":"Max Muster"}');
+insert into tanken (id, nr, datum, daten) values ('t1', '1', '2026-10-01', '{"liter":40}'), ('t2', null, '2026-10-02', '{"liter":30}');
+select _pruef('GF: Fahrzeug + Tankbuchungen sichtbar', (select count(*) from fahrzeuge) = 1 and (select count(*) from tanken) = 2);
+commit;
+begin; set local role authenticated; select konto_aktiv('max@konto.bad-dashboard.de', true) from (select _als('daniel@konto.bad-dashboard.de')) x; commit;
+begin; set local role authenticated; select _als('max@konto.bad-dashboard.de');
+select _pruef('Mitarbeiter: keine Fahrzeuge, keine Tankbuchungen', (select count(*) from fahrzeuge) = 0 and (select count(*) from tanken) = 0);
+do $$ begin insert into fahrzeuge (nr, daten) values ('9', '{}'); perform _pruef('Mitarbeiter: Fahrzeug anlegen gesperrt', false); exception when others then perform _pruef('Mitarbeiter: Fahrzeug anlegen gesperrt', true); end $$;
+update fahrzeuge set daten = '{}' where nr = '1';
+commit;
+select _pruef('Fahrzeug unverändert nach Mitarbeiter-Versuch', (select daten ->> 'fz_kennzeichen' from fahrzeuge where nr = '1') = 'BB-XX 1');
+begin; set local role authenticated; select _als('erika@konto.bad-dashboard.de');
+select _pruef('Lohnzettel-Freigabe: keine Fahrzeuge', (select count(*) from fahrzeuge) = 0 and (select count(*) from tanken) = 0);
+commit;
+begin; set local role anon; select set_config('request.jwt.claims', '{"role":"anon"}', true);
+select _pruef('Ohne Anmeldung: keine Fahrzeuge', (select count(*) from fahrzeuge) = 0 and (select count(*) from tanken) = 0);
+commit;
+-- Dateien
+insert into storage.objects (bucket_id, name) values ('fahrzeuge', 'dokumente/1/r1');
+begin; set local role authenticated; select _als('daniel@konto.bad-dashboard.de');
+select _pruef('GF: Fahrzeug-Dokumente sichtbar', (select count(*) from storage.objects where bucket_id = 'fahrzeuge') = 1);
+select _pruef('GF: Dateiliste Personal (Dokumente + Lohnzettel)', (select count(*) from jsonb_object_keys(personal_dateien())) >= 4);
+commit;
+begin; set local role authenticated; select _als('max@konto.bad-dashboard.de');
+select _pruef('Mitarbeiter: keine Fahrzeug-Dokumente', (select count(*) from storage.objects where bucket_id = 'fahrzeuge') = 0);
+select _pruef('Mitarbeiter: Dateiliste nur eigene', (select bool_and(split_part(k, '/', 2) = '901') from jsonb_object_keys(personal_dateien()) k));
+do $$ begin insert into storage.objects (bucket_id, name) values ('fahrzeuge', 'dokumente/1/x'); perform _pruef('Mitarbeiter: Fahrzeug-Dokument hochladen gesperrt', false); exception when others then perform _pruef('Mitarbeiter: Fahrzeug-Dokument hochladen gesperrt', true); end $$;
+commit;

@@ -477,3 +477,9 @@ html[data-thema="dunkel"] { --bk-1: #3987e5; --bk-2: #d95926; --bk-3: #199e70; -
 .bk-umliste .bu-zweck { max-width: 360px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 @media (max-width: 980px) { .bk-raster { grid-template-columns: 1fr; grid-template-areas: "verlauf" "monate" "aus" "ein" "um"; } .bk-umliste { max-height: 520px; } }
 @media (max-width: 520px) { .bk-ring { grid-template-columns: 1fr; } .bk-ring svg { max-width: 200px; justify-self: center; } }
+/* Fahrzeugkarte: bearbeitbare Tabellen (Verbrauch, Wartung, Dokumente) */
+.fz-tabelle { overflow-x: auto; margin-bottom: 6px; }
+.fz-tabelle .fz-tank-tab td { padding: 4px 4px; }
+.fz-tabelle .fz-tank-tab .eingabe { min-width: 92px; padding: 6px 8px; font-size: .86rem; }
+.fz-tabelle .fz-tank-tab td:last-child { width: 1%; }
+.fz-tabelle > .btn { margin-top: 8px; }

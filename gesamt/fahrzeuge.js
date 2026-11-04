@@ -110,18 +110,29 @@
     });
   }
 
-  /* ---------- Fahrzeugkarte ---------- */
+  /* ---------- Fahrzeugkarte (Reiter wie die alten Fahrzeugkarten) ---------- */
   const JN = ["", "Ja", "Nein"];
-  const BLOECKE = [
-    ["Fahrzeug", [["fz_kennzeichen", "Kennzeichen"], ["fz_modell", "Fahrzeugtyp / Modell"], ["fz_typ", "Art", ["", "Transporter", "PKW", "LKW", "Anhänger"]], ["fz_status", "Leasing / Eigentum", ["", "Leasing", "Eigentum", "Miete"]], ["fz_nr_intern", "Fahrzeug-Nr. (intern)"], ["fz_km", "Kilometerstand", "number"], ["fz_tuev", "Nächste HU / TÜV", "datum"]]],
-    ["Fahrer & Zuweisung", [["fz_fahrer", "Fahrer", "fahrer"], ["fz_zuweisung_seit", "Zugewiesen seit", "datum"], ["fz_fuehrerschein", "Führerschein Klasse"], ["fz_fs_gueltig", "Führerschein gültig bis", "datum"], ["fz_privatnutzung", "Privatnutzung erlaubt", JN]]],
-    ["Tanken", [["fz_tankkarte", "Tankkarte vorhanden", JN], ["fz_dkv", "DKV-/Tankkarten-Nr."]]],
-    ["Leasing & Steuer", [["fz_leasing_nr", "Leasing-Vertragsnr."], ["fz_leasingrate", "Leasingrate / Monat (€)"], ["fz_leasing_ende", "Leasing-Ende", "datum"], ["fz_steuer", "Kfz-Steuer / Jahr (€)"]]],
-    ["Versicherung", [["fz_versicherungsgeber", "Versicherer"], ["fz_vers_nr", "Versicherungs-Nr."], ["fz_vers_beitrag", "Beitrag / Jahr (€)"]]],
+  const REITER = [
+    ["fz", "🚗 Fahrzeug", [
+      ["Fahrzeugidentifikation", [["fz_kennzeichen", "Kennzeichen"], ["fz_modell", "Fahrzeugtyp / Modell"], ["fz_typ", "Fahrzeugkategorie", ["", "Transporter", "PKW", "LKW", "Anhänger"]], ["fz_status", "Leasing / Eigentum", ["", "Leasing", "Eigentum", "Miete"]],
+        ["fz_nr_intern", "Fahrzeug-Nr. (intern)"], ["fz_km", "Kilometerstand", "number"], ["fz_fin", "Fahrgestellnummer (FIN)"]]],
+      ["Fahrer & Führerschein", [["fz_fahrer", "Fahrer", "fahrer"], ["fz_zuweisung_seit", "Zugewiesen seit", "datum"], ["fz_fuehrerschein", "Führerschein Klasse"], ["fz_fs_gueltig", "Führerschein gültig bis", "datum"], ["fz_privatnutzung", "Privatnutzung erlaubt", JN]]]]],
+    ["kosten", "💶 Leasing & Vers.", [
+      ["Leasing & Steuer", [["fz_leasingrate", "Leasingrate / Monat (€)"], ["fz_steuer", "Kfz-Steuer / Jahr (€)"], ["fz_leasing_nr", "Leasing-Vertragsnr."], ["fz_leasing_ende", "Leasing-Ende", "datum"]]],
+      ["Versicherung", [["fz_vers_beitrag", "Beitrag ½-jährlich (€)"], ["fz_vers_nr", "Versicherungs-Nr."], ["fz_versicherungsgeber", "Versicherer"]]]]],
+    ["kraftstoff", "⛽ Kraftstoff", [
+      ["DKV-Tankkarte", [["fz_tankkarte", "Tankkarte vorhanden", JN], ["fz_dkv", "DKV-/Tankkarten-Nr."], ["fz_kraftstoff", "Kraftstoffart", ["", "Diesel", "Benzin", "Elektro", "Hybrid"]]]],
+      "tank", ["_fz_verbrauch", "Kraftstoffverbrauch (von Hand)", [["Datum", "datum"], ["Liter", "zahl"], ["Betrag (€)", "zahl"], ["Tankstelle"], ["Bemerkung"]]]]],
+    ["wartung", "🔧 Wartung", [
+      ["HU / TÜV & Kundendienst", [["fz_tuev", "Nächste HU / TÜV", "datum"], ["fz_kundendienst", "Nächster Kundendienst", "datum"], ["fz_reifen", "Reifengröße"], ["fz_winterreifen", "Winterreifen aufgezogen am", "datum"]]],
+      ["_fz_wartung", "Wartungshistorie", [["Datum", "datum"], ["Art", ["", "Inspektion", "HU / TÜV", "Reparatur", "Reifenwechsel", "Kundendienst", "Sonstiges"]], ["Werkstatt"], ["Kosten (€)", "zahl"], ["Bemerkung"]]]]],
+    ["notizen", "📝 Notizen", [["text", "fz_schaeden", "Schäden & Mängel", "Bekannte Schäden, Unfälle, offene Mängel …"], ["text", "fz_notizen", "Allgemeine Bemerkungen", "Notizen zum Fahrzeug …"]]],
+    ["dokumente", "📄 Dokumente", [["_fz_dokumente", "Dokumente & Schriftverkehr", [["Datum", "datum"], ["Typ", ["", "Rechnung", "Vertrag", "Schadenmeldung", "Gutachten", "Fahrzeugschein", "Sonstiges"]], ["Bezeichnung"], ["Betrag (€)", "zahl"], ["Ablage / Dateipfad"], ["Notiz"]], { datei: true }]]],
   ];
+  const tabelleLesen = (d, k) => { try { const x = JSON.parse(d[k] || "[]"); return Array.isArray(x) ? x : []; } catch (e) { return []; } };
   function tankBlock(nr) {
     const mon = tankMonate(nr), liste = (TANKEN[nr] || []).slice().sort((a, b) => (a.datum < b.datum ? 1 : -1));
-    if (!mon.length) return "";
+    if (!mon.length) return `<div class="sec">Tankvorgänge (DKV)</div><p class="leise klein-text">Noch keine DKV-Buchungen – sobald der DKV-Abruf läuft, erscheinen sie hier automatisch.</p>`;
     const d = lesen("fz_" + nr, {});
     return `<div class="sec">Tankvorgänge (DKV)</div>
       <p class="leise klein-text">Automatisch aus den DKV-Rechnungen${d.fz_km_datum ? ` · Kilometerstand laut DKV vom ${esc(d.fz_km_datum.split("-").reverse().join("."))}` : ""}</p>
@@ -136,25 +147,70 @@
     const key = "fz_" + nr, d = lesen(key, {}), neu = !localStorage.getItem(key);
     if (neu) d.fz_nr_intern = String(nr).padStart(3, "0");
     const ma = mitarbeiter();
+    const auswahl = (o, v, attr) => `<select class="eingabe" ${attr}>${o.map((x) => `<option value="${esc(x)}"${x === v ? " selected" : ""}>${x || "– bitte wählen –"}</option>`).join("")}${v && !o.includes(v) ? `<option selected>${esc(v)}</option>` : ""}</select>`;
     const feld = ([id, label, art]) => {
       const v = d[id] ?? "";
       let el;
-      if (Array.isArray(art)) el = `<select class="eingabe" id="${id}">${art.map((o) => `<option value="${o}"${o === v ? " selected" : ""}>${o || "– bitte wählen –"}</option>`).join("")}</select>`;
+      if (Array.isArray(art)) el = auswahl(art, v, `id="${id}"`);
       else if (art === "fahrer") el = `<select class="eingabe" id="${id}"><option value="">– niemand –</option>${ma.map((m) => `<option${m.name.toLowerCase() === String(v).trim().toLowerCase() ? " selected" : ""}>${esc(m.name)}</option>`).join("")}${v && !personZu(v) ? `<option selected>${esc(v)}</option>` : ""}</select>`;
       else el = `<input class="eingabe" id="${id}" type="${art === "number" ? "number" : "text"}"${art === "datum" ? ' placeholder="TT.MM.JJJJ" inputmode="numeric"' : ""} value="${esc(v)}">`;
       return `<label class="form-group"><span>${label}</span>${el}</label>`;
     };
+    /* Tabellen (Verbrauch, Wartung, Dokumente): Zeilen bearbeiten, + Zeile, × löschen */
+    const zelle = (sp, v) => Array.isArray(sp[1]) ? auswahl(sp[1], v, "") : `<input class="eingabe" type="text" value="${esc(v)}"${sp[1] === "datum" ? ' placeholder="TT.MM.JJJJ" inputmode="numeric"' : sp[1] === "zahl" ? ' inputmode="decimal"' : ""}>`;
+    /* Datei-Zelle (nur Dokumente): versteckt Zeilen-ID + Dateiname, Datei liegt über gesamt/dateien.js unter „fz:<Nr>:<ID>“ */
+    const neueId = () => "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+    const dateiZelle = (id, name) => `<td class="fz-datei"><input type="hidden" data-zid value="${esc(id)}"><input type="hidden" data-zname value="${esc(name)}">${name ? `<button type="button" class="btn klein still" data-datei-oeffnen title="Öffnen">📄 ${esc(name)}</button>` : ""}<label class="btn klein">${name ? "Ersetzen" : "📎 Datei"}<input type="file" hidden data-datei-wahl></label></td>`;
+    const zeile = (spalten, werte, datei) => `<tr>${spalten.map((sp, i) => `<td>${zelle(sp, (werte || [])[i] ?? "")}</td>`).join("")}${datei ? dateiZelle((werte || [])[spalten.length] || neueId(), (werte || [])[spalten.length + 1] || "") : ""}<td><button type="button" class="btn klein still" data-zeile-weg aria-label="Zeile löschen">×</button></td></tr>`;
+    const tabelle = ([k, titel, spalten, opt]) => `<div class="sec">${titel}</div><div class="fz-tabelle"><table class="fz-tank-tab" data-tabelle="${k}"><thead><tr>${spalten.map((s) => `<th>${s[0]}</th>`).join("")}${opt && opt.datei ? "<th>Datei</th>" : ""}<th></th></tr></thead>
+      <tbody>${tabelleLesen(d, k).map((w) => zeile(spalten, w, opt && opt.datei)).join("")}</tbody></table>
+      <button type="button" class="btn klein" data-zeile-neu="${k}">+ Zeile</button></div>`;
+    const TAB_SPALTEN = Object.fromEntries(REITER.flatMap(([, , b]) => b.filter((x) => Array.isArray(x) && typeof x[0] === "string" && x[0].startsWith("_")).map((x) => [x[0], x])));
+    const block = (b) => b === "tank" ? tankBlock(nr)
+      : b[0] === "text" ? `<div class="sec">${b[2]}</div><textarea class="eingabe" id="${b[1]}" placeholder="${b[3]}">${esc(d[b[1]] || "")}</textarea>`
+      : String(b[0]).startsWith("_") ? tabelle(b)
+      : `<div class="sec">${b[0]}</div><div class="form-grid">${b[1].map(feld).join("")}</div>`;
     inhalt.innerHTML = `<div class="topbar"><div class="topbar-left"><a class="back-btn" href="./${QS}">← Fahrzeuge</a><span class="tb-title" id="fz-titel"></span><span class="tb-nr">Fz. ${esc(d.fz_nr_intern || nr)}</span></div>
         <button class="btn jetzt btn-save" type="button" id="fz-speichern">💾 Speichern</button></div>
       <div class="pk-card fz-kartei">
         <div class="card-header"><div><div class="header-logo">Brüll GmbH · Fuhrpark</div><div class="header-name" id="fz-kopf"></div><div class="header-position" id="fz-kopf-fahrer"></div></div><span class="fz-schild gross" id="fz-kopf-schild"></span></div>
         <div class="fz-fristen" id="fz-fristen"></div>
-        <div class="tab-content active">${BLOECKE.map(([t, f]) => `<div class="sec">${t}</div><div class="form-grid">${f.map(feld).join("")}</div>`).join("")}
-          ${tankBlock(nr)}
-          <div class="sec">Schäden / Bemerkungen</div><textarea class="eingabe" id="fz_schaeden" placeholder="Bekannte Schäden, Werkstatt, Unfälle …">${esc(d.fz_schaeden || "")}</textarea>
-        </div>
+        <div class="tabs" role="tablist">${REITER.map(([id, t], i) => `<button type="button" class="tab-btn${i ? "" : " active"}" role="tab" data-reiter="${id}">${t}</button>`).join("")}</div>
+        ${REITER.map(([id, , bloecke], i) => `<div class="tab-content${i ? "" : " active"}" id="fz-tab-${id}" role="tabpanel">${bloecke.map(block).join("")}</div>`).join("")}
         <div class="save-bar"><span class="leise klein-text" id="fz-status" aria-live="polite"></span>${neu ? "" : `<button class="btn still gefahr" type="button" id="fz-loeschen">Fahrzeug löschen</button>`}<button class="btn jetzt btn-save" type="button" id="fz-speichern2">💾 Speichern</button></div>
       </div>`;
+    /* Reiter umschalten (gemerkt in der Adresse: #reiter) */
+    const zeige = (id) => {
+      if (!REITER.some((r) => r[0] === id)) id = REITER[0][0];
+      inhalt.querySelectorAll(".tab-btn").forEach((b) => b.classList.toggle("active", b.dataset.reiter === id));
+      inhalt.querySelectorAll(".tab-content").forEach((c) => c.classList.toggle("active", c.id === "fz-tab-" + id));
+    };
+    zeige(location.hash.slice(1));
+    inhalt.addEventListener("click", (e) => {
+      const r = e.target.closest("[data-reiter]"); if (r) { zeige(r.dataset.reiter); history.replaceState(null, "", "#" + r.dataset.reiter); return; }
+      const n = e.target.closest("[data-zeile-neu]"); if (n) { const sp = TAB_SPALTEN[n.dataset.zeileNeu], tb = inhalt.querySelector(`[data-tabelle="${n.dataset.zeileNeu}"] tbody`); tb.insertAdjacentHTML("beforeend", zeile(sp[2], [], sp[3] && sp[3].datei)); tb.lastElementChild.querySelector("input:not([type=hidden]), select").focus(); return; }
+      const w = e.target.closest("[data-zeile-weg]");
+      if (w) { const tr = w.closest("tr"), name = (tr.querySelector("[data-zname]") || {}).value; if (name && !confirm(`Zeile mit der Datei „${name}“ löschen?`)) return; if (name) window.BruellDateien.del("fz:" + nr + ":" + tr.querySelector("[data-zid]").value).catch(() => {}); tr.remove(); if (name) speichern(); return; }
+      const o = e.target.closest("[data-datei-oeffnen]");
+      if (o) {
+        const tr = o.closest("tr"), fenster = window.open("", "_blank");             // sofort öffnen, sonst blockt der Browser
+        window.BruellDateien.get("fz:" + nr + ":" + tr.querySelector("[data-zid]").value).then((f) => {
+          if (!f) { if (fenster) fenster.close(); alert("Die Datei wurde nicht gefunden – bitte neu hochladen."); return; }
+          const url = URL.createObjectURL(f); if (fenster) fenster.location.href = url; else location.href = url; setTimeout(() => URL.revokeObjectURL(url), 60000);
+        });
+      }
+    });
+    inhalt.addEventListener("change", async (e) => {
+      const wahl = e.target.closest("[data-datei-wahl]"); if (!wahl || !wahl.files[0]) return;
+      const f = wahl.files[0], tr = wahl.closest("tr"), td = wahl.closest("td"), id = tr.querySelector("[data-zid]").value;
+      $("#fz-status").textContent = "Lade „" + f.name + "“ hoch …";
+      try { await window.BruellDateien.put("fz:" + nr + ":" + id, f); }
+      catch (err) { $("#fz-status").textContent = "Datei konnte nicht gespeichert werden: " + (err.message || err); return; }
+      td.outerHTML = dateiZelle(id, f.name);
+      const z = tr.querySelectorAll("td input:not([type=hidden]), td select"); if (z[2] && !z[2].value) z[2].value = f.name.replace(/\.[^.]+$/, "");   // Bezeichnung vorschlagen
+      if (z[0] && !z[0].value) z[0].value = new Date().toLocaleDateString("de-DE");
+      speichern();
+    });
     const wert = (id) => ($("#" + id) || {}).value || "";
     const kopf = () => {
       const p = personZu(wert("fz_fahrer"));
@@ -162,7 +218,7 @@
       $("#fz-kopf-fahrer").innerHTML = wert("fz_fahrer") ? `Fahrer: ${p ? `<a href="../personal/karte.html${qs({ nr: p.nr })}">${esc(wert("fz_fahrer"))}</a>` : esc(wert("fz_fahrer"))}` : "Kein Fahrer zugewiesen";
       $("#fz-kopf-schild").innerHTML = `<i>D</i>${esc(wert("fz_kennzeichen") || "—")}`;
       $("#fz-titel").textContent = [wert("fz_kennzeichen"), wert("fz_modell")].filter(Boolean).join(" · ") || "Neues Fahrzeug";
-      $("#fz-fristen").innerHTML = fristChip("HU / TÜV", wert("fz_tuev")) + fristChip("Führerschein bis", wert("fz_fs_gueltig")) + fristChip("Leasing-Ende", wert("fz_leasing_ende"));
+      $("#fz-fristen").innerHTML = fristChip("HU / TÜV", wert("fz_tuev")) + fristChip("Kundendienst", wert("fz_kundendienst")) + fristChip("Führerschein bis", wert("fz_fs_gueltig")) + fristChip("Leasing-Ende", wert("fz_leasing_ende"));
       document.title = "Brüll · Fahrzeug · " + ($("#fz-titel").textContent);
     };
     kopf();
@@ -170,6 +226,11 @@
     const speichern = () => {
       const neuD = { ...d };
       inhalt.querySelectorAll("input[id^='fz_'], select[id^='fz_'], textarea[id^='fz_']").forEach((el) => { neuD[el.id] = el.value.trim(); });
+      inhalt.querySelectorAll("[data-tabelle]").forEach((tab) => {
+        const zeilen = [...tab.querySelectorAll("tbody tr")].map((tr) => [...tr.querySelectorAll("input:not([type=file]), select")].map((x) => x.value.trim()))
+          .filter((z, i, alle) => z.some((v, j) => v && !(tab.querySelector("[data-zid]") && j === z.length - 2)));   // leere Zeilen weg (Zeilen-ID allein zählt nicht)
+        neuD[tab.dataset.tabelle] = JSON.stringify(zeilen);
+      });
       if (!neuD.fz_kennzeichen && !neuD.fz_modell) { $("#fz-status").textContent = "Bitte mindestens Kennzeichen oder Modell eintragen."; return; }
       try { localStorage.setItem(key, JSON.stringify(neuD)); } catch (e) { $("#fz-status").textContent = "Speichern fehlgeschlagen – Browser-Speicher voll."; return; }
       try { new BroadcastChannel("bruell_fz").postMessage({ type: "fz_saved", nr }); } catch (e) { /* alt */ }

@@ -243,10 +243,8 @@
     return treffer.length === 1 ? treffer[0] : null;
   }
   /* Lohnzettel in die Personalkarte legen (gleicher Speicher wie personal/karte.html) */
-  function dokDB() { return new Promise((ok, f) => { const r = indexedDB.open("bruell-dokumente", 1); r.onupgradeneeded = () => r.result.createObjectStore("dateien"); r.onsuccess = () => ok(r.result); r.onerror = () => f(r.error); }); }
   async function zettelAblegen(nr, m, datei) {
-    const db = await dokDB();
-    await new Promise((ok, f) => { const t = db.transaction("dateien", "readwrite"); t.objectStore("dateien").put(datei, nr + ":lz-" + m); t.oncomplete = ok; t.onerror = () => f(t.error); });
+    await window.BruellDateien.put(nr + ":lz-" + m, datei);                  // Browser + auf dem Mac mini der Dateispeicher
     const d = lesen("pk_" + nr, {}); let lz = []; try { lz = JSON.parse(d._lohnzettel || "[]"); } catch (e) { /* alt */ }
     d._lohnzettel = JSON.stringify(lz.filter((x) => x.monat !== m).concat([{ monat: m, name: datei.name, groesse: datei.size, datum: new Date().toLocaleDateString("de-DE") }]));
     schreiben("pk_" + nr, d);
