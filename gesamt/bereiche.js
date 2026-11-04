@@ -45,7 +45,7 @@
   function mitarbeiterWeiter() {
     const k = konto();
     if (!k || k.mussAendern || (document.body && document.body.classList.contains("vorraum"))) return false;
-    if (k.ebene === "mitarbeiter" || !darf(akt, k)) { location.replace(darf("uebersicht", k) ? "../" + QS : "../personal/karte.html" + QS); return true; }
+    if (k.ebene === "mitarbeiter" || !darf(akt, k)) { const s = R ? R.startseite(k) : null; location.replace("../" + (s === null ? "personal/karte.html" : s) + QS); return true; }
     return false;
   }
   if (mitarbeiterWeiter()) return;

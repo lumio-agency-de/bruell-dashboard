@@ -57,7 +57,8 @@ var PK_NR = (new URLSearchParams(location.search).get("nr") || "").replace(/\D/g
   if (!GF) {
     const weg = () => {                                              // erste erlaubte Seite
       if (eigeneKarte) return location.replace(eigeneKarte);
-      if (darf("uebersicht")) return location.replace("../" + QS);
+      const s = R.startseite(KONTO);
+      if (s !== null) return location.replace("../" + s + (s.includes("?") ? QS.replace(/^\?/, "&") : QS));
       document.addEventListener("DOMContentLoaded", () => { document.body.innerHTML = '<main class="main"><div class="seite"><div class="panel startfeld"><h2>Kein Bereich freigegeben</h2><p>Bitte an die Geschäftsführung wenden.</p></div></div></main>'; });
     };
     document.documentElement.classList.add("nur-lesen");             // ändern dürfen in den Gesamt-Bereichen nur Admins
