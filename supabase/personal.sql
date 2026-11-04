@@ -128,3 +128,12 @@ create policy personal_aendern on storage.objects for update to authenticated
 drop policy if exists personal_loeschen on storage.objects;
 create policy personal_loeschen on storage.objects for delete to authenticated using (
   bucket_id = 'personal' and (ist_gf() or ((storage.foldername(name))[1] = 'lohnzettel' and darf_lohnzettel())));
+
+-- Welche Fotos gibt es (Stand je Nr.)? Eine Abfrage statt einer je Ordner. Läuft mit den Rechten des
+-- Angemeldeten (security invoker) → die Regeln oben gelten: GF alle, sonst nur das eigene Foto.
+create or replace function public.personal_fotos() returns jsonb language sql stable security invoker set search_path = public, storage as $$
+  select coalesce(jsonb_object_agg(split_part(name, '/', 2), coalesce(updated_at, created_at)), '{}'::jsonb)
+  from storage.objects where bucket_id = 'personal' and name like 'foto/%/foto'
+$$;
+revoke all on function public.personal_fotos() from public, anon;
+grant execute on function public.personal_fotos() to authenticated;

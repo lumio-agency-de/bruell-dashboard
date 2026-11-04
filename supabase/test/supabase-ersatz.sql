@@ -8,7 +8,7 @@ create table auth.users (instance_id uuid, id uuid primary key, aud text, role t
   email_change_token_new text, recovery_token text, last_sign_in_at timestamptz, banned_until timestamptz);
 create table auth.identities (id uuid primary key, user_id uuid, provider_id text, identity_data jsonb, provider text, last_sign_in_at timestamptz, created_at timestamptz, updated_at timestamptz);
 create table storage.buckets (id text primary key, name text, public boolean, file_size_limit bigint);
-create table storage.objects (id uuid primary key default gen_random_uuid(), bucket_id text, name text);
+create table storage.objects (id uuid primary key default gen_random_uuid(), bucket_id text, name text, created_at timestamptz default now(), updated_at timestamptz default now());
 alter table storage.objects enable row level security;
 create function storage.foldername(name text) returns text[] language sql immutable as $$ select (string_to_array(name, '/'))[1:array_length(string_to_array(name, '/'), 1) - 1] $$;
 grant usage on schema public, storage, auth, extensions to anon, authenticated;

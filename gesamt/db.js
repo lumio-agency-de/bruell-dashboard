@@ -67,11 +67,15 @@ window.BruellDB = (function () {
   /* ---------- Fotos: Dateispeicher → Browser ---------- */
   const alsDatenUrl = (blob) => new Promise((ok, nein) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = nein; r.readAsDataURL(blob); });
   async function fotosHolen(nrs) {
+    /* höchstens alle 10 Minuten je Tab nachsehen – Fotos ändern sich selten */
+    const zuletzt = +sessionStorage.getItem("bruell:ph-geprueft") || 0;
+    if (Date.now() - zuletzt < 6e5 && localStorage.getItem(FOTOSTAND)) return false;
+    const liste = await sb.rpc("personal_fotos");                    // eine Abfrage: { Nr: Stand } (nur erlaubte Fotos)
+    if (liste.error) throw liste.error;
+    sessionStorage.setItem("bruell:ph-geprueft", String(Date.now()));
     const alt = lesen(FOTOSTAND, {}), neu = {}; let geaendert = false;
-    await Promise.all(nrs.map(async (nr) => {
-      const { data } = await sb.storage.from("personal").list("foto/" + nr, { limit: 5 });
-      const f = (data || []).find((x) => x.name === "foto"); if (!f) return;
-      const stand = f.updated_at || f.created_at || "1"; neu[nr] = stand;
+    await Promise.all(nrs.filter((nr) => liste.data && liste.data[nr]).map(async (nr) => {
+      const stand = liste.data[nr]; neu[nr] = stand;
       if (alt[nr] === stand && localStorage.getItem("ph_" + nr)) return;
       const dl = await sb.storage.from("personal").download("foto/" + nr + "/foto");
       if (dl.error || !dl.data) return;

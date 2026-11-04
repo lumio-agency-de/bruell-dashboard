@@ -23,7 +23,7 @@ insert into personal (nr, daten) values
 select _pruef('GF sieht alle Karten', (select count(*) from personal) = 2);
 select _pruef('GF sieht interne Felder', (select daten ? 'sonstnotiz' from personal where nr = '901'));
 commit;
-insert into storage.objects (bucket_id, name) values ('personal', 'foto/901/bild.jpg'), ('personal', 'dokumente/901/vertrag.pdf'),
+insert into storage.objects (bucket_id, name) values ('personal', 'foto/901/foto'), ('personal', 'dokumente/901/vertrag.pdf'),
   ('personal', 'dokumente/902/zeugnis.pdf'), ('personal', 'lohnzettel/901/2026-01.pdf'), ('personal', 'lohnzettel/902/2026-01.pdf'), ('akten', 'projekte/x/planung/a.pdf');
 
 -- Mitarbeiter Max (Nr. 901)
@@ -32,8 +32,9 @@ select _pruef('Max: keine Karte direkt aus der Tabelle', (select count(*) from p
 select _pruef('Max: eigene Karte über meine_personalkarte()', (meine_personalkarte() ->> 'nr') = '901');
 select _pruef('Max: Name und Weiterbildung sichtbar', (meine_personalkarte() -> 'daten' ->> 'vorname') = 'Max' and (meine_personalkarte() -> 'daten' ->> 'weiterbildung') = 'Schweißkurs');
 select _pruef('Max: Bewertung + Notizen ausgeblendet', not (meine_personalkarte() -> 'daten' ?| array['stars_fach', 'bew_notiz', 'sonstnotiz']));
+select _pruef('Max: Fotoliste nur eigenes Foto', (select array_agg(k) from jsonb_object_keys(personal_fotos()) k) = array['901']);
 update personal set daten = '{}' where nr = '901';
-select _pruef('Max: Dateien nur eigene (Foto, Dokument, Lohnzettel)', (select array_agg(name order by name) from storage.objects) = array['dokumente/901/vertrag.pdf', 'foto/901/bild.jpg', 'lohnzettel/901/2026-01.pdf']);
+select _pruef('Max: Dateien nur eigene (Foto, Dokument, Lohnzettel)', (select array_agg(name order by name) from storage.objects) = array['dokumente/901/vertrag.pdf', 'foto/901/foto', 'lohnzettel/901/2026-01.pdf']);
 commit;
 select _pruef('Max konnte die Karte NICHT ändern', (select daten ->> 'vorname' from personal where nr = '901') = 'Max');
 begin; set local role authenticated; select _als('max@konto.bad-dashboard.de');
