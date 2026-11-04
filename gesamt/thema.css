@@ -50,10 +50,13 @@ html[data-thema="dunkel"] [style*="color:#1a3c6e"] { color: #9cc0f5 !important; 
 .i-werkzeug { width: 14px; height: 14px; background: linear-gradient(45deg, transparent 42%, currentColor 42%, currentColor 58%, transparent 58%); border-radius: 2px; box-shadow: inset 0 0 0 1.5px currentColor; }
 .i-unter { width: 6px; height: 6px; margin: 0 4px; border-radius: 50%; background: currentColor; opacity: .6; }
 
-/* Seitenwechsel ohne weißen Neuaufbau: Browser blendet weich über, die Seitenleiste bleibt stehen.
-   (Chrome/Edge/Safari ab 18.2; ältere Browser wechseln wie bisher.) */
+/* Seitenwechsel ohne weißen Blitz: die alte Seite bleibt stehen, bis die neue fertig ist, dann wird in
+   EINEM Schritt getauscht. Bewusst ohne Überblenden/Umformen – sonst sieht man kurz beide Seiten bzw.
+   Menüs übereinander, und die je Bereich verschieden hohen Leisten würden gestreckt. (Chrome/Edge/Safari ab 18.2) */
 @view-transition { navigation: auto; }
-.rail { view-transition-name: seitenleiste; }
-::view-transition-old(root), ::view-transition-new(root) { animation-duration: 140ms; }
-::view-transition-group(seitenleiste) { animation: none; }
+::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+::view-transition-old(root) { opacity: 0; }   /* die Leiste ist leicht durchscheinend → alte Seite sonst kurz sichtbar */
 @media (prefers-reduced-motion: reduce) { @view-transition { navigation: none; } }
+/* Kein Einblenden des Seiteninhalts (bad/app/css/app.css: .seite { animation: rein 240ms }) –
+   die Seite ist nach wenigen Millisekunden fertig, das Einblenden ließ sie ¼ s lang „noch nicht da“ wirken. */
+.seite { animation: none; }

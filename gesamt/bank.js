@@ -92,6 +92,7 @@ window.Bank = (function () {
 
   /* Kontoauszug-Dateien für ein Konto einlesen → { neu, doppelt, anderes } */
   async function einlesen(dateien, konto) {
+    beispielEntfernen();                                                     // erfundene Beispieldaten nie mit echten mischen
     const UM = lesen(KEY, []), saldi = lesen(SALDO, {}); let neu = 0, doppelt = 0, anderes = 0; const liste = [];
     for (const f of dateien) { if (/\.zip$/i.test(f.name)) liste.push(...await zipLesen(f)); else liste.push(f); }
     for (const f of liste) {
@@ -110,9 +111,9 @@ window.Bank = (function () {
     return { neu, doppelt, anderes, dateien: liste.length };
   }
 
-  /* ---------- Beispieldaten (nur Demo): 12 Monate frei erfundene Umsätze für beide Konten ----------
-     Kennung „demo-…“ → lassen sich gezielt wieder entfernen, echte Auszüge bleiben unberührt. */
-  const DEMO = new URLSearchParams(location.search).has("demo");
+  /* ---------- Beispieldaten: 12 Monate frei erfundene Umsätze für beide Konten ----------
+     Angeboten, solange noch kein echter Auszug eingelesen ist. Kennung „demo-…“ → lassen sich gezielt
+     entfernen; beim Einlesen eines echten Auszugs werden sie automatisch gelöscht (nichts vermischen). */
   const istBeispiel = (u) => String(u.id).startsWith("demo-");
   function beispielLaden() {
     let s = 20261103; const zz = () => (s = (s * 1103515245 + 12345) % 2147483648) / 2147483648;   // fester Zufall → immer gleiche Daten
@@ -232,7 +233,7 @@ window.Bank = (function () {
       const kontoText = konto ? KONTEN[konto] : "beide Firmenkonten";
       box.innerHTML = `
         ${konto ? `<section class="panel lo-import"><label class="lo-drop" data-drop>🏦 <span><b>Kontoauszug ${KONTEN[konto]} einlesen</b><small>CAMT (XML oder ZIP) oder CSV aus dem Online-Banking. Schon eingelesene Umsätze werden übersprungen; die Buchhaltung gleicht danach automatisch ab.</small></span><input type="file" accept=".xml,.csv,.zip,.txt" multiple hidden data-datei></label>
-          ${bericht ? `<p class="bu-bericht">${esc(bericht)}</p>` : ""}${DEMO && lesen(KEY, []).some(istBeispiel) ? `<p class="bu-bericht">Erfundene Beispieldaten (Demo). <button type="button" class="btn klein still" data-beispiel="weg">Beispieldaten entfernen</button></p>` : ""}</section>` : ""}
+          ${bericht ? `<p class="bu-bericht">${esc(bericht)}</p>` : ""}${lesen(KEY, []).some(istBeispiel) ? `<p class="bu-bericht">Erfundene Beispieldaten – werden beim Einlesen eines echten Auszugs automatisch entfernt. <button type="button" class="btn klein still" data-beispiel="weg">Beispieldaten entfernen</button></p>` : ""}</section>` : ""}
         <div class="kpis vier lo-kpis bk-kpis">
           <div class="kpi"><span class="kpi-titel">Kontostand${konto ? "" : " gesamt"}</span><span class="kpi-zahl klein">${stand}</span><span class="kpi-unter">${standUnter}</span></div>
           <a class="kpi${pruefen ? " alarm" : ""}" href="buchhaltung.html${location.search}"><span class="kpi-titel">In der Buchhaltung prüfen</span><span class="kpi-zahl klein">${pruefen}</span><span class="kpi-unter">Umsätze ohne passende Rechnung →</span></a>
@@ -248,7 +249,7 @@ window.Bank = (function () {
               ${liste.slice(0, 400).map((u) => { const [st, kl] = STATUS[u.status || ""] || STATUS[""]; return `<tr class="${u.status === "pruefen" ? "bu-pruefen" : ""}" title="Buchhaltung: ${esc(st)}${u.hinweis ? " – " + esc(u.hinweis) : ""}"><td>${datumDE(u.datum)}${konto ? "" : `<small>${KONTEN[u.konto] || ""}</small>`}</td><td><b>${esc(u.name || "–")}</b><small class="bu-zweck">${esc(u.zweck)}</small></td><td class="r"><span class="${u.betrag < 0 ? "bu-minus" : ""}">${euro(u.betrag)}</span>${u.status === "pruefen" ? '<small class="lo-warn">prüfen</small>' : umbuchung(u) ? "<small>Umbuchung</small>" : ""}</td></tr>`; }).join("")}
               </tbody></table>` : '<p class="leise">Keine Treffer.</p>'}</div></section>
           <section class="panel bk-p-ein"><div class="bk-kopf"><h2>Einnahmen</h2><small>Ohne Umbuchungen zwischen den Firmenkonten</small>${zrWahl("ein", zrEin)}</div>${panelRing(alle, 1, zrEin)}</section>
-        </div>` : `<section class="panel"><div class="panel-innen" style="padding-top:16px"><p class="leise">Noch kein Kontoauszug eingelesen${konto ? " – oben hineinziehen" : " – unter Bank → Sparkasse oder Raiffeisenbank"}.</p>${DEMO ? `<p><button type="button" class="btn" data-beispiel="laden">Beispieldaten laden (12 Monate, erfunden)</button></p>` : ""}</div></section>`}`;
+        </div>` : `<section class="panel"><div class="panel-innen" style="padding-top:16px"><p class="leise">Noch kein Kontoauszug eingelesen${konto ? " – oben hineinziehen" : " – unter Bank → Sparkasse oder Raiffeisenbank"}.</p><p><button type="button" class="btn" data-beispiel="laden">Beispieldaten ansehen (12 Monate, erfunden)</button></p></div></section>`}`;
     }
     box.addEventListener("change", async (e) => {
       const t = e.target;
