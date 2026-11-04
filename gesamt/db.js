@@ -51,16 +51,32 @@ window.BruellDB = (function () {
       if (error) throw error;
       if (data) neu[data.nr] = data;
     }
-    const alt = lesen(STAND, {}); let geaendert = false;
+    const alt = lesen(STAND, {}), ergaenzt = []; let geaendert = false;
     for (const [nr, r] of Object.entries(neu)) {
-      const txt = JSON.stringify(r.daten);
-      if (localStorage.getItem("pk_" + nr) !== txt) { still("pk_" + nr, txt); geaendert = true; }
+      const txt = JSON.stringify(r.daten), lokal = localStorage.getItem("pk_" + nr);
+      if (lokal === txt) continue;
+      /* Karte gab es in diesem Browser schon vor der Datenbank (nie abgeglichen): nichts verlieren –
+         Browser-Fassung sichern (pkvordb_<Nr>) und Felder, die in der DB leer sind, aus dem Browser ergänzen */
+      if (lokal !== null && !(nr in alt)) {
+        let l = {}; try { l = JSON.parse(lokal) || {}; } catch (e) { /* kaputt */ }
+        if (!localStorage.getItem("pkvordb_" + nr)) still("pkvordb_" + nr, lokal);
+        const leer = (v) => v == null || String(v).trim() === "" || v === "[]" || v === "{}";
+        const zusammen = { ...r.daten };
+        for (const [k, v] of Object.entries(l)) if (!leer(v) && leer(zusammen[k])) zusammen[k] = v;
+        const ztxt = JSON.stringify(zusammen);
+        still("pk_" + nr, ztxt); geaendert = true;
+        if (ztxt !== txt && gf()) ergaenzt.push(nr);
+        continue;
+      }
+      still("pk_" + nr, txt); geaendert = true;
     }
     /* früher aus der DB gekommen, dort jetzt weg (gelöscht/keine Berechtigung mehr) → auch hier weg */
     for (const nr of Object.keys(alt)) if (!neu[nr] && localStorage.getItem("pk_" + nr) !== null) { still("pk_" + nr, null); geaendert = true; }
     /* Nicht-GF: im Browser nur die eigene Karte – Reste früherer Sitzungen/Vorlagen entfernen */
     if (!gf()) Object.keys(localStorage).map((k) => PK.exec(k)).filter((m) => m && !neu[m[1]]).forEach((m) => { still(m[0], null); geaendert = true; });
     still(STAND, JSON.stringify(Object.fromEntries(Object.entries(neu).map(([nr, r]) => [nr, r.geaendert]))));
+    ergaenzt.forEach(vormerken);                                   // ergänzte Felder (z. B. Adressen) zurück in die DB
+    if (ergaenzt.length) melden(`${ergaenzt.length} Personalkarte${ergaenzt.length === 1 ? "" : "n"} um Angaben aus diesem Browser ergänzt`);
     return { geaendert, anzahl: Object.keys(neu).length };
   }
 
