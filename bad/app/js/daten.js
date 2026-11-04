@@ -22,7 +22,7 @@
     return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, "0")).join("");
   }
   const normMitglied = (m) => m && { id: m.id, ebene: m.ebene, name: m.name, benutzer: m.benutzer || m.email, email: m.email, mussAendern: !!(m.mussAendern ?? m.muss_aendern), aktiv: m.aktiv !== false, formulare: m.formulare || [],
-    pk: m.pk ? String(m.pk) : "", lohnzettel: !!m.lohnzettel };
+    pk: m.pk ? String(m.pk) : "", lohnzettel: !!m.lohnzettel, bereiche: Array.isArray(m.bereiche) ? m.bereiche : null };
 
   function cloudKonfig() {
     /* Brüll-Server (Mac mini): Zugang kommt aus /gesamt/cloud.js, das nur der Server ausliefert (nicht im Repo) */

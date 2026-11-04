@@ -44,6 +44,18 @@ end $$;
 revoke all on function public.konto_personal(text, text, boolean) from public, anon;
 grant execute on function public.konto_personal(text, text, boolean) to authenticated;
 
+-- Kontenliste der Geschäftsführung um Personalkarte (pk) und Lohnzettel-Freigabe ergänzt
+-- (ersetzt die Fassung aus dem Bad-schema.sql – deshalb personal.sql immer NACH schema.sql ausführen)
+create or replace function public.konten_liste() returns jsonb
+language plpgsql stable security definer set search_path = public, auth as $$
+begin
+  if not ist_gf() then raise exception 'nicht erlaubt'; end if;
+  return coalesce((select jsonb_agg(jsonb_build_object(
+      'email', m.email, 'benutzer', coalesce(m.benutzer, m.email), 'id', m.id, 'ebene', m.ebene, 'name', m.name,
+      'aktiv', m.aktiv, 'mussAendern', m.muss_aendern, 'letzterLogin', u.last_sign_in_at, 'pk', m.pk, 'lohnzettel', m.lohnzettel))
+    from mitglieder m left join auth.users u on u.email = m.email), '[]'::jsonb);
+end $$;
+
 -- ---------------------------------------------------------------------------
 -- Personalkarten
 -- ---------------------------------------------------------------------------

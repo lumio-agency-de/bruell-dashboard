@@ -60,3 +60,10 @@ html[data-thema="dunkel"] [style*="color:#1a3c6e"] { color: #9cc0f5 !important; 
 /* Kein Einblenden des Seiteninhalts (bad/app/css/app.css: .seite { animation: rein 240ms }) –
    die Seite ist nach wenigen Millisekunden fertig, das Einblenden ließ sie ¼ s lang „noch nicht da“ wirken. */
 .seite { animation: none; }
+
+/* ⚙ Einstellungen-Knopf neben „Passwort ändern“ (nur Admin) */
+.einst-knopf { display: inline-grid; place-items: center; width: 36px; padding-inline: 0 !important; }
+.einst-knopf svg { width: 18px; height: 18px; transition: transform 300ms ease; }
+.einst-knopf:hover svg { transform: rotate(45deg); }
+.einst-knopf.aktiv { background: color-mix(in oklab, #fff 18%, transparent); }
+@media (prefers-reduced-motion: reduce) { .einst-knopf:hover svg { transform: none; } }

@@ -30,8 +30,9 @@ window.BruellDB = (function () {
 
   /* Sammlungen: Browser-Schlüssel ↔ Tabelle */
   const SAMMLUNGEN = [
-    { name: "Personalkarte", prefix: "pk_", tabelle: "personal", stand: "bruell:pk-db", uebernommen: "bruell:pk-uebernommen", eigene: "meine_personalkarte", seite: /\/personal\/(index\.html)?$/ },
-    { name: "Fahrzeugkarte", prefix: "fz_", tabelle: "fahrzeuge", stand: "bruell:fz-db", uebernommen: "bruell:fz-uebernommen", eigene: null, seite: /\/fahrzeuge\/(index\.html)?$/ },
+    /* recht: wer diesen Bereich (Konten-Seite) freigegeben hat, liest alle Karten (alle: Funktion, sonst Tabelle) */
+    { name: "Personalkarte", prefix: "pk_", tabelle: "personal", stand: "bruell:pk-db", uebernommen: "bruell:pk-uebernommen", eigene: "meine_personalkarte", recht: "personal", alle: "personal_alle", seite: /\/personal\/(index\.html)?$/ },
+    { name: "Fahrzeugkarte", prefix: "fz_", tabelle: "fahrzeuge", stand: "bruell:fz-db", uebernommen: "bruell:fz-uebernommen", eigene: null, recht: "fahrzeuge", seite: /\/fahrzeuge\/(index\.html)?$/ },
   ].map((s) => ({ ...s, re: new RegExp("^" + s.prefix + "(\\d+)$"), abw: "bruell:abweichung:" + s.tabelle }));
   const sammlungVon = (k) => { for (const s of SAMMLUNGEN) { const m = s.re.exec(k); if (m) return [s, m[1]]; } return null; };
 
@@ -55,6 +56,11 @@ window.BruellDB = (function () {
       const { data, error } = await sb.from(s.tabelle).select("nr, daten, geaendert").eq("geloescht", false);
       if (error) throw error;
       data.forEach((r) => { neu[r.nr] = r; });
+    } else if (s.recht && window.BruellRechte && window.BruellRechte.darf(s.recht)) {
+      const { data, error } = s.alle ? await sb.rpc(s.alle) : await sb.from(s.tabelle).select("nr, daten, geaendert").eq("geloescht", false);
+      if (error) throw error;
+      (data || []).forEach((r) => { neu[r.nr] = r; });
+      if (s.eigene) { const e = await sb.rpc(s.eigene); if (e.data) neu[e.data.nr] = e.data; }   // eigene Karte immer
     } else if (s.eigene) {
       const { data, error } = await sb.rpc(s.eigene);
       if (error) throw error;
@@ -134,9 +140,10 @@ window.BruellDB = (function () {
     if (!window.FZ_TANKEN || !Object.keys(window.FZ_TANKEN).length) window.FZ_TANKEN = t;
     if (!window.FZ_TANKEN_OFFEN || !window.FZ_TANKEN_OFFEN.length) window.FZ_TANKEN_OFFEN = offen;
   }
-  if (gf()) tankenSetzen(lesen(TANKEN, []));
+  if (gf() || (window.BruellRechte && (window.BruellRechte.darf("fahrzeuge") || window.BruellRechte.darf("monitor")))) tankenSetzen(lesen(TANKEN, []));
+  const tankenErlaubt = () => gf() || (window.BruellRechte && (window.BruellRechte.darf("fahrzeuge") || window.BruellRechte.darf("monitor")));
   async function tankenHolen() {
-    if (!gf()) { still(TANKEN, null); return false; }
+    if (!tankenErlaubt()) { still(TANKEN, null); return false; }
     const zuletzt = +sessionStorage.getItem("bruell:tanken-geprueft") || 0;
     if (Date.now() - zuletzt < 6e5 && localStorage.getItem(TANKEN)) return false;
     const { data, error } = await sb.from("tanken").select("id, nr, datum, daten").order("datum");

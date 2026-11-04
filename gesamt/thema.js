@@ -41,3 +41,56 @@
     document.head.appendChild(s);
   }
 })();
+
+/* ==========================================================================
+   Rechte: welche Menüpunkte (Bereiche) das angemeldete Konto sieht. Hier, weil thema.js auf JEDER Seite
+   läuft (auch Bad/Heizung). Admin = Geschäftsführung: alles, und nur er ändert in den Gesamt-Bereichen.
+   Konto.bereiche (Konten-Seite) – sonst Standard je Ebene. Die Datenbank prüft dasselbe (supabase/rechte.sql).
+   ========================================================================== */
+window.BruellRechte = (function () {
+  "use strict";
+  /* Schlüssel, Name, Adresse ab Dashboard-Wurzel, Symbol, übergeordneter Punkt */
+  const BEREICHE = [
+    ["uebersicht", "Übersicht", "", "i-cockpit"], ["bad", "Bad", "bad/", "i-projekte"], ["heizung", "Heizung", "heizung/", "i-projekte"],
+    ["personal", "Personal", "personal/", "i-konten"], ["lohn", "Lohnabrechnung", "personal/lohn.html", "i-lohn", "personal"],
+    ["fahrzeuge", "Fahrzeuge", "fahrzeuge/", "i-einrichtung"], ["werkzeuge", "Werkzeuge", "lager/", "i-werkzeug"],
+    ["betrieb", "Betrieb", "betrieb/", "i-kennzahlen"], ["buchhaltung", "Buchhaltung", "betrieb/buchhaltung.html", "i-unter", "betrieb"],
+    ["bank", "Bank", "betrieb/bank.html", "i-unter", "betrieb"], ["monitor", "Betriebsmonitor", "betrieb/", "i-unter", "betrieb"],
+    ["monat", "Auswertung Monat", "betrieb/monat.html", "i-unter", "betrieb"], ["jahr", "Auswertung Jahr", "betrieb/jahr.html", "i-unter", "betrieb"],
+    ["abschluss", "Jahresabschluss", "betrieb/abschluss.html", "i-unter", "betrieb"],
+  ].map(([key, titel, pfad, icon, eltern]) => ({ key, titel, pfad, icon, eltern: eltern || "" }));
+  const STANDARD = {
+    geschaeftsfuehrung: BEREICHE.map((b) => b.key),
+    planung: ["uebersicht", "bad", "heizung"], monteur: ["uebersicht", "bad", "heizung"], partner: ["bad"], mitarbeiter: [],
+  };
+  const lesen = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } };
+  function konto() {
+    try {
+      const e = JSON.parse(sessionStorage.getItem("bruell:sitzung") || localStorage.getItem("bruell:sitzung") || "null");
+      return (e && lesen("bruell:konten", []).find((k) => k.email === e && k.aktiv !== false)) || null;
+    } catch (e) { return null; }
+  }
+  const admin = (k = konto()) => !!k && k.ebene === "geschaeftsfuehrung";
+  const wirksam = (k = konto()) => !k ? [] : admin(k) ? STANDARD.geschaeftsfuehrung : Array.isArray(k.bereiche) ? k.bereiche : (STANDARD[k.ebene] || []);
+  /* Unterpunkt nur mit übergeordnetem Punkt (Betrieb → Buchhaltung …); Lohnabrechnung auch einzeln */
+  function darf(key, k = konto()) {
+    const l = wirksam(k), b = BEREICHE.find((x) => x.key === key);
+    if (!b || !l.includes(key)) return false;
+    return !b.eltern || b.eltern === "personal" || l.includes(b.eltern);
+  }
+  /* Bereich der aktuellen Seite (Pfad ab Dashboard-Wurzel) */
+  function bereichVon(pfad) {
+    const p = String(pfad || "").replace(/^\/+/, "").replace(/index\.html$/, "");
+    if (/^konten\//.test(p)) return "konten";
+    if (/^personal\/karte\.html/.test(p)) return "karte";
+    if (/^betrieb\/bank/.test(p)) return "bank";
+    const treffer = BEREICHE.filter((b) => b.pfad && p.startsWith(b.pfad)).sort((a, b) => b.pfad.length - a.pfad.length)[0];
+    if (treffer && treffer.key === "betrieb") return p === "betrieb/" ? "monitor" : "betrieb";
+    return treffer ? treffer.key : "uebersicht";
+  }
+  /* ⚙ Einstellungen (nur Admin) – Knopf neben „Passwort ändern“; wurzel = Weg zur Dashboard-Wurzel ("" / "../") */
+  const ZAHNRAD = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>';
+  const einstellungenKnopf = (wurzel = "", aktiv = false) => admin()
+    ? `<a class="btn klein hell einst-knopf${aktiv ? " aktiv" : ""}" href="${wurzel}konten/${location.search.replace(/[?&]nr=[^&]*/, "").replace(/^&/, "?")}" title="Einstellungen" aria-label="Einstellungen"${aktiv ? ' aria-current="page"' : ""}>${ZAHNRAD}</a>` : "";
+  return { BEREICHE, STANDARD, konto, admin, wirksam, darf, bereichVon, einstellungenKnopf };
+})();

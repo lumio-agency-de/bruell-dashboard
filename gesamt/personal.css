@@ -483,3 +483,37 @@ html[data-thema="dunkel"] { --bk-1: #3987e5; --bk-2: #d95926; --bk-3: #199e70; -
 .fz-tabelle .fz-tank-tab .eingabe { min-width: 92px; padding: 6px 8px; font-size: .86rem; }
 .fz-tabelle .fz-tank-tab td:last-child { width: 1%; }
 .fz-tabelle > .btn { margin-top: 8px; }
+/* Konten & Rechte */
+.kt-leiste { display: flex; gap: 14px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 14px; }
+.kt-leiste p { margin: 0; max-width: 70ch; }
+.kt-liste { display: grid; gap: 10px; }
+.kt-konto { padding: 0; overflow: hidden; }
+.kt-kopf { all: unset; box-sizing: border-box; cursor: pointer; display: grid; grid-template-columns: auto minmax(160px, 1fr) 2fr auto; gap: 14px; align-items: center; width: 100%; padding: 12px 16px; }
+.kt-kopf:hover { background: color-mix(in oklab, var(--tinte) 4%, transparent); }
+.kt-kopf:focus-visible { outline: 2px solid var(--akzent); outline-offset: -2px; }
+.kt-k { display: grid; place-items: center; min-width: 42px; height: 42px; padding: 0 6px; border-radius: 10px; background: var(--tinte); color: #fff; font-weight: 800; letter-spacing: .04em; }
+.kt-name { display: grid; } .kt-name small { color: var(--leise); }
+.kt-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.kt-chip { font-size: .72rem; padding: 2px 8px; border-radius: 999px; background: color-mix(in oklab, var(--tinte) 8%, transparent); }
+.kt-detail { border-top: 1px solid var(--fuge); padding: 14px 16px 16px; display: grid; gap: 12px; }
+.kt-bereiche { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px 14px; margin-top: 6px; }
+.kt-gruppe { display: grid; gap: 4px; }
+.kt-unter { display: grid; gap: 4px; padding-left: 22px; }
+.kt-haken { display: flex; gap: 8px; align-items: center; font-size: .9rem; cursor: pointer; }
+.kt-haken.aus { opacity: .55; cursor: default; }
+.kt-knoepfe { display: flex; gap: 8px; flex-wrap: wrap; }
+@media (max-width: 720px) { .kt-kopf { grid-template-columns: auto 1fr; } .kt-chips { grid-column: 1 / -1; } }
+/* Nur lesen (kein Admin): Anlegen, Importieren, Einlesen und Bearbeiten ausblenden */
+html.nur-lesen #neu, html.nur-lesen label:has(> #import), html.nur-lesen #fz-neu,
+html.nur-lesen [data-drop], html.nur-lesen [data-beispiel], html.nur-lesen .bu-aktion,
+html.nur-lesen .lo-import, html.nur-lesen .lo-einst, html.nur-lesen .lo-konten .btn { display: none !important; }
+html.nur-lesen .lo-konto { pointer-events: none; }
+/* Auf-/Zuklappbare Menügruppen (Personal → Lohnabrechnung, Betrieb → Unterpunkte) */
+.nav-gruppe { display: flex; align-items: center; gap: 2px; }
+.nav-gruppe > a { flex: 1; min-width: 0; }
+.nav-auf { all: unset; cursor: pointer; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; color: color-mix(in oklab, #fff 70%, transparent); flex: none; }
+.nav-auf:hover { background: color-mix(in oklab, #fff 10%, transparent); color: #fff; }
+.nav-auf:focus-visible { outline: 2px solid var(--akzent); outline-offset: 1px; }
+.nav-auf svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.nav-auf[aria-expanded="true"] svg { transform: rotate(90deg); }
+.nav a[hidden] { display: none !important; }

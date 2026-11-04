@@ -49,17 +49,25 @@ var PK_NR = (new URLSearchParams(location.search).get("nr") || "").replace(/\D/g
   /* Freigabe „Lohnzettel hochladen“ (Lohnabrechnung → Einstellungen): Seite Lohnzettel + Reiter Lohnzettel fremder Karten */
   const LZ_FREI = !GF && PERSON.lohnzettel, HIER = document.body.dataset.bereich || "";
   if (!GF) PERSON.pk = pkVon(PERSON);
-  if (LZ_FREI && HIER === "lohn") window.LOHN_NUR_ZETTEL = true;
-  else if (LZ_FREI && document.body.classList.contains("karte-seite") && PK_NR !== PERSON.pk && new URLSearchParams(location.search).has("lz")) { window.PK_NUR_LESEN = window.PK_NUR_LOHNZETTEL = window.PK_LZ_DARF = true; }
-  else if (!GF) {
-    if (!PERSON.pk) {
-      if (PERSON.ebene !== "mitarbeiter") { location.replace("../" + QS); return; }
-      document.addEventListener("DOMContentLoaded", () => { document.body.innerHTML = '<main class="main"><div class="seite"><div class="panel startfeld"><h2>Keine Personalkarte verknüpft</h2><p>Bitte an die Geschäftsführung wenden.</p></div></div></main>'; });
-      return;
-    }
-    if (!document.body.classList.contains("karte-seite") || PK_NR !== PERSON.pk) { location.replace("../personal/karte.html" + qs({ nr: PERSON.pk })); return; }
-    window.PK_NUR_LESEN = true;
-    if (LZ_FREI) window.PK_LZ_DARF = true;
+  /* ---------- Zugang nach Rechten (gesamt/thema.js → BruellRechte; Konten-Seite) ----------
+     Admin (GF): alles. Alle anderen: nur freigegebene Bereiche, dort nur lesen; die eigene Personalkarte immer. */
+  const R = window.BruellRechte, KONTO = R.konto(), darf = (b) => GF || R.darf(b, KONTO);
+  const SEITE = R.bereichVon((location.pathname.match(/\/(personal|fahrzeuge|lager|betrieb|konten)\/(.*)$/) || []).slice(1).join("/"));
+  const eigeneKarte = PERSON.pk ? "../personal/karte.html" + qs({ nr: PERSON.pk }) : "";
+  if (!GF) {
+    const weg = () => {                                              // erste erlaubte Seite
+      if (eigeneKarte) return location.replace(eigeneKarte);
+      if (darf("uebersicht")) return location.replace("../" + QS);
+      document.addEventListener("DOMContentLoaded", () => { document.body.innerHTML = '<main class="main"><div class="seite"><div class="panel startfeld"><h2>Kein Bereich freigegeben</h2><p>Bitte an die Geschäftsführung wenden.</p></div></div></main>'; });
+    };
+    document.documentElement.classList.add("nur-lesen");             // ändern dürfen in den Gesamt-Bereichen nur Admins
+    if (LZ_FREI && HIER === "lohn" && !darf("lohn")) window.LOHN_NUR_ZETTEL = true;
+    else if (SEITE === "karte") {
+      if (PERSON.pk && PK_NR === PERSON.pk) { window.PK_NUR_LESEN = true; if (LZ_FREI) window.PK_LZ_DARF = true; }
+      else if (LZ_FREI && new URLSearchParams(location.search).has("lz")) { window.PK_NUR_LESEN = window.PK_NUR_LOHNZETTEL = window.PK_LZ_DARF = true; }
+      else if (darf("personal")) window.PK_NUR_LESEN = true;
+      else { weg(); return; }
+    } else if (SEITE === "konten" || !darf(SEITE)) { weg(); return; }
   }
 
   /* ---------- Leiste ---------- */
@@ -69,24 +77,50 @@ var PK_NR = (new URLSearchParams(location.search).get("nr") || "").replace(/\D/g
     const UNTER = document.body.dataset.unter || "";
     const BETRIEB_UNTER = [["buchhaltung", "../betrieb/buchhaltung.html", "Buchhaltung"], ["bank", "../betrieb/bank.html", "Bank"], ["monitor", "../betrieb/", "Betriebsmonitor"],
       ["monat", "../betrieb/monat.html", "Auswertung Monat"], ["jahr", "../betrieb/jahr.html", "Auswertung Jahr"], ["abschluss", "../betrieb/abschluss.html", "Jahresabschluss"]];
-    const eigene = ["../personal/karte.html" + qs({ nr: PERSON.pk }), "Meine Personalkarte", "i-konten", true];
-    const nav = !GF ? [...(PERSON.ebene === "mitarbeiter" ? [] : [["../", "Übersicht", "i-cockpit"], ["../bad/", "Bad", "i-projekte"], ["../heizung/", "Heizung", "i-projekte"]]),
-        ...(PERSON.pk ? [[eigene[0], eigene[1], eigene[2], hier !== "lohn" && PK_NR === PERSON.pk]] : []), ...(LZ_FREI ? [["../personal/lohn.html", "Lohnzettel", "i-lohn", hier === "lohn" || !!window.PK_NUR_LOHNZETTEL]] : [])]
-      : [["../", "Übersicht", "i-cockpit"], ["../bad/", "Bad", "i-projekte"], ["../heizung/", "Heizung", "i-projekte"],
-      ["../personal/", "Personal", "i-konten", hier === "personal"],
-      /* Unterpunkt nur im Bereich Personal sichtbar */
-      ...(hier === "personal" || hier === "lohn" ? [["../personal/lohn.html", "Lohnabrechnung", "i-lohn", hier === "lohn", "nav-unter"]] : []),
-      ["../fahrzeuge/", "Fahrzeuge", "i-einrichtung", hier === "fahrzeuge"], ["../lager/", "Werkzeuge", "i-werkzeug", hier === "werkzeuge"], ["../betrieb/", "Betrieb", "i-kennzahlen", hier === "betrieb" && !UNTER],
-      /* Unterpunkte nur im Bereich Betrieb sichtbar; der Betriebsmonitor bleibt unter betrieb/ */
-      ...(hier === "betrieb" ? BETRIEB_UNTER.flatMap(([u, h, t]) => [[h, t, "i-unter", UNTER === u, "nav-unter"],
-        /* unter „Bank“ die beiden Firmenkonten, sichtbar sobald man im Bankbereich ist */
-        ...(u === "bank" && /^bank/.test(UNTER) ? [["../betrieb/bank-sparkasse.html", "Sparkasse", "i-unter", UNTER === "bank-sparkasse", "nav-unter nav-unter2"], ["../betrieb/bank-raiba.html", "Raiffeisenbank", "i-unter", UNTER === "bank-raiba", "nav-unter nav-unter2"]] : [])]) : [])];
-    $("#rail").innerHTML = `<a class="marke" href="../${QS}"><img class="marke-logo" src="../bad/app/img/logo.svg" alt=""><span class="marke-text"><strong>Brüll GmbH</strong><small>${{ fahrzeuge: "Fahrzeuge", werkzeuge: "Werkzeuge", betrieb: "Betrieb", lohn: "Lohnabrechnung" }[hier] || "Personal"}</small></span></a>
-      <nav class="nav">${nav.map(([h, t, i, an, kl]) => `<a href="${h.includes("?") ? h : h + QS}"${kl ? ` class="${kl}"` : ""}${an ? ' aria-current="page"' : ""}><span class="nav-i ${i}" aria-hidden="true"></span>${t}</a>`).join("")}</nav>
+    /* Menü nach Rechten: [Adresse, Titel, Symbol, aktiv, Klasse] */
+    /* Auf-/Zuklappen der Unterpunkte (Personal, Betrieb) – eigene Wahl gemerkt, sonst offen, wenn man gerade darin ist */
+    const AUF = lesen("bruell:nav-auf", {}), offen = (g, drin) => (g in AUF ? !!AUF[g] : drin);
+    const nav = [], add = (h, t, i, an, kl, gruppe, eltern) => nav.push([h, t, i, an, kl, gruppe, eltern]);
+    if (darf("uebersicht")) add("../", "Übersicht", "i-cockpit");
+    if (darf("bad")) add("../bad/", "Bad", "i-projekte");
+    if (darf("heizung")) add("../heizung/", "Heizung", "i-projekte");
+    if (darf("personal")) {
+      add("../personal/", "Personal", "i-konten", hier === "personal", "", darf("lohn") ? "personal" : "");
+      if (darf("lohn")) add("../personal/lohn.html", "Lohnabrechnung", "i-lohn", hier === "lohn", "nav-unter", "", "personal");
+    } else {
+      if (eigeneKarte) add(eigeneKarte, "Meine Personalkarte", "i-konten", hier !== "lohn" && PK_NR === PERSON.pk);
+      if (darf("lohn")) add("../personal/lohn.html", "Lohnabrechnung", "i-lohn", hier === "lohn");
+      else if (LZ_FREI) add("../personal/lohn.html", "Lohnzettel", "i-lohn", hier === "lohn" || !!window.PK_NUR_LOHNZETTEL);
+    }
+    if (darf("fahrzeuge")) add("../fahrzeuge/", "Fahrzeuge", "i-einrichtung", hier === "fahrzeuge");
+    if (darf("werkzeuge")) add("../lager/", "Werkzeuge", "i-werkzeug", hier === "werkzeuge");
+    const bu = BETRIEB_UNTER.filter(([u]) => darf(u));
+    if (darf("betrieb") && bu.length) {
+      add(bu.some(([u]) => u === "monitor") ? "../betrieb/" : bu[0][1], "Betrieb", "i-kennzahlen", hier === "betrieb" && !UNTER, "", "betrieb");
+      /* Unterpunkte (auf-/zuklappbar); unter „Bank“ die beiden Firmenkonten, sobald man im Bankbereich ist */
+      bu.forEach(([u, h, t]) => {
+        add(h, t, "i-unter", UNTER === u, "nav-unter", "", "betrieb");
+        if (u === "bank" && /^bank/.test(UNTER)) { add("../betrieb/bank-sparkasse.html", "Sparkasse", "i-unter", UNTER === "bank-sparkasse", "nav-unter nav-unter2", "", "betrieb"); add("../betrieb/bank-raiba.html", "Raiffeisenbank", "i-unter", UNTER === "bank-raiba", "nav-unter nav-unter2", "", "betrieb"); }
+      });
+    }
+    $("#rail").innerHTML = `<a class="marke" href="../${QS}"><img class="marke-logo" src="../bad/app/img/logo.svg" alt=""><span class="marke-text"><strong>Brüll GmbH</strong><small>${{ fahrzeuge: "Fahrzeuge", werkzeuge: "Werkzeuge", betrieb: "Betrieb", lohn: "Lohnabrechnung", konten: "Einstellungen" }[hier] || "Personal"}</small></span></a>
+      <nav class="nav">${nav.map(([h, t, i, an, kl, gruppe, eltern]) => {
+        const a = `<a href="${h.includes("?") ? h : h + QS}"${kl ? ` class="${kl}"` : ""}${an ? ' aria-current="page"' : ""}${eltern ? ` data-in="${eltern}"${offen(eltern, hier === (eltern === "personal" ? "lohn" : "betrieb") && !!UNTER || (eltern === "personal" && hier === "lohn")) ? "" : " hidden"}` : ""}><span class="nav-i ${i}" aria-hidden="true"></span>${t}</a>`;
+        if (!gruppe) return a;
+        const auf = offen(gruppe, gruppe === "personal" ? hier === "lohn" : hier === "betrieb" && !!UNTER);
+        return `<div class="nav-gruppe">${a}<button type="button" class="nav-auf" data-gruppe="${gruppe}" aria-expanded="${auf}" aria-label="${t}: Unterpunkte ${auf ? "einklappen" : "aufklappen"}" title="${auf ? "Einklappen" : "Aufklappen"}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></div>`;
+      }).join("")}</nav>
       <div class="speicher"><div class="ich"><span class="ich-k">${esc(ini)}</span><span><b>${esc(PERSON.name)}</b><small>${esc(EBENE_TITEL[PERSON.ebene] || "")}</small></span></div>
-        <div class="ich-aktionen"><button class="btn klein hell" type="button" id="pw-aendern">Passwort ändern</button><button class="btn klein hell" type="button" id="abmelden">Abmelden</button></div>
+        <div class="ich-aktionen">${R.einstellungenKnopf("../", hier === "konten")}<button class="btn klein hell" type="button" id="pw-aendern">Passwort ändern</button><button class="btn klein hell" type="button" id="abmelden">Abmelden</button></div>
         <p class="modus">${!GF ? (LZ_FREI ? "Lohnzettel hochladen freigegeben" : "Nur lesen") + (DEMO ? " · Demo" : "") : DEMO ? "Demo – Daten nur in diesem Browser" : hier === "betrieb" ? "Betriebszahlen – vertraulich" : "Personaldaten – vertraulich"}</p></div>`;
     $("#pw-aendern").addEventListener("click", () => window.BruellPasswort && window.BruellPasswort.oeffnen());
+    $("#rail").addEventListener("click", (e) => {
+      const b = e.target.closest(".nav-auf"); if (!b) return;
+      const g = b.dataset.gruppe, auf = b.getAttribute("aria-expanded") !== "true";
+      b.setAttribute("aria-expanded", auf); b.title = auf ? "Einklappen" : "Aufklappen"; b.setAttribute("aria-label", b.getAttribute("aria-label").replace(/(auf|ein)klappen$/, auf ? "einklappen" : "aufklappen"));
+      document.querySelectorAll(`#rail [data-in="${g}"]`).forEach((x) => { x.hidden = !auf; });
+      const s = lesen("bruell:nav-auf", {}); s[g] = auf; try { localStorage.setItem("bruell:nav-auf", JSON.stringify(s)); } catch (err) { /* egal */ }
+    });
     $("#abmelden").addEventListener("click", async () => {
       if (window.BruellDB) await window.BruellDB.abmelden();      // Mac mini: auch die Datenbank-Sitzung beenden
       try { localStorage.removeItem("bruell:sitzung"); sessionStorage.removeItem("bruell:sitzung"); sessionStorage.setItem("bruell:zurueck", "1"); } catch (e) { /* egal */ }
@@ -225,10 +259,11 @@ var PK_NR = (new URLSearchParams(location.search).get("nr") || "").replace(/\D/g
   window.pkZugang = GF ? {
     konto: kontoVon,
     titel: (e) => EBENE_TITEL[e] || e || "",
-    vorschlag: (vorname, nachname) => (norm(vorname).replace(/[^a-z]/g, "") + "." + norm(nachname).replace(/[^a-z]/g, "")).replace(/^\.|\.$/g, ""),
+    /* Benutzername = Kürzel aus der Personalkarte (z. B. „DB“ für Daniel Brüll), sonst Anfangsbuchstaben */
+    vorschlag: (vorname, nachname, kuerzel) => String(kuerzel || "").trim().toUpperCase() || (norm(vorname).replace(/[^a-z]/g, "").slice(0, 1) + norm(nachname).replace(/[^a-z]/g, "").slice(0, 1)).toUpperCase(),
     async anlegen(nr, benutzer, name) {
       benutzer = String(benutzer || "").trim().toLowerCase();
-      if (!/^[a-z0-9._-]{3,}$/.test(benutzer)) throw new Error("Benutzername: mindestens 3 Zeichen, nur a–z, 0–9, Punkt, Strich.");
+      if (!/^[a-z0-9._-]{2,}$/.test(benutzer)) throw new Error("Benutzername: mindestens 2 Zeichen, nur Buchstaben a–z, Ziffern, Punkt, Strich.");
       const l = lesen("bruell:konten", []), email = kontoEmail(benutzer);
       if (l.some((k) => k.email === email)) throw new Error("Benutzername schon vergeben.");
       const pw = startPasswort(), salz = zufall(24);
@@ -253,6 +288,34 @@ var PK_NR = (new URLSearchParams(location.search).get("nr") || "").replace(/\D/g
       k.aktiv = an; localStorage.setItem("bruell:konten", JSON.stringify(l));
     },
   } : null;
+  /* Mac mini (Datenbank): Zugänge liegen in Supabase – gleiche Bedienung, aber über die Datenbank-Funktionen.
+     Die Kontenliste (konten_liste) wird zwischengespeichert, damit die Karte sofort zeigen kann, ob es einen Zugang gibt. */
+  if (window.pkZugang && window.BruellDB) {
+    const sb = window.BruellDB.sb, KL = "bruell:konten-db";
+    const liste = () => lesen(KL, []);
+    const laden = async () => { const { data, error } = await sb.rpc("konten_liste"); if (error) throw error; try { localStorage.setItem(KL, JSON.stringify(data || [])); } catch (e) { /* voll */ } if (window.zugangZeichnen) window.zugangZeichnen(); return data; };
+    const pruefen = (r) => { if (r.error) throw new Error(r.error.message); return r.data; };
+    Object.assign(window.pkZugang, {
+      konto: (nr) => liste().find((k) => String(k.pk || "") === String(nr)) || null,
+      alle: liste,
+      async anlegen(nr, benutzer, name) {
+        benutzer = String(benutzer || "").trim().toLowerCase();
+        if (!/^[a-z0-9._-]{2,}$/.test(benutzer)) throw new Error("Benutzername: mindestens 2 Zeichen, nur Buchstaben a–z, Ziffern, Punkt, Strich.");
+        if (liste().some((k) => String(k.benutzer).toLowerCase() === benutzer)) throw new Error("Benutzername schon vergeben.");
+        const pw = startPasswort();
+        pruefen(await sb.rpc("konto_anlegen", { p_benutzer: benutzer, p_passwort: pw, p_id: "pk-" + nr, p_ebene: "mitarbeiter", p_name: name, p_formulare: [] }));
+        pruefen(await sb.rpc("konto_personal", { p_email: kontoEmail(benutzer), p_pk: String(nr), p_lohnzettel: false }));
+        await laden(); return pw;
+      },
+      async zuruecksetzen(email) { const pw = startPasswort(); pruefen(await sb.rpc("konto_passwort_zuruecksetzen", { p_email: email, p_passwort: pw })); await laden(); return pw; },
+      async lohnzettel(email, an) { const k = liste().find((x) => x.email === email); if (!k) return; pruefen(await sb.rpc("konto_personal", { p_email: email, p_pk: k.pk || null, p_lohnzettel: !!an })); await laden(); },
+      async aktiv(email, an) {
+        if (email === PERSON.email) throw new Error("Das eigene Konto kann nicht gesperrt werden.");
+        pruefen(await sb.rpc("konto_aktiv", { p_email: email, p_aktiv: !!an })); await laden();
+      },
+    });
+    window.BruellDB.fertig.then((r) => r && r.angemeldet && laden()).catch((e) => console.warn("Konten:", e));
+  }
 
   /* ---------- Personalkarte: Kopfzeile aus den Daten ---------- */
   window.pkKopfAktualisieren = function () {

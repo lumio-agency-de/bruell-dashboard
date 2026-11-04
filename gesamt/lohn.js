@@ -355,7 +355,7 @@ ${l.map((x, i) => `<CdtTrfTxInf><PmtId><EndToEndId>${id.slice(0, 28)}-${i + 1}</
     if (t.id === "lo-monat" && t.value) { monat = t.value; return zeichnen(); }
     if (t.classList.contains("lo-betrag")) { const z = zahl(t.value); wert(nr, { betrag: z ? z.toFixed(2) : "", quelle: "" }); return setTimeout(neuMitFokus); }
     if (t.classList.contains("lo-ueberwiesen")) { wert(nr, { ueberwiesen: t.checked, datum: t.checked ? new Date().toLocaleDateString("de-DE") : "" }); return zeichnen(); }
-    if (t.classList.contains("lo-recht") && window.pkZugang) { window.pkZugang.lohnzettel(t.dataset.email, t.checked); toast(t.checked ? "Freigegeben: darf Lohnzettel hochladen" : "Freigabe entfernt"); return; }
+    if (t.classList.contains("lo-recht") && window.pkZugang) { Promise.resolve(window.pkZugang.lohnzettel(t.dataset.email, t.checked)).catch((e) => alert("Freigabe konnte nicht gespeichert werden: " + (e.message || e))); toast(t.checked ? "Freigegeben: darf Lohnzettel hochladen" : "Freigabe entfernt"); return; }
     if (t.classList.contains("lo-konto") || t.id === "lo-firma") {
       const k = lesen("lohn:konten", {});
       if (t.id === "lo-firma") k.firma = t.value.trim(); else { k[t.dataset.k] = { ...(k[t.dataset.k] || {}), [t.dataset.f]: t.dataset.f === "iban" ? ibanSauber(t.value) : t.value.trim() }; }

@@ -39,7 +39,12 @@
   };
   const lesen = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } };
   const schreiben = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* voll/gesperrt */ } };
-  const widgetsFuer = (person) => { const w = lesen("bruell:widgets", {})[person.id]; return Array.isArray(w) ? w : STANDARD[person.ebene] || STANDARD.planung; };
+  /* Rechte (gesamt/thema.js): Kachel nur, wenn mindestens einer ihrer Bereiche freigegeben ist */
+  const R = window.BruellRechte;
+  const darf = (b) => !!R && (R.admin() || R.darf(b));
+  const WIDGET_RECHT = { bad: ["bad"], heizung: ["heizung"], kalender: ["bad", "heizung", "fahrzeuge"], mail: ["bad", "heizung"], baustellen: ["bad", "heizung"], neu: ["bad", "heizung"], kennzahlen: ["monitor"], personal: ["personal"] };
+  const widgetErlaubt = (id) => (WIDGET_RECHT[id] || []).some(darf);
+  const widgetsFuer = (person) => { const w = lesen("bruell:widgets", {})[person.id]; return (Array.isArray(w) ? w : STANDARD[person.ebene] || STANDARD.planung).filter(widgetErlaubt); };
 
   function toast(t) { const el = $("#toast"); el.textContent = t; el.classList.add("an"); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("an"), 2600); }
 
@@ -120,7 +125,7 @@
      Daten: Fahrzeugkarten im Browser (fz_<Nr>), sonst personal/daten-lokal.js (nur auf dem eigenen Rechner). */
   const TUEV_VORLAUF = 21;
   function tuevTermine() {
-    if (!PERSON || PERSON.ebene !== "geschaeftsfuehrung") return [];
+    if (!PERSON || !darf("fahrzeuge")) return [];
     const fz = { ...(window.FZ_VOLL || {}) };
     try { Object.keys(localStorage).filter((k) => /^fz_\d+$/.test(k)).forEach((k) => { fz[k.slice(3)] = lesen(k, {}); }); } catch (e) { /* gesperrt */ }
     return Object.entries(fz).flatMap(([nr, f]) => {
@@ -136,7 +141,7 @@
     });
   }
   function wKalender(A, g) {
-    const alle = [...Object.entries(A).flatMap(([b, a]) => ((a && a.termine) || []).map((t) => ({ ...t, b }))), ...tuevTermine()];
+    const alle = [...Object.entries(A).filter(([b]) => darf(b)).flatMap(([b, a]) => ((a && a.termine) || []).map((t) => ({ ...t, b }))), ...tuevTermine()];
     alle.sort((x, y) => x.d - y.d);
     const h = heute0(), mo = new Date(h); mo.setDate(h.getDate() - ((h.getDay() + 6) % 7));
     const woche = [...Array(7)].map((_, i) => { const d = new Date(mo); d.setDate(mo.getDate() + i); return d; });
@@ -342,11 +347,13 @@
   /* ---------- Leiste ---------- */
   function leiste(person) {
     $("#nav").innerHTML = `<a href="./${QS}" aria-current="page"><span class="nav-i i-cockpit" aria-hidden="true"></span>Übersicht</a>
-      ${BEREICHE.map((b) => `<a href="${b.id}/${QS}#/cockpit"><span class="nav-i ${b.icon}" aria-hidden="true"></span>${esc(b.titel)}</a>`).join("")}
-      ${person.ebene === "geschaeftsfuehrung" ? `<a href="personal/${QS}"><span class="nav-i i-konten" aria-hidden="true"></span>Personal</a><a href="fahrzeuge/${QS}"><span class="nav-i i-einrichtung" aria-hidden="true"></span>Fahrzeuge</a><a href="lager/${QS}"><span class="nav-i i-werkzeug" aria-hidden="true"></span>Werkzeuge</a><a href="betrieb/${QS}"><span class="nav-i i-kennzahlen" aria-hidden="true"></span>Betrieb</a><a href="bad/${QS}#/konten"><span class="nav-i i-einrichtung" aria-hidden="true"></span>Konten</a>` : person.ebene !== "partner" ? `<a href="personal/karte.html${QS}"><span class="nav-i i-konten" aria-hidden="true"></span>Meine Personalkarte</a>` : ""}`;
+      ${BEREICHE.filter((b) => darf(b.id)).map((b) => `<a href="${b.id}/${QS}#/cockpit"><span class="nav-i ${b.icon}" aria-hidden="true"></span>${esc(b.titel)}</a>`).join("")}
+      ${darf("personal") ? `<a href="personal/${QS}"><span class="nav-i i-konten" aria-hidden="true"></span>Personal</a>` : person.ebene !== "partner" ? `<a href="personal/karte.html${QS}"><span class="nav-i i-konten" aria-hidden="true"></span>Meine Personalkarte</a>` : ""}
+      ${darf("fahrzeuge") ? `<a href="fahrzeuge/${QS}"><span class="nav-i i-einrichtung" aria-hidden="true"></span>Fahrzeuge</a>` : ""}${darf("werkzeuge") ? `<a href="lager/${QS}"><span class="nav-i i-werkzeug" aria-hidden="true"></span>Werkzeuge</a>` : ""}
+      ${darf("betrieb") && ["buchhaltung", "bank", "monitor", "monat", "jahr", "abschluss"].some(darf) ? `<a href="betrieb/${QS}"><span class="nav-i i-kennzahlen" aria-hidden="true"></span>Betrieb</a>` : ""}`;
     const ini = (person.name || "?").split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
     $("#ich").innerHTML = `<div class="ich"><span class="ich-k">${esc(ini)}</span><span><b>${esc(person.name)}</b><small>${esc({ geschaeftsfuehrung: "Geschäftsführung", planung: "Planung / Bearbeitung", monteur: "Monteur" }[person.ebene] || "")}</small></span></div>
-      <div class="ich-aktionen"><button class="btn klein hell" data-aktion="passwort">Passwort ändern</button><button class="btn klein hell" data-aktion="abmelden">Abmelden</button></div>
+      <div class="ich-aktionen">${R ? R.einstellungenKnopf("") : ""}<button class="btn klein hell" data-aktion="passwort">Passwort ändern</button><button class="btn klein hell" data-aktion="abmelden">Abmelden</button></div>
       ${DEMO ? '<p class="modus">Demo – Daten nur in diesem Browser</p>' : ""}`;
   }
 
@@ -356,17 +363,20 @@
     PERSON = ich();
     if (!PERSON || PERSON.mussAendern) return zumLogin();
     if (PERSON.ebene === "partner") return location.replace("bad/" + QS);   // Partner arbeiten direkt in ihren Einsätzen
-    if (PERSON.ebene === "mitarbeiter") return location.replace("personal/karte.html" + QS);   // nur die eigene Personalkarte
+    if (PERSON.ebene === "mitarbeiter" || !darf("uebersicht")) return location.replace("personal/karte.html" + QS);   // keine Übersicht freigegeben → eigene Personalkarte
     try { localStorage.setItem("bruell:bereich", "uebersicht"); } catch (e) { /* egal */ }
     leiste(PERSON);
     /* Sofort den zuletzt geladenen Stand zeigen (je Person), frische Auszüge ersetzen ihn, sobald sie da sind */
     const CACHE = "bruell:auszug-cache:" + PERSON.id + (DEMO ? ":demo" : ""), alt = lesen(CACHE, null);
     if (alt && alt.bad && alt.heizung) { AUSZUEGE = alt; zeichnen(); }
-    const [bad, heizung] = await Promise.all(BEREICHE.map((b) => auszugHolen(b.id)));
-    if (alt && alt.bad && alt.heizung && [bad, heizung].every((a) => a && a.fehler)) return;   // offline o. Ä.: alten Stand stehen lassen
+    /* nur Bereiche laden, die freigegeben sind (spart Zeit; ohne Freigabe keine Daten daraus) */
+    const ohne = { fehler: "nicht freigegeben", aus: true };
+    const [bad, heizung] = await Promise.all(BEREICHE.map((b) => (darf(b.id) ? auszugHolen(b.id) : Promise.resolve(ohne))));
+    const genutzt = [bad, heizung].filter((a) => !a.aus);
+    if (alt && alt.bad && alt.heizung && genutzt.length && genutzt.every((a) => a && a.fehler)) return;   // offline o. Ä.: alten Stand stehen lassen
     AUSZUEGE = { bad, heizung };
-    if (!bad.fehler && !heizung.fehler) schreiben(CACHE, AUSZUEGE);
-    if ([bad, heizung].every((a) => a && a.fehler)) { $("#main").innerHTML = `<div class="seite"><div class="panel startfeld"><h2>Bereiche nicht erreichbar</h2><p>Bitte neu laden oder erneut anmelden.</p><button class="btn" data-aktion="abmelden">Neu anmelden</button></div></div>`; return; }
+    if (genutzt.every((a) => !a.fehler)) schreiben(CACHE, AUSZUEGE);
+    if (genutzt.length && genutzt.every((a) => a && a.fehler)) { $("#main").innerHTML = `<div class="seite"><div class="panel startfeld"><h2>Bereiche nicht erreichbar</h2><p>Bitte neu laden oder erneut anmelden.</p><button class="btn" data-aktion="abmelden">Neu anmelden</button></div></div>`; return; }
     zeichnen();
   }
   setInterval(() => { const u = $("#uhr"); if (u) { const d = new Date(); u.textContent = `${zwei(d.getHours())}:${zwei(d.getMinutes())}`; } }, 5000);

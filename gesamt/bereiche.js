@@ -30,12 +30,22 @@
       localStorage.setItem("bruell:konten", JSON.stringify(konten));
     } catch (e) { /* ohne */ }
   })();
-  const k0 = konto();
-  if (k0 && k0.ebene === "geschaeftsfuehrung") EINTRAEGE.push(["personal", "Personal", "i-konten"], ["fahrzeuge", "Fahrzeuge", "i-einrichtung"], ["lager", "Werkzeuge", "i-werkzeug"], ["betrieb", "Betrieb", "i-kennzahlen"]);
-  else if (k0 && k0.ebene !== "partner") EINTRAEGE.push(["personal/karte.html", "Meine Personalkarte", "i-konten"]);
+  /* Menü nach Rechten (gesamt/thema.js → BruellRechte; Konten-Seite) */
+  const R = window.BruellRechte, k0 = konto();
+  const darf = (b, k) => !!R && !!k && (R.admin(k) || R.darf(b, k));
+  if (k0) {
+    for (let i = EINTRAEGE.length - 1; i >= 0; i--) if (!darf(EINTRAEGE[i][0] || "uebersicht", k0)) EINTRAEGE.splice(i, 1);
+    if (darf("personal", k0)) EINTRAEGE.push(["personal", "Personal", "i-konten"]);
+    else if (k0.ebene !== "partner") EINTRAEGE.push(["personal/karte.html", "Meine Personalkarte", "i-konten"]);
+    if (darf("fahrzeuge", k0)) EINTRAEGE.push(["fahrzeuge", "Fahrzeuge", "i-einrichtung"]);
+    if (darf("werkzeuge", k0)) EINTRAEGE.push(["lager", "Werkzeuge", "i-werkzeug"]);
+    if (darf("betrieb", k0) && ["buchhaltung", "bank", "monitor", "monat", "jahr", "abschluss"].some((b) => darf(b, k0))) EINTRAEGE.push(["betrieb", "Betrieb", "i-kennzahlen"]);
+  }
+  /* Bereich nicht freigegeben (oder Konto nur mit eigener Personalkarte) → Übersicht bzw. eigene Karte */
   function mitarbeiterWeiter() {
     const k = konto();
-    if (k && k.ebene === "mitarbeiter" && !k.mussAendern && !(document.body && document.body.classList.contains("vorraum"))) { location.replace("../personal/karte.html" + QS); return true; }
+    if (!k || k.mussAendern || (document.body && document.body.classList.contains("vorraum"))) return false;
+    if (k.ebene === "mitarbeiter" || !darf(akt, k)) { location.replace(darf("uebersicht", k) ? "../" + QS : "../personal/karte.html" + QS); return true; }
     return false;
   }
   if (mitarbeiterWeiter()) return;
@@ -65,6 +75,11 @@
     const ob = new MutationObserver(() => { if (document.querySelector(".ich") && mitarbeiterWeiter()) ob.disconnect(); });
     ob.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ["class"] });
   }
-  const los = () => { einbauen(); zurueckPruefen(); mitarbeiterBeobachten(); };
+  /* ⚙ Einstellungen (nur Admin) in die Ich-Leiste von Bad/Heizung – die zeichnet app.js, deshalb beobachten */
+  function zahnradEinbauen() {
+    const setzen = () => { const a = document.querySelector(".rail .ich-aktionen"); if (a && !a.querySelector(".einst-knopf") && R) a.insertAdjacentHTML("afterbegin", R.einstellungenKnopf("../")); };
+    setzen(); new MutationObserver(setzen).observe(document.body, { subtree: true, childList: true });
+  }
+  const los = () => { einbauen(); zurueckPruefen(); mitarbeiterBeobachten(); zahnradEinbauen(); };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", los); else los();
 })();

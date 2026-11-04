@@ -22,6 +22,7 @@ insert into personal (nr, daten) values
  ('902', '{"vorname":"Erika","nachname":"Beispiel","position":"Büro","stars_team":5,"sonstnotiz":"geheim2"}');
 select _pruef('GF sieht alle Karten', (select count(*) from personal) = 2);
 select _pruef('GF sieht interne Felder', (select daten ? 'sonstnotiz' from personal where nr = '901'));
+select _pruef('GF: Kontenliste mit Personalkarte + Freigabe', (select count(*) from jsonb_array_elements(konten_liste()) k where k->>'pk' = '902' and (k->>'lohnzettel')::boolean) = 1);
 commit;
 insert into storage.objects (bucket_id, name) values ('personal', 'foto/901/foto'), ('personal', 'dokumente/901/vertrag.pdf'),
   ('personal', 'dokumente/902/zeugnis.pdf'), ('personal', 'lohnzettel/901/2026-01.pdf'), ('personal', 'lohnzettel/902/2026-01.pdf'), ('akten', 'projekte/x/planung/a.pdf');

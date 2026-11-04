@@ -631,7 +631,7 @@
 
     return `<div class="seite cockpit">
       <header class="kopf"><div><p class="eyebrow">${WT[d.getDay()]}, ${fDatum(d)}${S.ich ? " · " + esc(S.ich.name) : ""}</p><h1>Cockpit</h1></div>
-        ${ebene() === "planung" ? `<div class="kopf-aktionen"><div class="seg"><button class="seg-k${S.nurMeine ? " an" : ""}" data-aktion="nur-meine" data-wert="1">Meine Projekte</button><button class="seg-k${S.nurMeine ? "" : " an"}" data-aktion="nur-meine" data-wert="0">Alle</button></div></div>` : ""}</header>
+        ${istBuero() ? `<div class="kopf-aktionen">${ebene() === "planung" ? `<div class="seg"><button class="seg-k${S.nurMeine ? " an" : ""}" data-aktion="nur-meine" data-wert="1">Meine Projekte</button><button class="seg-k${S.nurMeine ? "" : " an"}" data-aktion="nur-meine" data-wert="0">Alle</button></div>` : ""}<button class="btn jetzt" data-aktion="neu">+ Neue Anfrage</button></div>` : ""}</header>
       <section class="kpis">
         ${window.ABSCHNITTE.map((a) => {
           const l = laufend.filter((p) => p.phase >= a.von && p.phase <= a.bis);
@@ -733,7 +733,7 @@
             <dl class="infos">${Object.entries(proPerson).map(([n, x]) => `<dt>${esc(n)}</dt><dd>${h(x)} <small class="leise">(Timer)</small></dd>`).join("") || "<dt>Timer</dt><dd>noch keine Zeiten erfasst</dd>"}</dl>
             <p class="q-gruppe">Zusatzstunden (nicht gestempelt)</p>
             ${tab("extraStunden", [["wer", "Person", "", cfg().team.filter((m) => m.name).map((m) => m.name)], ["h", "Stunden", "zahl"], ["notiz", "Tätigkeit"]], "Stunden nachtragen")}
-            <div class="felder abstand-o">${zahl("stundensatz", "Kostensatz je Stunde (€)", String((cfg().kalkulation || {}).stundensatz || "aus Einrichtung"))}${zahl("stundenSoll", "Kalkulierte Stunden (Angebot)", "h")}</div>
+            <div class="felder abstand-o">${zahl("stundensatz", "Kostensatz je Stunde (€)", String((cfg().kalkulation || {}).stundensatz || "aus Unternehmen"))}${zahl("stundenSoll", "Kalkulierte Stunden (Angebot)", "h")}</div>
             <dl class="infos zahl-summe"><dt>Stunden gesamt</dt><dd>${h(g.stunden)} ${abw(g.stunden, g.stundenSoll, "h")}</dd><dt>Lohnkosten</dt><dd>${g.satz ? eur(g.lohn) : `<span class="leise">Kostensatz fehlt</span>`}</dd></dl></div></section>
         </div>
         <div class="spalte">
@@ -813,7 +813,7 @@
     const zielBalken = ziel ? `<div class="ziel">
         <div class="ziel-spur"><span class="ziel-ist" style="width:${Math.min(100, (istJahr / ziel) * 100)}%"></span><span class="ziel-bestand" style="width:${Math.max(0, Math.min(100 - (istJahr / ziel) * 100, (bestand / ziel) * 100))}%"></span></div>
         <div class="ziel-legende"><span><i class="ist"></i>Abgerechnet ${eur(istJahr)} · ${prozent(istJahr / ziel)}</span><span><i class="bestand"></i>Auftragsbestand ${eur(bestand)}</span><span>Ziel ${eur(ziel)} · Prognose ${prozent(prognose / ziel)}</span></div></div>`
-      : `<p class="leise">Noch kein Jahresziel hinterlegt – unter Einrichtung → Ziele eintragen.</p>`;
+      : `<p class="leise">Noch kein Jahresziel hinterlegt – unter Unternehmen → Ziele & Kalkulation eintragen.</p>`;
 
     /* Offene Forderungen */
     const forderungen = [];
@@ -921,6 +921,8 @@
         inhalt: () => `${P.kapazitaet}${teamPanel()}` },
       { id: "ziele", titel: "Ziele & Kalkulation", vorschau: [["Umsatzziel", (cfg().ziele || {}).jahresumsatz ? kurz((cfg().ziele || {}).jahresumsatz) : "—"], ["Kostensatz", (cfg().kalkulation || {}).stundensatz ? geld((cfg().kalkulation || {}).stundensatz) + "/h" : "—"]],
         inhalt: () => zieleFormular() },
+      { id: "fristen", titel: "Fristen & Erinnerungen", vorschau: [["Fristen", Object.keys(cfg().fristen || {}).length + " Einträge"], ["Kundenerinnerung", ((cfg().fristen || {}).kundenerinnerungVorBaustart ?? "—") + " T. vor Baustart"]],
+        inhalt: () => fristenFormular() },
       { id: "nachkalkulation", titel: "Nachkalkulation", vorschau: [["Stunden", gesamtStunden ? Math.round(gesamtStunden) + " h" : "—"], ["Ø pro Heizung", mitStunden ? (gesamtStunden / mitStunden).toFixed(1).replace(".", ",") + " h" : "—"], ["DB", W.db != null ? kurz(W.db) : "—"], ["Offen", String(projekte.filter((p) => p.status === "abgeschlossen" && !geld(p).abgeschlossen).length)]],
         inhalt: () => `${P.nachkalkulation}${P.fertig}` },
     ];
@@ -1000,7 +1002,7 @@
     if (!alle().length) {
       return `<div class="seite"><header class="kopf"><div><p class="eyebrow">Projekte</p><h1>Noch leer</h1></div></header>
         <div class="panel startfeld"><h2>Die erste Anfrage anlegen</h2>
-          <p>Jede Heizung läuft als Projekt durch ${N} Level. Leg eine echte Anfrage an – oder probier das Dashboard erst mit Beispielprojekten aus (lassen sich unter „Einrichtung“ wieder entfernen).</p>
+          <p>Jede Heizung läuft als Projekt durch ${N} Level. Leg eine echte Anfrage an – oder probier das Dashboard erst mit Beispielprojekten aus (lassen sich unter „Unternehmen → Fristen & Erinnerungen“ wieder entfernen).</p>
           <div class="aktionen"><button class="btn jetzt" data-aktion="neu">+ Neue Anfrage</button><button class="btn" data-aktion="demo">Beispielprojekte laden</button></div></div></div>`;
     }
     const f = S.filter;
@@ -1722,62 +1724,19 @@
   /* ================================================================
      Einrichtung
      ================================================================ */
-  function ansichtEinrichtung() {
-    const c = cfg();
-    const f = (pfad, label, wert, typ = "text") => `<div class="feld"><label for="c-${pfad}">${label}</label><input class="eingabe" id="c-${pfad}" type="${typ}" data-cfg="${pfad}" value="${esc(wert)}"></div>`;
-    const rollen = [...new Set([...window.FIRMA.team.map((t) => t.rolle), ...c.team.map((t) => t.rolle)])];
-    const demo = alle().some((p) => p.demo);
-    const cloud = Daten.modus === "cloud";
-    return `<div class="seite">
-      <header class="kopf"><div><p class="eyebrow">Einrichtung</p><h1>Firma & Team</h1></div>
-        <div class="kopf-aktionen"><button class="btn jetzt" data-aktion="cfg-speichern">Übernehmen</button></div></header>
-      <div class="einr">
-        <section class="panel"><h3>Betriebsart: ${cloud ? "Cloud" : "Lokal"}</h3>
-          <p class="leise">${cloud ? `Verbunden mit <b>${esc(c.cloud.url)}</b>${Daten.nutzer ? ` als <b>${esc(Daten.nutzer)}</b>` : ""}. Projekte, Dateien und Kunden-Uploads liegen in der Cloud – für alle im Team gleich.`
-            : "Projekte und Dateien liegen nur in diesem Browser. Zum Ausprobieren ideal; für mehrere Arbeitsplätze und echte Kunden-Links die Cloud einrichten: Anleitung in <code>supabase/ANLEITUNG-CLOUD.md</code>, Zugangsdaten in <code>einstellungen/firma.js</code> unter <code>cloud</code>."}</p>
-          <div class="aktionen">
-            ${cloud ? `<button class="btn" data-aktion="abmelden">Abmelden</button>` : ""}
-            ${cloud && !(window.FIRMA.cloud || {}).url ? `<button class="btn still gefahr" data-aktion="cloud-trennen">Cloud trennen</button>` : ""}
-            <button class="btn" data-aktion="export">Projekte sichern (JSON)</button>
-            <label class="btn">Sicherung einspielen<input type="file" accept=".json,application/json" data-aktion="import" hidden></label>
-            ${demo ? `<button class="btn still gefahr" data-aktion="demo-weg">Beispielprojekte entfernen</button>` : `<button class="btn still" data-aktion="demo">Beispielprojekte laden</button>`}
-          </div></section>
-        ${cloud ? "" : `<section class="panel"><h3>Cloud verbinden</h3>
-          <p class="leise">Zugangsdaten aus dem Supabase-Projekt (Project Settings → API). Sie werden nur in diesem Browser gespeichert; für alle Arbeitsplätze und das Kundenportal gehören sie in <code>einstellungen/firma.js</code>.</p>
-          <div class="felder drei">
-            <div class="feld"><label for="cl-url">Project URL</label><input class="eingabe" id="cl-url" placeholder="https://xxxx.supabase.co"></div>
-            <div class="feld"><label for="cl-key">anon / publishable key</label><input class="eingabe" id="cl-key"></div>
-            <div class="feld"><label for="cl-portal">Adresse des Kundenportals</label><input class="eingabe" id="cl-portal" placeholder="https://…/kunde.html"></div>
-          </div><div class="aktionen"><button class="btn voll" data-aktion="cloud-verbinden">Verbinden</button></div></section>`}
-        <section class="panel"><h3>Firma</h3><div class="felder drei">
-          ${f("name", "Firmenname", c.name)}${f("kurzname", "Kurzname (in Mails)", c.kurzname)}${f("bereich", "Untertitel", c.bereich)}
-          ${f("adresse.strasse", "Straße", c.adresse.strasse)}${f("adresse.ort", "PLZ & Ort", c.adresse.ort)}${f("adresse.mapsLink", "Google-Maps-Link", c.adresse.mapsLink, "url")}
-          ${f("telefon", "Telefon", c.telefon)}${f("email", "E-Mail", c.email, "email")}${f("website", "Website", c.website)}
-          ${f("kundenPostfach", "Postfach für Kundenmails", c.kundenPostfach, "email")}${f("logo", "Logo-Datei", c.logo)}
-        </div></section>
-        <section class="panel"><h3>Farben</h3><div class="felder drei">
-          <div class="feld"><span class="lab">Grundfarbe</span><div class="farbe"><input type="color" data-cfg="farben.tinte" value="${esc(c.farben.tinte)}" aria-label="Grundfarbe"><code>${esc(c.farben.tinte)}</code></div></div>
-          <div class="feld"><span class="lab">Akzent („jetzt dran“)</span><div class="farbe"><input type="color" data-cfg="farben.akzent" value="${esc(c.farben.akzent)}" aria-label="Akzentfarbe"><code>${esc(c.farben.akzent)}</code></div></div>
-        </div></section>
-
-        <section class="panel"><h3>Programme</h3><div class="felder drei">
-          ${Object.entries(c.programme).map(([k, v]) => f("programme." + k, { erp: "Warenwirtschaft / ERP", heizungsrechner: "Kostenrechner", foerderung: "Förderantrag" }[k] || k, v)).join("")}
-        </div></section>
-        <section class="panel"><h3>Geschäftszeiten</h3><p class="leise">Termine außerhalb dieser Zeiten und an Wochenenden werden nicht angenommen.</p><div class="felder drei">
-          ${f("geschaeftszeiten.von", "Termine ab", (c.geschaeftszeiten || {}).von || "07:00", "time")}
-          ${f("geschaeftszeiten.bis", "Termine bis", (c.geschaeftszeiten || {}).bis || "18:00", "time")}
-        </div></section>
-        <section class="panel"><h3>Fristen (Tage)</h3><div class="felder drei">
+  /* Einrichtung entfällt (Firma, Farben, Programme … kommen aus einstellungen/firma.js) – alte Links führen zu „Unternehmen“ */
+  function ansichtEinrichtung() { location.replace("#/kennzahlen"); return ""; }
+  /* Fristen & Erinnerungen (Reiter unter „Unternehmen“, nur Geschäftsführung) */
+  function fristenFormular() {
+    const c = cfg(), f = (pfad, label, wert, typ = "text") => `<div class="feld"><label for="c-${pfad}">${label}</label><input class="eingabe" id="c-${pfad}" type="${typ}" data-cfg="${pfad}" value="${esc(wert)}"></div>`;
+    return `<section class="panel"><h2 class="panel-titel">Fristen (Tage)</h2><div class="panel-innen"><p class="leise">Ab wann das Dashboard an Aufgaben erinnert – im Cockpit, in der Übersicht und bei den Mails.</p><div class="felder drei">
           ${f("fristen.erinnerungVorErstgespraech", "Fotos fehlen – Tage vor Erstgespräch", c.fristen.erinnerungVorErstgespraech, "number")}
           ${f("fristen.angebotsverfolgung", "Angebotsverfolgung – Tage nach Erstgespräch", c.fristen.angebotsverfolgung, "number")}
           ${f("fristen.tafVorBaustart", "TAF an Schornsteinfeger – Tage vor Baustart", c.fristen.tafVorBaustart ?? 14, "number")}
           ${f("fristen.kundenerinnerungVorBaustart", "Kundenerinnerung – Tage vor Baustart", c.fristen.kundenerinnerungVorBaustart, "number")}
           ${f("fristen.bewertungNachRechnung", "Google-Bewertung prüfen – Tage nach Schlussrechnung", c.fristen.bewertungNachRechnung ?? 7, "number")}
-        </div></section>
-        <section class="panel"><h3>Für eine andere Firma übernehmen</h3>
-          <p class="leise">Einstellungen übernehmen, dann als <code>firma.js</code> herunterladen und im Ordner <code>einstellungen/</code> ersetzen. Level, Formulare und Mailtexte stehen in <code>ablauf.js</code>, <code>formulare.js</code> und <code>mailvorlagen.js</code> – siehe <code>ANLEITUNG.md</code>.</p>
-          <div class="aktionen"><button class="btn" data-aktion="cfg-datei">firma.js herunterladen</button><button class="btn still gefahr" data-aktion="cfg-reset">Auf firma.js zurücksetzen</button></div></section>
-      </div></div>`;
+        </div><div class="aktionen"><button class="btn jetzt" data-aktion="cfg-speichern">Übernehmen</button></div></div></section>
+      ${alle().some((p) => p.demo) ? `<section class="panel"><h2 class="panel-titel">Beispielprojekte</h2><div class="panel-innen"><p class="leise">Die Beispielprojekte zum Ausprobieren wieder entfernen – echte Projekte bleiben.</p><div class="aktionen"><button class="btn still gefahr" data-aktion="demo-weg">Beispielprojekte entfernen</button></div></div></section>` : ""}`;
   }
   /* ---------- Partner-Adressbuch (Büro liest, Geschäftsführung pflegt) ---------- */
   const ADR_FELDER = [["firma", "Firma"], ["gewerk", "Gewerk"], ["name", "Ansprechpartner"], ["strasse", "Straße & Nr."], ["ort", "PLZ & Ort"], ["telefon", "Telefon"], ["mobil", "Mobil"], ["email", "E-Mail"], ["notiz", "Notiz"]];
@@ -2209,7 +2168,7 @@
     const e = ebene();
     const punkte = e === "partner" ? [["cockpit", "Meine Einsätze", "projekte"]]
       : e === "monteur" ? [["cockpit", "Meine Baustellen", "projekte"]]
-      : [["cockpit", "Cockpit", "cockpit"], ["projekte", "Projekte", "projekte"], ["adressbuch", "Adressbuch", "adressbuch"], ...(istGF() ? [["kennzahlen", "Unternehmen", "kennzahlen"], ["konten", "Konten", "konten"], ["einrichtung", "Einrichtung", "einrichtung"]] : [])];
+      : [["cockpit", "Cockpit", "cockpit"], ["projekte", "Projekte", "projekte"], ["adressbuch", "Adressbuch", "adressbuch"], ...(istGF() ? [["kennzahlen", "Unternehmen", "kennzahlen"], ["konten", "Konten", "konten"]] : [])];
     $(".nav").innerHTML = punkte.map(([id, l, i]) => `<a href="#/${id}" data-nav="${id}"><span class="nav-i i-${i}" aria-hidden="true"></span>${l}</a>`).join("");
     const nk = $(".neu-knopf"); if (nk) nk.hidden = !istBuero();
   }
