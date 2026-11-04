@@ -53,7 +53,8 @@
     return k ? { id: k.id, name: k.name || k.benutzer, ebene: k.ebene, mussAendern: k.mussAendern } : null;
   }
   function zumLogin() { try { sessionStorage.setItem("bruell:zurueck", "1"); } catch (e) { /* egal */ } location.replace("bad/" + QS); }
-  function abmelden() {
+  async function abmelden() {
+    if (window.BruellDB) await window.BruellDB.abmelden();        // Mac mini: auch die Datenbank-Sitzung beenden
     try { localStorage.removeItem("bruell:sitzung"); sessionStorage.removeItem("bruell:sitzung"); } catch (e) { /* egal */ }
     zumLogin();
   }

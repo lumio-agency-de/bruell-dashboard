@@ -57,7 +57,7 @@ create table if not exists public.kennzahlen (
 create table if not exists public.mitglieder (
   email     text primary key,
   id        text not null unique,          -- Kürzel (Team) bzw. Partner-ID
-  ebene     text not null check (ebene in ('geschaeftsfuehrung', 'planung', 'monteur', 'partner')),
+  ebene     text not null check (ebene in ('geschaeftsfuehrung', 'planung', 'monteur', 'partner', 'mitarbeiter')),
   name      text,
   formulare text[] not null default '{}'   -- Partner: welche Formulare sie sehen
 );
@@ -400,7 +400,7 @@ declare
 begin
   if not ist_gf() then raise exception 'nicht erlaubt'; end if;
   if length(coalesce(p_passwort, '')) < 8 then raise exception 'Passwort zu kurz (mind. 8 Zeichen)'; end if;
-  if p_ebene not in ('geschaeftsfuehrung', 'planung', 'monteur', 'partner') then raise exception 'unbekannte Ebene'; end if;
+  if p_ebene not in ('geschaeftsfuehrung', 'planung', 'monteur', 'partner', 'mitarbeiter') then raise exception 'unbekannte Ebene'; end if;   -- mitarbeiter: nur eigene Personalkarte (Dashboard Gesamt/supabase/personal.sql)
   if exists (select 1 from mitglieder where email = v_email and id <> p_id) then raise exception 'Benutzername schon vergeben'; end if;
   select id into v_uid from auth.users where email = v_email;
   if v_uid is null then

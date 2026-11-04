@@ -25,3 +25,6 @@ DKV-Eingang/
 
 # Betriebsmonitor-Zahlen (vertraulich, nur lokal – online nur verschlüsselt über werkzeuge/tresor.js)
 betrieb/daten-lokal.js
+
+# Datenbank-Zugang: liefert nur der Mac mini aus (dienste/konfig/cloud.js) – nie ins Repo
+gesamt/cloud.js

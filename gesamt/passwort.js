@@ -2,8 +2,8 @@
    Brüll Dashboard – eigenes Passwort ändern (Übersicht, Personal, Fahrzeuge, Werkzeuge, Betrieb)
    --------------------------------------------------------------------------
    Aufruf: BruellPasswort.oeffnen()  → Dialog „Passwort ändern“ für das angemeldete Konto.
-   Heute (Demo/Test): Konto in bruell:konten, gleiches Verfahren wie bad/app/js/daten.js
-   (Salz + SHA-256). Mit Supabase auf dem Mac mini: sb.auth.updateUser + rpc passwort_geaendert.
+   Lokal (Demo/Test): Konto in bruell:konten, gleiches Verfahren wie bad/app/js/daten.js
+   (Salz + SHA-256). Mac mini (gesamt/db.js aktiv): Supabase – altes Passwort prüfen, updateUser, passwort_geaendert.
    Fremde Passwörter setzt die Geschäftsführung in Bad → Konten zurück.
    ========================================================================== */
 window.BruellPasswort = (function () {
@@ -24,6 +24,17 @@ window.BruellPasswort = (function () {
   async function aendern(alt, neu) {
     if (String(neu).length < 8) throw new Error("Das neue Passwort braucht mindestens 8 Zeichen.");
     if (alt === neu) throw new Error("Bitte ein anderes Passwort als das bisherige wählen.");
+    const db = window.BruellDB;
+    if (db) {                                                   // Mac mini: Passwort liegt in der Datenbank
+      const email = sitzung(); if (!email) throw new Error("Nicht angemeldet – bitte neu anmelden.");
+      const a = await db.sb.auth.signInWithPassword({ email, password: alt });
+      if (a.error) throw new Error("Das aktuelle Passwort stimmt nicht.");
+      const u = await db.sb.auth.updateUser({ password: neu });
+      if (u.error) throw new Error(u.error.message);
+      await db.sb.rpc("passwort_geaendert");
+      const l = lesen("bruell:konten", []), k = l.find((x) => x.email === email); if (k) { k.mussAendern = false; localStorage.setItem("bruell:konten", JSON.stringify(l)); }
+      return;
+    }
     const email = sitzung(), l = lesen("bruell:konten", []), k = email && l.find((x) => x.email === email);
     if (!k) throw new Error("Nicht angemeldet – bitte neu anmelden.");
     if (k.hash !== (await pruefsumme(k.salz, alt))) throw new Error("Das aktuelle Passwort stimmt nicht.");

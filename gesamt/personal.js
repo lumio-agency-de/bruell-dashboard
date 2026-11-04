@@ -87,7 +87,8 @@ var PK_NR = (new URLSearchParams(location.search).get("nr") || "").replace(/\D/g
         <div class="ich-aktionen"><button class="btn klein hell" type="button" id="pw-aendern">Passwort ändern</button><button class="btn klein hell" type="button" id="abmelden">Abmelden</button></div>
         <p class="modus">${!GF ? (LZ_FREI ? "Lohnzettel hochladen freigegeben" : "Nur lesen") + (DEMO ? " · Demo" : "") : DEMO ? "Demo – Daten nur in diesem Browser" : hier === "betrieb" ? "Betriebszahlen – vertraulich" : "Personaldaten – vertraulich"}</p></div>`;
     $("#pw-aendern").addEventListener("click", () => window.BruellPasswort && window.BruellPasswort.oeffnen());
-    $("#abmelden").addEventListener("click", () => {
+    $("#abmelden").addEventListener("click", async () => {
+      if (window.BruellDB) await window.BruellDB.abmelden();      // Mac mini: auch die Datenbank-Sitzung beenden
       try { localStorage.removeItem("bruell:sitzung"); sessionStorage.removeItem("bruell:sitzung"); sessionStorage.setItem("bruell:zurueck", "1"); } catch (e) { /* egal */ }
       location.replace("../bad/" + QS);
     });
@@ -143,6 +144,8 @@ var PK_NR = (new URLSearchParams(location.search).get("nr") || "").replace(/\D/g
     }
   }
   function demoAnlegen() {
+    /* Mac mini (Datenbank): nur die Geschäftsführung bekommt die Vorlage (zum Übernehmen) – alle anderen sehen nur, was die DB freigibt */
+    if (window.BruellDB && !GF) return;
     if (mitarbeiterVorladen()) return fahrzeugeVorladen();
     if (!DEMO || Object.keys(localStorage).some((k) => /^pk_\d+$/.test(k))) return;
     for (const m of DEMO_MA) {

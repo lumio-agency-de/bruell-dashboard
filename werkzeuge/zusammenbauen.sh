@@ -28,6 +28,9 @@ baue() {   # $1 = Quelle, $2 = Zielordner (bad|heizung), $3 = alter Speicher-Pr�
   sed -i '' -e "s#<title>$alt</title>#<title>Brüll Dashboard</title>#" -e "s#<strong id=\"marke-name\">$alt</strong>#<strong id=\"marke-name\">Brüll GmbH</strong>#" "$z/index.html"
   # Cache-Versionen neu: die Gesamt-Fassung weicht von der Einzelversion ab (sonst laden Handys alte Dateien)
   sed -i '' -E "s/\?v=[0-9]{12}/?v=$V/g" "$z/index.html" "$z/kunde.html"
+  # Mac mini: Datenbank-Zugang kommt aus /gesamt/cloud.js (liefert nur der Server aus, nicht im Repo) – vorerst nur Bad
+  [ "$2" = bad ] && sed -i '' -e 's#^  <script src="app/vendor/supabase.js#  <script src="../gesamt/cloud.js" onerror="this.remove()"></script>\
+  <script src="app/vendor/supabase.js#' "$z/index.html"
   # Bereichs-Umschalter einbinden
   sed -i '' -e "s#</body>#  <link rel=\"stylesheet\" href=\"../gesamt/bereiche.css?v=$V\">\\
   <link rel=\"stylesheet\" href=\"../gesamt/mobil.css?v=$V\">\\

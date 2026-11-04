@@ -21,9 +21,12 @@
     const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(salz + "|" + pw));
     return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, "0")).join("");
   }
-  const normMitglied = (m) => m && { id: m.id, ebene: m.ebene, name: m.name, benutzer: m.benutzer || m.email, email: m.email, mussAendern: !!(m.mussAendern ?? m.muss_aendern), aktiv: m.aktiv !== false, formulare: m.formulare || [] };
+  const normMitglied = (m) => m && { id: m.id, ebene: m.ebene, name: m.name, benutzer: m.benutzer || m.email, email: m.email, mussAendern: !!(m.mussAendern ?? m.muss_aendern), aktiv: m.aktiv !== false, formulare: m.formulare || [],
+    pk: m.pk ? String(m.pk) : "", lohnzettel: !!m.lohnzettel };
 
   function cloudKonfig() {
+    /* Brüll-Server (Mac mini): Zugang kommt aus /gesamt/cloud.js, das nur der Server ausliefert (nicht im Repo) */
+    if (window.BRUELL_CLOUD && window.BRUELL_CLOUD.url && window.BRUELL_CLOUD.anonKey) return window.BRUELL_CLOUD;
     const c = (window.FIRMA && window.FIRMA.cloud) || {};
     if (c.url && c.anonKey) return c;
     try { const l = JSON.parse(localStorage.getItem("baddashboard:cloud")); if (l && l.url && l.anonKey) return l; } catch (e) { /* keiner */ }
@@ -227,12 +230,24 @@
       async _mitgliedLaden(email) {
         const { data } = await sb.from("mitglieder").select("*").eq("email", String(email || "").toLowerCase()).maybeSingle();
         this.mitglied = data && data.aktiv !== false ? normMitglied(data) : null;
+        this._spiegeln();
+      },
+      /* Anmeldung für die übrigen Seiten (Übersicht, Personal, Heizung …) sichtbar machen: dieselbe Form wie
+         im lokalen Modus (Sitzung + Konto, ohne Passwort). Die Rechte prüft trotzdem nur die Datenbank. */
+      _spiegeln() {
+        const m = this.mitglied;
+        try {
+          if (!m) { localStorage.removeItem("bruell:sitzung"); sessionStorage.removeItem("bruell:sitzung"); localStorage.removeItem("bruell:konten"); return; }
+          localStorage.setItem("bruell:konten", JSON.stringify([{ ...m, cloud: true }]));
+          localStorage.setItem("bruell:sitzung", JSON.stringify(m.email));
+          sessionStorage.setItem("bruell:sitzung", JSON.stringify(m.email));
+        } catch (e) { /* Speicher gesperrt */ }
       },
       async start() {
         const { data } = await sb.auth.getSession();
         this.angemeldet = !!data.session;
         this.nutzer = data.session ? data.session.user.email : null;
-        if (this.angemeldet) await this._mitgliedLaden(this.nutzer);
+        if (this.angemeldet) await this._mitgliedLaden(this.nutzer); else { this.mitglied = null; this._spiegeln(); }
         return this.angemeldet;
       },
       async anmelden(benutzer, passwort) {
@@ -244,7 +259,7 @@
         this.angemeldet = true; this.nutzer = data.user.email;
         await this._mitgliedLaden(this.nutzer);
       },
-      async abmelden() { await sb.auth.signOut(); this.angemeldet = false; this.mitglied = null; },
+      async abmelden() { await sb.auth.signOut(); this.angemeldet = false; this.mitglied = null; this._spiegeln(); },
       async sperreHolen(res, name, erzwingen) {
         const { data, error } = await sb.rpc("sperre_holen", { p_ressource: res, p_name: name, p_erzwingen: !!erzwingen });
         if (error) throw error;
@@ -257,6 +272,7 @@
         if (error) throw new Error(/same|different/i.test(error.message) ? "Bitte ein neues Passwort wählen, nicht das Startpasswort." : error.message);
         await sb.rpc("passwort_geaendert");
         if (this.mitglied) this.mitglied.mussAendern = false;
+        this._spiegeln();
       },
       async konten() {
         const { data, error } = await sb.rpc("konten_liste");
