@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Brüll · Als App einrichten</title>
+  <link rel="icon" href="../bad/app/img/logo.svg">
+  <link rel="stylesheet" href="../bad/app/css/app.css?v=202610242000">
+  <link rel="stylesheet" href="../gesamt/dunkel-auto.css?v=202611032230">
+  <link rel="stylesheet" href="../gesamt/thema.css?v=202611050800">
+  <script src="../gesamt/thema.js?v=202611062100"></script>
+  <style>
+    body { background: var(--papier, #fff); }
+    .inst { max-width: 860px; margin: 0 auto; padding: 32px 16px 64px; }
+    .inst-kopf { display: flex; gap: 18px; align-items: center; margin-bottom: 26px; }
+    .inst-kopf img { width: 72px; height: 72px; border-radius: 18px; box-shadow: 0 4px 14px rgba(0,0,0,.12); background: #fff; }
+    .inst-kopf h1 { margin: 0; }
+    .inst .panel { margin-bottom: 16px; }
+    .inst .panel-titel { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+    .inst .geraet-hier { font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--orange, #e8892b); }
+    .inst ol { margin: 0; padding: 4px 18px 18px 38px; line-height: 1.6; }
+    .inst ol li { margin: 6px 0; }
+    .inst kbd, .inst .taste { display: inline-block; padding: 1px 7px; border: 1px solid var(--fuge-stark, #c9ced6); border-radius: 6px; font: inherit; font-size: .88em; background: var(--panel, #fff); white-space: nowrap; }
+    .inst .tipp { margin: 0 18px 18px; padding: 10px 14px; border-left: 3px solid var(--orange, #e8892b); background: var(--flaeche, rgba(0,0,0,.03)); font-size: .92rem; }
+    .inst details.panel > summary { cursor: pointer; list-style: none; }
+    .inst details.panel > summary::-webkit-details-marker { display: none; }
+    .inst details.panel > summary::after { content: "›"; margin-left: auto; color: var(--leise, #6b7280); }
+    .inst details[open].panel > summary::after { transform: rotate(90deg); }
+  </style>
+</head>
+<body>
+  <main class="inst">
+    <header class="inst-kopf">
+      <img src="../gesamt/icons/apple-touch-icon.png" alt="">
+      <div><p class="eyebrow">Brüll Dashboard</p><h1>Als App einrichten</h1>
+        <p class="unter leise">Mit eigenem Symbol auf dem Schreibtisch, im Dock bzw. in der Taskleiste – das Dashboard öffnet sich dann in einem eigenen Fenster wie ein Programm.</p></div>
+    </header>
+
+    <section class="panel"><div class="panel-innen">
+      <p><b>Vorher einmal je Gerät:</b> Das Gerät muss im Netz des Brüll-Servers sein und dem Server-Zertifikat vertrauen (sonst warnt der Browser).
+        Mac: Ordner „Brüll Server/einrichten/Gerät verbinden (Mac)“ · Windows und iPad: bekommt ihr von Miko.</p>
+      <p class="leise">Adresse des Dashboards: <b id="adresse"></b></p>
+    </div></section>
+
+    <details class="panel" data-geraet="windows"><summary class="panel-titel"><span>Windows-PC</span><small class="leise">Microsoft Edge oder Google Chrome</small><span class="geraet-hier" hidden>Dein Gerät</span></summary>
+      <ol>
+        <li>Das Dashboard in <b>Microsoft Edge</b> öffnen und anmelden.</li>
+        <li>Oben rechts auf <span class="taste">⋯</span> → <b>Apps</b> → <b>„Diese Website als App installieren“</b> (bzw. <b>„Brüll installieren“</b>).</li>
+        <li>Im nächsten Fenster <b>„Desktopverknüpfung erstellen“</b> und auf Wunsch <b>„An Taskleiste anheften“</b> anhaken → <b>Zulassen</b>.</li>
+      </ol>
+      <p class="tipp">In <b>Chrome</b>: <span class="taste">⋮</span> → <b>Streamen, speichern und teilen</b> → <b>„Seite als App installieren“</b>. Das Symbol liegt danach auf dem Desktop und im Startmenü.</p>
+    </details>
+
+    <details class="panel" data-geraet="mac"><summary class="panel-titel"><span>Mac</span><small class="leise">Safari</small><span class="geraet-hier" hidden>Dein Gerät</span></summary>
+      <ol>
+        <li>Das Dashboard in <b>Safari</b> öffnen und anmelden.</li>
+        <li>In der Menüleiste <b>Ablage</b> → <b>„Zum Dock hinzufügen …“</b> → Name „Brüll“ lassen → <b>Hinzufügen</b>.</li>
+        <li>Für den <b>Schreibtisch</b>: Im Finder <b>Programme</b> öffnen (bzw. „Programme“ im Benutzerordner), das Symbol <b>„Brüll“</b> mit gedrückter <kbd>⌘</kbd>+<kbd>⌥</kbd> auf den Schreibtisch ziehen (legt einen Verweis an).</li>
+      </ol>
+      <p class="tipp">Einfacher Lesezeichen-Weg: Die Adresse oben in Safari mit der Maus auf den Schreibtisch ziehen – öffnet das Dashboard dann im normalen Safari-Fenster.</p>
+    </details>
+
+    <details class="panel" data-geraet="ipad"><summary class="panel-titel"><span>iPad / iPhone</span><small class="leise">Safari</small><span class="geraet-hier" hidden>Dein Gerät</span></summary>
+      <ol>
+        <li>Das Dashboard in <b>Safari</b> öffnen und anmelden.</li>
+        <li>Auf <span class="taste">Teilen ⬆︎</span> tippen → <b>„Zum Home-Bildschirm“</b> → <b>Hinzufügen</b>.</li>
+        <li>Das Symbol „Brüll“ liegt jetzt auf dem Home-Bildschirm und öffnet das Dashboard ohne Safari-Leisten.</li>
+      </ol>
+    </details>
+
+    <details class="panel" data-geraet="android"><summary class="panel-titel"><span>Android</span><small class="leise">Chrome</small><span class="geraet-hier" hidden>Dein Gerät</span></summary>
+      <ol>
+        <li>Das Dashboard in <b>Chrome</b> öffnen und anmelden.</li>
+        <li><span class="taste">⋮</span> → <b>„App installieren“</b> bzw. <b>„Zum Startbildschirm hinzufügen“</b>.</li>
+      </ol>
+    </details>
+
+    <p class="leise klein-text">Die App ist dasselbe Dashboard wie im Browser – gleiche Anmeldung, gleiche Daten. Ist der Brüll-Server aus oder das Gerät nicht im Firmennetz, öffnet sie sich ohne Inhalt.</p>
+  </main>
+  <script>
+    (function () {
+      var start = location.href.replace(/installieren\/.*$/, "");
+      document.getElementById("adresse").textContent = start;
+      var ua = navigator.userAgent, ipad = /iPad|iPhone/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+      var g = ipad ? "ipad" : /Android/.test(ua) ? "android" : /Windows/.test(ua) ? "windows" : /Macintosh/.test(ua) ? "mac" : "";
+      var el = g && document.querySelector('[data-geraet="' + g + '"]');
+      if (el) { el.open = true; el.querySelector(".geraet-hier").hidden = false; el.parentNode.insertBefore(el, el.parentNode.querySelector("details")); }
+    })();
+  </script>
+</body>
+</html>

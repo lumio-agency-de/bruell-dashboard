@@ -1,0 +1,18 @@
+{
+  "name": "Brüll Dashboard",
+  "short_name": "Brüll",
+  "description": "Dashboard der Brüll GmbH – Bad, Heizung, Personal, Betrieb",
+  "lang": "de",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#042461",
+  "icons": [
+    { "src": "gesamt/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "gesamt/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "gesamt/icons/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "gesamt/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

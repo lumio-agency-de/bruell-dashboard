@@ -51,7 +51,7 @@ begin
   return coalesce((select jsonb_agg(jsonb_build_object(
       'email', m.email, 'benutzer', coalesce(m.benutzer, m.email), 'id', m.id, 'ebene', m.ebene, 'name', m.name,
       'aktiv', m.aktiv, 'mussAendern', m.muss_aendern, 'letzterLogin', u.last_sign_in_at, 'pk', m.pk, 'lohnzettel', m.lohnzettel,
-      'bereiche', m.bereiche, 'bereicheWirksam', coalesce(m.bereiche, bereiche_standard(m.ebene))))
+      'bereiche', m.bereiche, 'bereicheWirksam', coalesce(m.bereiche, bereiche_standard(m.ebene)), 'formulare', m.formulare))
     from mitglieder m left join auth.users u on u.email = m.email), '[]'::jsonb);
 end $$;
 
@@ -144,3 +144,12 @@ begin
 end $$;
 revoke all on function public.konto_loeschen(text) from public, anon;
 grant execute on function public.konto_loeschen(text) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Lohnzettel hochladen/ändern nur Admins (Vorgabe 06.11.2026) – die Freigabe „lohnzettel“ für andere entfällt.
+-- Lesen bleibt: eigene Lohnzettel, und alle mit Bereich „Lohn“.
+-- ---------------------------------------------------------------------------
+create or replace function public.darf_lohnzettel() returns boolean language sql stable security definer set search_path = public as $$
+  select ist_gf()
+$$;
+update public.mitglieder set lohnzettel = false where lohnzettel;

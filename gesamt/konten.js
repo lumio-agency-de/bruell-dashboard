@@ -51,7 +51,6 @@
     passwort: (email, pw) => rpc("konto_passwort_zuruecksetzen", { p_email: email, p_passwort: pw }),
     aktiv: (email, an) => rpc("konto_aktiv", { p_email: email, p_aktiv: an }),
     loeschen: (email) => rpc("konto_loeschen", { p_email: email }),
-    lohnzettel: (k, an) => rpc("konto_personal", { p_email: k.email, p_pk: k.pk || null, p_lohnzettel: an }),
   } : {
     liste: async () => lokal.get().map((k) => ({ ...k, bereicheWirksam: Array.isArray(k.bereiche) ? k.bereiche : R.STANDARD[k.ebene] || [] })),
     async anlegen(k, pw) {
@@ -65,7 +64,6 @@
     passwort: async (email, pw) => { const salz = startPasswort() + startPasswort(), h = await pruefsumme(salz, pw); lokal.mit(email, (k) => { k.salz = salz; k.hash = h; k.mussAendern = true; }); },
     aktiv: async (email, an) => lokal.mit(email, (k) => { k.aktiv = an; }),
     loeschen: async (email) => { const l = lokal.get(); if (!l.some((x) => x.email === email)) throw new Error("Konto nicht gefunden"); lokal.set(l.filter((x) => x.email !== email)); },
-    lohnzettel: async (k, an) => lokal.mit(k.email, (x) => { x.lohnzettel = an; }),
   };
 
   /* ---------- Übersicht: welche Widgets jemand sieht (gleiche Liste wie gesamt/uebersicht.js) ---------- */
@@ -109,7 +107,6 @@
               <label class="kt-haken"><input type="checkbox" data-a="standard"${Array.isArray(k.bereiche) ? "" : " checked"}> Standard der Rolle verwenden</label>
               ${bereichsAuswahl("b-" + k.email, w, !Array.isArray(k.bereiche))}`}</div>
             ${k.ebene !== "partner" ? `<div class="feld"><label>Widgets auf der Übersicht</label>${widgetAuswahl(k, admin, w)}</div>` : ""}
-            ${k.ebene !== "partner" && !admin ? `<label class="kt-haken"><input type="checkbox" data-a="lz"${k.lohnzettel ? " checked" : ""}> Darf Lohnzettel für alle hochladen</label>` : ""}
             <div class="kt-knoepfe">${k.pk ? `<a class="btn klein still" href="../personal/karte.html${location.search ? location.search + "&" : "?"}nr=${encodeURIComponent(k.pk)}">Personalkarte</a>` : ""}
               <button type="button" class="btn klein" data-a="pw">Neues Startpasswort</button>
               ${eigen ? "" : `<button type="button" class="btn klein ${k.aktiv === false ? "" : "still gefahr"}" data-a="sperre">${k.aktiv === false ? "Entsperren" : "Sperren"}</button>
@@ -139,33 +136,55 @@
       d.querySelector("[data-kopie]").addEventListener("click", () => navigator.clipboard.writeText(text).then(() => toast("Zugangsdaten kopiert")));
     });
   }
-  function neuDialog() {
+  /* Externe Partner aus den Adressbüchern von Bad und Heizung (Einstellungen der Bereiche) */
+  async function partnerListe() {
+    const aus = (quelle, daten) => ((daten && daten.partner) || []).filter((x) => x && x.id && (x.firma || x.name)).map((x) => ({ quelle, id: x.id, firma: x.firma || x.name, gewerk: x.gewerk || "" }));
+    if (DB) {
+      const [b, h] = await Promise.all([DB.sb.from("einstellungen").select("daten").eq("id", 1).maybeSingle(), DB.sb.schema("heizung").from("einstellungen").select("daten").eq("id", 1).maybeSingle()]);
+      return [...aus("bad", b.data && b.data.daten), ...aus("heizung", h.data && h.data.daten)];
+    }
+    return [...aus("bad", lesen("baddashboard:einstellungen", null)), ...aus("heizung", lesen("heizdashboard:einstellungen", null))];
+  }
+  const slugBenutzer = (t) => String(t || "").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/ß/g, "ss").replace(/\b(gmbh|ug|kg|ohg|gbr|e\.?k\.?|co)\b/g, "").replace(/[^a-z0-9]/g, "").slice(0, 20);
+  async function neuDialog() {
     const ps = personen(), vergeben = new Set(KONTEN.map((k) => String(k.pk || "")));
-    dialog(`<form id="kt-neu"><div class="dlg-kopf"><div><p class="eyebrow">Konten & Rechte</p><h2>Zugang anlegen</h2><p>Person wählen – Name und Benutzername (Kürzel) kommen aus der Personalkarte.</p></div><button class="btn still" type="button" data-zu aria-label="Schließen">✕</button></div>
+    let pa = []; try { pa = await partnerListe(); } catch (e) { /* ohne Partner weiter */ }
+    const paVergeben = new Set(KONTEN.map((k) => k.id)), BER = { bad: "Bad", heizung: "Heizung" };
+    dialog(`<form id="kt-neu"><div class="dlg-kopf"><div><p class="eyebrow">Konten & Rechte</p><h2>Zugang anlegen</h2><p>Mitarbeiter (aus der Personalkarte) oder externen Partner (aus dem Adressbuch von Bad bzw. Heizung) wählen.</p></div><button class="btn still" type="button" data-zu aria-label="Schließen">✕</button></div>
       <div class="dlg-inhalt"><div class="felder">
-        <div class="feld"><label for="kt-p">Mitarbeiter</label><select class="eingabe" id="kt-p" required><option value="">– bitte wählen –</option>${ps.map((p) => `<option value="${p.nr}"${vergeben.has(p.nr) ? " disabled" : ""}>${esc(p.name)}${p.kuerzel ? ` (${esc(p.kuerzel)})` : ""}${vergeben.has(p.nr) ? " – hat schon einen Zugang" : ""}</option>`).join("")}</select></div>
+        <div class="feld"><label for="kt-p">Für wen?</label><select class="eingabe" id="kt-p" required><option value="">– bitte wählen –</option><optgroup label="Mitarbeiter (Personalkarte)">${ps.map((p) => `<option value="${p.nr}"${vergeben.has(p.nr) ? " disabled" : ""}>${esc(p.name)}${p.kuerzel ? ` (${esc(p.kuerzel)})` : ""}${vergeben.has(p.nr) ? " – hat schon einen Zugang" : ""}</option>`).join("")}</optgroup>${pa.length ? `<optgroup label="Partner (extern, aus dem Adressbuch)">${pa.map((x) => `<option value="partner:${x.quelle}:${esc(x.id)}"${paVergeben.has(x.id) ? " disabled" : ""}>${esc(x.firma)}${x.gewerk ? ` · ${esc(x.gewerk)}` : ""} (${BER[x.quelle]})${paVergeben.has(x.id) ? " – hat schon einen Zugang" : ""}</option>`).join("")}</optgroup>` : ""}</select></div>
         <div class="feld"><label for="kt-b">Benutzername</label><input class="eingabe" id="kt-b" required autocapitalize="characters" spellcheck="false" placeholder="Kürzel"></div>
         <div class="feld"><label for="kt-r">Rolle</label><select class="eingabe" id="kt-r">${ROLLEN.filter(([e]) => e !== "partner").map(([e, t]) => `<option value="${e}"${e === "planung" ? " selected" : ""}>${t}</option>`).join("")}</select></div>
         <div class="feld"><label>Sieht im Menü</label><div id="kt-bereiche"></div></div>
       </div><p class="luecken versteckt" id="kt-f" role="alert"></p></div>
       <div class="dlg-fuss"><button class="btn" type="button" data-zu>Abbrechen</button><button class="btn jetzt" type="submit">Anlegen</button></div></form>`, (d) => {
-      const rolle = () => d.querySelector("#kt-r").value;
-      const bereicheZeigen = () => { d.querySelector("#kt-bereiche").innerHTML = rolle() === "geschaeftsfuehrung" ? '<p class="leise">Admins sehen alles und dürfen alles ändern.</p>' : bereichsAuswahl("neu", R.STANDARD[rolle()] || [], false); };
+      const partnerWahl = () => { const v = d.querySelector("#kt-p").value, m = /^partner:(bad|heizung):(.+)$/.exec(v); return m && pa.find((x) => x.quelle === m[1] && x.id === m[2]); };
+      const rolle = () => (partnerWahl() ? "partner" : d.querySelector("#kt-r").value);
+      const bereicheZeigen = () => {
+        const pw = partnerWahl(); d.querySelector("#kt-r").disabled = !!pw;
+        if (pw) { d.querySelector("#kt-bereiche").innerHTML = `<p class="leise">Partner sehen nur ihre Einsätze in <b>${BER[pw.quelle]}</b>. Welche Formulare, stellst du in den Einstellungen ${BER[pw.quelle]} ein (dort einmal „Änderungen übernehmen“).</p>`; return; }
+        d.querySelector("#kt-bereiche").innerHTML = rolle() === "geschaeftsfuehrung" ? '<p class="leise">Admins sehen alles und dürfen alles ändern.</p>' : bereichsAuswahl("neu", R.STANDARD[rolle()] || [], false); };
       bereicheZeigen();
       d.querySelector("#kt-r").addEventListener("change", bereicheZeigen);
-      d.querySelector("#kt-p").addEventListener("change", (e) => { const p = ps.find((x) => x.nr === e.target.value); if (p) d.querySelector("#kt-b").value = p.kuerzel || (p.name.split(/\s+/).map((w) => w[0]).join("").toUpperCase()); });
+      d.querySelector("#kt-p").addEventListener("change", (e) => {
+        const p = ps.find((x) => x.nr === e.target.value), x = partnerWahl();
+        if (p) d.querySelector("#kt-b").value = p.kuerzel || (p.name.split(/\s+/).map((w) => w[0]).join("").toUpperCase());
+        if (x) d.querySelector("#kt-b").value = slugBenutzer(x.firma).toUpperCase();
+        bereicheZeigen();
+      });
       d.querySelector("#kt-neu").addEventListener("submit", async (e) => {
         e.preventDefault();
         const f = d.querySelector("#kt-f"), p = ps.find((x) => x.nr === d.querySelector("#kt-p").value), benutzer = d.querySelector("#kt-b").value.trim().toUpperCase();
         const fehler = (t) => { f.textContent = t; f.classList.remove("versteckt"); };
-        if (!p) return fehler("Bitte einen Mitarbeiter wählen.");
+        const x = partnerWahl();
+        if (!p && !x) return fehler("Bitte einen Mitarbeiter oder Partner wählen.");
         if (!/^[A-Z0-9._-]{2,}$/i.test(benutzer)) return fehler("Benutzername: mindestens 2 Zeichen (Buchstaben, Ziffern).");
         if (KONTEN.some((k) => String(k.benutzer).toLowerCase() === benutzer.toLowerCase())) return fehler(`„${benutzer}“ ist schon vergeben – z. B. ${benutzer}2 nehmen.`);
-        const bereiche = rolle() === "geschaeftsfuehrung" ? null : [...d.querySelectorAll('input[name="neu"]:checked')].map((x) => x.value);
-        const pw = startPasswort();
-        try { await Konten.anlegen({ benutzer: benutzer.toLowerCase(), name: p.name, ebene: rolle(), pk: p.nr, id: p.kuerzel || "pk-" + p.nr, bereiche }, pw); }
+        const bereiche = x ? [x.quelle] : rolle() === "geschaeftsfuehrung" ? null : [...d.querySelectorAll('input[name="neu"]:checked')].map((c) => c.value);
+        const pw = startPasswort(), name = x ? x.firma : p.name;
+        try { await Konten.anlegen(x ? { benutzer: benutzer.toLowerCase(), name, ebene: "partner", pk: "", id: x.id, bereiche } : { benutzer: benutzer.toLowerCase(), name, ebene: rolle(), pk: p.nr, id: p.kuerzel || "pk-" + p.nr, bereiche }, pw); }
         catch (err) { return fehler(err.message || String(err)); }
-        d.close(); OFFEN = kontoEmail(benutzer); await laden(); passwortZeigen(p.name, benutzer, pw);
+        d.close(); OFFEN = kontoEmail(benutzer); await laden(); passwortZeigen(name, benutzer, pw);
       });
     });
   }
@@ -193,7 +212,6 @@
       if (t.dataset.a === "standard") { await Konten.bereiche(k.email, t.checked ? null : (k.bereicheWirksam || [])); toast(t.checked ? "Standard der Rolle" : "Eigene Auswahl"); return laden(); }
       if (t.dataset.a === "w-standard") { widgetsSetzen(k, t.checked ? null : widgetsVon(k)); toast(t.checked ? "Widgets: Standard der Rolle" : "Widgets: eigene Auswahl"); return zeichnen(); }
       if (t.name === "w-" + k.email) { widgetsSetzen(k, [...box.querySelectorAll(`input[name="w-${CSS.escape(k.email)}"]:checked`)].map((x) => x.value)); toast("Widgets gespeichert"); return; }
-      if (t.dataset.a === "lz") { await Konten.lohnzettel(k, t.checked); toast(t.checked ? "Lohnzettel-Freigabe erteilt" : "Freigabe entzogen"); return laden(); }
       if (t.name === "b-" + k.email) { await Konten.bereiche(k.email, [...box.querySelectorAll(`input[name="b-${CSS.escape(k.email)}"]:checked`)].map((x) => x.value)); toast("Gespeichert"); return laden(); }
     } catch (err) { alert(err.message || err); laden(); }
   });

@@ -72,10 +72,20 @@
   const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   /* Felder sperren, die die Seite selbst nicht sperrt (z. B. Betriebsmonitor) */
   function felderSperren() {
-    document.querySelectorAll("#main input:not([type=search]):not([type=hidden]), #main textarea, #main select:not([data-filter])").forEach((el) => { if (!el.closest("#sperre-hinweis")) el.disabled = true; });
+    document.querySelectorAll("#main input:not([type=search]):not([type=hidden]):not([type=month]), #main textarea, #main select:not([data-filter])").forEach((el) => { if (!el.closest("#sperre-hinweis")) el.disabled = true; });
+  }
+  /* Knöpfe, die etwas ändern, abfangen – Blättern, Reiter, Filter, Aufklappen, Links und Herunterladen bleiben */
+  const ERLAUBT = "#sperre-hinweis, .tab-btn, [data-reiter], [data-filter], .seg-k, [data-jahr], summary, a[href], [data-aktion=\"r-auf\"], [data-aktion=\"r-alle\"], #pw-aendern, #abmelden, .thema-knopf, .einst-knopf, [data-aktion=\"passwort\"], [data-aktion=\"abmelden\"]";
+  function klickAbfangen(e) {
+    const b = e.target.closest("#main button, #main [role=button], #main label.btn, #main input[type=checkbox], #main input[type=radio], #main input[type=file]");
+    if (!b || b.closest(ERLAUBT) || /^[‹›←→]$|herunterladen|⬇|drucken|SEPA/i.test((b.textContent || "").trim())) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    const h = document.getElementById("sperre-hinweis"); if (h) h.scrollIntoView({ block: "nearest" });   // Hinweis zeigen (ohne Animation)
   }
 
   if (belegt) {
+    document.addEventListener("click", klickAbfangen, true);
+    document.addEventListener("change", (e) => { if (e.target.closest("#main") && !e.target.closest(ERLAUBT) && !/^(search|month)$/.test(e.target.type)) { e.stopImmediatePropagation(); } }, true);
     const los = () => { hinweis(); felderSperren(); new MutationObserver(() => { hinweis(); felderSperren(); }).observe(document.getElementById("main") || document.body, { childList: true, subtree: true }); };
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", los); else los();
     /* alle 15 s nachsehen; frei → mit Schreibschutz für mich neu laden */

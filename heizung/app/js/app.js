@@ -163,14 +163,26 @@
     return l;
   }
   const siehtListe = (s) => { const r = (cfg().rechte || {})[s.id]; return Array.isArray(r) ? r : rechteStandard(s); };
-  const siehtSchritt = (s) => istGF() || siehtListe(s).includes(ebene());
+  /* Brüll Dashboard (Gesamt, Zugänge über ⚙ Einstellungen): „Wer sieht was“ je Person (Konto) statt je Rolle.
+     Für Personen ohne eigene Einstellung (z. B. neu angelegt) gilt der Standard ihrer Rolle. */
+  const JE_PERSON = !!window.BruellRechte;
+  const gewerkVon = (id) => ((cfg().partner || []).find((x) => x.id === id) || {}).gewerk || "";
+  function personSieht(s, p) {
+    const c = cfg();
+    if (JE_PERSON && c.rechtePerson && (c.rechtePersonBekannt || []).includes(p.id)) return (c.rechtePerson[s.id] || []).includes(p.id);
+    return siehtListe(s).includes(p.ebene);
+  }
+  /* Spalten „je Person“: alle aktiven Zugänge mit Bereich „Heizung“ außer Admins (angelegt im ⚙) */
+  const personenSpalten = () => (S.konten || []).filter((k) => k.aktiv !== false && k.ebene !== "geschaeftsfuehrung" && k.ebene !== "mitarbeiter" && (!Array.isArray(k.bereicheWirksam) || k.bereicheWirksam.includes("heizung")))
+    .map((k) => ({ id: k.id, name: k.name || k.benutzer, kurz: String(k.benutzer || k.id || "").toUpperCase().slice(0, 10), ebene: k.ebene }));
+  const siehtSchritt = (s) => istGF() || (JE_PERSON && S.ich ? personSieht(s, { id: S.ich.id, ebene: ebene() }) : siehtListe(s).includes(ebene()));
   const darfSchritt = (s) => istGF() || (siehtSchritt(s) && (s.ebene || ["planung"]).includes(ebene()));
   const formularSchritte = (fid) => ALLE_SCHRITTE.filter((s) => s.typ === "formular" && s.formular === fid);
   const siehtFormular = (fid) => istGF() || (formularSchritte(fid).length ? formularSchritte(fid).some(siehtSchritt) : istBuero());
   /* Formulare, die ein Partner sieht: freigegeben UND (eigenes Gewerk oder keinem Gewerk zugeordnet) */
-  function partnerFormulare(gewerk) {
+  function partnerFormulare(gewerk, pid) {
     const eigene = (cfg().gewerke || {})[gewerk] || [], alleG = gewerkFormulare();
-    return [...new Set(ALLE_SCHRITTE.filter((s) => s.typ === "formular" && siehtListe(s).includes("partner") && (eigene.includes(s.formular) || !alleG.has(s.formular))).map((s) => s.formular))];
+    return [...new Set(ALLE_SCHRITTE.filter((s) => s.typ === "formular" && (JE_PERSON && pid ? personSieht(s, { id: pid, ebene: "partner" }) : siehtListe(s).includes("partner")) && (eigene.includes(s.formular) || !alleG.has(s.formular))).map((s) => s.formular))];
   }
   const darfKat = (kat) => istBuero() || (ebene() === "monteur" ? !GESPERRT_MONTEUR.includes(kat) : PARTNER_ORDNER.includes(kat));
   const darfHochladen = (kat) => istBuero() || (ebene() === "monteur" ? ["baustelle", "fertig"].includes(kat) : kat === "baustelle");
@@ -181,7 +193,7 @@
 
   /* Was ein Partner von einem Projekt sehen darf (gleicher Auszug wie partner_auftraege() in der Cloud) */
   function partnerSicht(p, partner) {
-    const forms = partnerFormulare(partner.gewerk);
+    const forms = partnerFormulare(partner.gewerk, partner.id);
     const k = p.kunde || {};
     return {
       id: p.id, projektnr: p.projektnr, phase: p.phase, status: p.status, geaendert: p.geaendert,
@@ -1773,6 +1785,7 @@
   /* Zugang einer Person (Konto) als Zelle + Aktionen */
   function zugangZellen(id) {
     const k = (S.konten || []).find((x) => x.id === id), selbst = S.ich && S.ich.id === id;
+    if (JE_PERSON) return `<td class="zugang">${k ? `<b>${esc(k.benutzer)}</b>${k.aktiv ? "" : '<span class="status-chip">gesperrt</span>'}` : '<span class="leise">kein Zugang</span>'}</td><td class="aktionen-zelle"><small class="leise">über ⚙</small></td>`;
     if (!k) return `<td class="zugang"><span class="leise">kein Zugang</span></td><td class="aktionen-zelle"><button class="btn klein voll" data-aktion="konto-neu" data-id="${esc(id || "")}">Zugang anlegen</button></td>`;
     const status = !k.aktiv ? '<span class="status-chip">gesperrt</span>' : k.mussAendern ? '<span class="status-chip pausiert">Startpasswort</span>' : `<small>${k.letzterLogin ? "zuletzt " + fKurz(new Date(k.letzterLogin)) : "noch nie angemeldet"}</small>`;
     return `<td class="zugang"><b>${esc(k.benutzer)}</b>${status}</td><td class="aktionen-zelle">
@@ -1813,7 +1826,10 @@
       return m;
     }).filter((m) => m.name || m.kuerzel);
     if ($("#ordnerrechte")) c.freigabeStandard = Object.fromEntries(ordnerSpalten().map(([e]) => [e, $$("#ordnerrechte [data-r-ordner]").filter((z) => $(`[data-r-e="${e}"]`, z).checked).map((z) => z.dataset.rOrdner)]));
-    if ($("#rechte")) c.rechte = Object.fromEntries($$("#rechte [data-r-schritt]").map((z) => [z.dataset.rSchritt, $$("[data-r-e]", z).filter((x) => x.checked).map((x) => x.dataset.rE)]));
+    if ($("#rechte") && JE_PERSON) {
+      c.rechtePerson = Object.fromEntries($$("#rechte [data-r-schritt]").map((z) => [z.dataset.rSchritt, $$("[data-r-e]", z).filter((x) => x.checked).map((x) => x.dataset.rE.slice(2))]));
+      c.rechtePersonBekannt = [...new Set([...(c.rechtePersonBekannt || []), ...$$("#rechte [data-r-level]").map((x) => x.dataset.rLevel.slice(2))])];
+    } else if ($("#rechte")) c.rechte = Object.fromEntries($$("#rechte [data-r-schritt]").map((z) => [z.dataset.rSchritt, $$("[data-r-e]", z).filter((x) => x.checked).map((x) => x.dataset.rE)]));
     if ($("#partner")) {
       const ids = new Set(), alt = cfg().partner || [];
       c.partner = $$("#partner tr[data-id]").map((tr) => {
@@ -1830,21 +1846,44 @@
   /* ================================================================
      Konten & Rechte (nur Geschäftsführung)
      ================================================================ */
+  /* Brüll Dashboard: Kürzel in der Mitarbeiter-Tabelle eintippen → Name (sowie leere Felder Telefon/E-Mail) aus der
+     Personalkarte, Ebene aus dem Zugang im ⚙ */
+  function ausPersonalkarte(kz) {
+    kz = String(kz || "").trim().toUpperCase(); if (kz.length < 2) return null;
+    for (const k of Object.keys(localStorage)) {
+      if (!/^pk_\d+$/.test(k)) continue;
+      try { const d = JSON.parse(localStorage.getItem(k)); if (d && String(d.kuerzel || "").trim().toUpperCase() === kz && !d.austritt) return d; } catch (e) { /* kaputt */ }
+    }
+    return null;
+  }
+  document.addEventListener("input", (e) => {
+    const el = e.target;
+    if (!JE_PERSON || !el.matches || !el.matches('#team [data-team="kuerzel"]')) return;
+    const kz = el.value.trim().toUpperCase(), d = ausPersonalkarte(kz), tr = el.closest("tr"); if (!d || !tr) return;
+    const setzen = (f, v, immer) => { const x = $(`[data-team="${f}"]`, tr); if (x && v && (immer || !x.value.trim())) x.value = v; };
+    setzen("name", [d.vorname, d.nachname].filter(Boolean).join(" "), true);
+    setzen("telefon", d.telefon || d.mobil || ""); setzen("email", d.email || "");
+    const k = (S.konten || []).find((x) => String(x.id || "").toUpperCase() === kz && x.ebene !== "partner"), sel = $('[data-team="ebene"]', tr);
+    if (k && sel && [...sel.options].some((o) => o.value === k.ebene)) sel.value = k.ebene;
+  });
   function rechteMatrix() {
+    const PS = JE_PERSON ? personenSpalten() : null;
+    const SP = PS ? PS.map((p) => ["p:" + p.id, p.kurz, p]) : RECHTE_EBENEN.map((e) => [e, EBENE_TITEL[e] || e]);
+    const hat = (s, e, l) => (PS ? personSieht(s, SP.find((x) => x[0] === e)[2]) : l.includes(e));
     const zelle = (attr, an, teil) => `<span class="r-zelle"><input type="checkbox" ${attr}${an ? " checked" : ""}${teil ? " data-teil" : ""}></span>`;
     const levels = PHASEN.map((ph) => {
       const zeilen = ph.schritte.map((s) => {
         const l = siehtListe(s);
         return `<div class="r-zeile r-schritt" data-r-schritt="${esc(s.id)}"><span class="r-titel">${esc(ersetzen(s.titel))}<small>${esc({ formular: "Formular", dateien: "Dateien", termin: "Termin", mail: "Mail", erledigt: "Bestätigung", entscheidung: "Entscheidung", feld: "Eintrag", team: "Zuweisung" }[s.typ] || "")} · erledigt: ${esc(ebenenText(s.ebene))}</small></span>
-          <span class="r-zelle r-gf" aria-label="Geschäftsführung: ja">✓</span>${RECHTE_EBENEN.map((e) => zelle(`data-r-e="${e}" aria-label="${esc((EBENE_TITEL[e] || e) + ": " + s.titel)}"`, l.includes(e))).join("")}</div>`;
+          <span class="r-zelle r-gf" aria-label="Geschäftsführung: ja">✓</span>${SP.map(([e, t]) => zelle(`data-r-e="${esc(e)}" aria-label="${esc(t + ": " + s.titel)}"`, hat(s, e, l))).join("")}</div>`;
       }).join("");
-      const kopf = RECHTE_EBENEN.map((e) => { const n = ph.schritte.filter((s) => siehtListe(s).includes(e)).length; return zelle(`data-r-level="${e}" aria-label="${esc((EBENE_TITEL[e] || e) + ": ganzes Level " + ph.nr)}"`, n === ph.schritte.length, n > 0 && n < ph.schritte.length); }).join("");
+      const kopf = SP.map(([e, t]) => { const n = ph.schritte.filter((s) => hat(s, e, siehtListe(s))).length; return zelle(`data-r-level="${esc(e)}" aria-label="${esc(t + ": ganzes Level " + ph.nr)}"`, n === ph.schritte.length, n > 0 && n < ph.schritte.length); }).join("");
       return `<div class="r-level" data-r-nr="${ph.nr}"><div class="r-zeile r-kopf"><button type="button" class="r-auf" data-aktion="r-auf" aria-expanded="false"><span class="r-pfeil" aria-hidden="true">›</span><b>${zwei(ph.nr)}</b> ${esc(ph.titel)}<small>${ph.schritte.length} Schritte</small></button>
         <span class="r-zelle r-gf">alle</span>${kopf}</div><div class="r-schritte" hidden>${zeilen}</div></div>`;
     }).join("");
     return `<section class="panel" id="rechte"><div class="r-titelzeile"><h2 class="panel-titel">Wer sieht was</h2><span class="kopf-aktionen"><button type="button" class="btn klein still" data-aktion="r-alle" data-wert="1">Alle aufklappen</button><button type="button" class="btn klein still" data-aktion="r-alle" data-wert="0">Alle zuklappen</button><button type="button" class="btn klein still" data-aktion="r-standard">Standard wiederherstellen</button></span></div>
-      <p class="leise klein-text panel-innen">Haken = diese Ebene sieht den Schritt mit Inhalt (Formulare, Dateien). Erledigen darf, wer ihn sieht und im Ablauf dafür zuständig ist. Die Geschäftsführung sieht immer alles. Mit „Änderungen übernehmen“ speichern.</p>
-      <div class="r-matrix"><div class="r-zeile r-th"><span>Level / Schritt</span><span>${esc(EBENE_TITEL.geschaeftsfuehrung || "Geschäftsführung")}</span>${RECHTE_EBENEN.map((e) => `<span>${esc(EBENE_TITEL[e] || e)}</span>`).join("")}</div>${levels}</div>
+      <p class="leise klein-text panel-innen">${PS && !PS.length ? "<b>Noch keine Zugänge mit Bereich „Heizung“ – zuerst im ⚙ anlegen.</b> " : ""}Haken = ${PS ? "diese Person" : "diese Ebene"} sieht den Schritt mit Inhalt (Formulare, Dateien). Erledigen darf, wer ihn sieht und im Ablauf dafür zuständig ist. Die Geschäftsführung sieht immer alles. Mit „Änderungen übernehmen“ speichern.</p>
+      ${PS ? `<div class="r-scroll"><div class="r-matrix breit" style="--sp:${SP.length}">` : `<div class="r-matrix">`}<div class="r-zeile r-th"><span>Level / Schritt</span><span>${esc(EBENE_TITEL.geschaeftsfuehrung || "Geschäftsführung")}</span>${SP.map(([, t, p]) => `<span${p ? ` title="${esc(p.name)}"` : ""}>${esc(t)}</span>`).join("")}</div>${levels}</div>${PS ? "</div>" : ""}
       <p class="vb-max">Ordner je Projekt gibt das Büro im Reiter „Team“ frei. ${Daten.modus === "cloud" ? "Die Datenbank setzt Ordner- und Partner-Freigaben durch." : "Im Demo-Modus liegen die Daten nur in diesem Browser."}</p></section>`;
   }
   const ordnerSpalten = () => [["planung", EBENE_TITEL.planung || "Planung"], ["monteur", EBENE_TITEL.monteur || "Monteur"],
@@ -1872,10 +1911,11 @@
     const rollen = [...new Set([...window.FIRMA.team.map((t) => t.rolle), ...c.team.map((t) => t.rolle)])];
     const anzahl = (S.konten || []).filter((k) => k.aktiv).length;
     return `<div class="seite konten">
-      <header class="kopf"><div><p class="eyebrow">Nur für die Geschäftsführung</p><h1>Konten & Rechte</h1>
+      <header class="kopf"><div><p class="eyebrow">Nur für die Geschäftsführung</p><h1>${JE_PERSON ? "Einstellungen Heizung" : "Konten & Rechte"}</h1>
         <p class="unter leise">${anzahl} aktive ${anzahl === 1 ? "Zugang" : "Zugänge"}. Jede Person meldet sich mit eigenem Benutzernamen und Passwort an und sieht nur, was ihre Ebene erlaubt.</p></div>
         <div class="kopf-aktionen"><button class="btn jetzt" data-aktion="konten-speichern">Änderungen übernehmen</button></div></header>
       ${S.kontenFehler ? `<p class="luecken">${esc(S.kontenFehler)}</p>` : ""}
+      ${JE_PERSON ? `<section class="panel"><div class="panel-innen"><p><b>Zugänge, Rollen und Menüpunkte</b> (auch für Partner) legst du im <a href="../konten/${esc(location.search)}">⚙ Einstellungen</a> an. Hier stellst du nur Heizung ein: Team-Angaben für Mails und Signatur, wer welche Schritte sieht und welche Ordner.</p></div></section>` : ""}
       <section class="panel"><h2 class="panel-titel">Mitarbeiter</h2>
         <div class="tab-wrap ohne-rand"><table class="team-tabelle konten-tab"><thead><tr><th>Name</th><th>Funktion</th><th>Kürzel</th><th>Ebene</th><th>Telefon</th><th>E-Mail</th><th>Zugang</th><th></th><th></th></tr></thead>
         <tbody id="team">${c.team.map((m) => teamZeile(m)).join("")}</tbody></table></div>
@@ -1917,7 +1957,7 @@
         e.preventDefault(); e.stopPropagation();
         const b = $("#kn-b", dlg).value.trim(), pw = $("#kn-p", dlg).value;
         try {
-          await Daten.kontoAnlegen({ benutzer: b, passwort: pw, id: m.id, ebene: m.ebene, name: m.name, formulare: m.ebene === "partner" ? partnerFormulare(m.gewerk) : [] });
+          await Daten.kontoAnlegen({ benutzer: b, passwort: pw, id: m.id, ebene: m.ebene, name: m.name, formulare: m.ebene === "partner" ? partnerFormulare(m.gewerk, m.id) : [] });
           await kontenLaden(); render(); zugangErgebnis(dlg, m.name, b.toLowerCase(), pw);
         } catch (err) { const f = $("#kn-f", dlg); f.textContent = err.message || String(err); f.classList.remove("versteckt"); }
       });
@@ -2020,7 +2060,7 @@
     const vorhanden = new Set((await Daten.konten()).map((k) => k.id));
     for (const [b, id] of DEMO_KONTEN) {
       const m = mitgliedZu(id); if (!m || vorhanden.has(id)) continue;
-      await Daten.kontoAnlegen({ benutzer: b, passwort: DEMO_PW, id, ebene: m.ebene, name: m.name, formulare: m.ebene === "partner" ? partnerFormulare(m.gewerk) : [] }, true);
+      await Daten.kontoAnlegen({ benutzer: b, passwort: DEMO_PW, id, ebene: m.ebene, name: m.name, formulare: m.ebene === "partner" ? partnerFormulare(m.gewerk, m.id) : [] }, true);
     }
     try { localStorage.setItem("heizdashboard:demo", "1"); } catch (e) { /* egal */ }
   }
@@ -2168,7 +2208,7 @@
     const e = ebene();
     const punkte = e === "partner" ? [["cockpit", "Meine Einsätze", "projekte"]]
       : e === "monteur" ? [["cockpit", "Meine Baustellen", "projekte"]]
-      : [["cockpit", "Cockpit", "cockpit"], ["projekte", "Projekte", "projekte"], ["adressbuch", "Adressbuch", "adressbuch"], ...(istGF() ? [["kennzahlen", "Unternehmen", "kennzahlen"], ["konten", "Konten", "konten"]] : [])];
+      : [["cockpit", "Cockpit", "cockpit"], ["projekte", "Projekte", "projekte"], ["adressbuch", "Adressbuch", "adressbuch"], ...(istGF() ? [["kennzahlen", "Unternehmen", "kennzahlen"], ["konten", JE_PERSON ? "Einstellungen" : "Konten", "konten"]] : [])];
     $(".nav").innerHTML = punkte.map(([id, l, i]) => `<a href="#/${id}" data-nav="${id}"><span class="nav-i i-${i}" aria-hidden="true"></span>${l}</a>`).join("");
     const nk = $(".neu-knopf"); if (nk) nk.hidden = !istBuero();
   }
@@ -2311,7 +2351,7 @@
     }
     if (akt === "r-standard") {
       if (!confirm("Alle Haken auf den Standard zurücksetzen? Gespeichert wird erst mit „Änderungen übernehmen“.")) return;
-      $$("#rechte [data-r-schritt]").forEach((z) => { const st = rechteStandard(ALLE_SCHRITTE.find((s) => s.id === z.dataset.rSchritt)); $$("[data-r-e]", z).forEach((x) => { x.checked = st.includes(x.dataset.rE); }); });
+      $$("#rechte [data-r-schritt]").forEach((z) => { const st = rechteStandard(ALLE_SCHRITTE.find((s) => s.id === z.dataset.rSchritt)); $$("[data-r-e]", z).forEach((x) => { const p = x.dataset.rE.startsWith("p:") && personenSpalten().find((y) => "p:" + y.id === x.dataset.rE); x.checked = st.includes(p ? p.ebene : x.dataset.rE); }); });
       rechteTeilzustand(); toast("Standard gesetzt – mit „Änderungen übernehmen“ speichern"); return;
     }
     if (akt === "adr-neu" && istGF()) { $(".adr-tab .leer-hinweis")?.closest("tr").remove(); $("#partner").insertAdjacentHTML("afterbegin", partnerZeileAdr({ gewerk: Object.keys(cfg().gewerke || {})[0] }).replace('data-id=""', 'data-id="" data-neu')); $("#partner [data-partner=firma]").focus(); return; }
@@ -2441,15 +2481,16 @@
     if (akt === "konten-speichern" && istGF()) {
       const neu = cfgSammeln();
       const selbst = neu.team.find((t) => t.kuerzel === S.ich.id);
-      if (!selbst || selbst.ebene !== "geschaeftsfuehrung") return toast("Die eigene Ebene (Geschäftsführung) kann nicht geändert oder entfernt werden.", "fehler");
+      if (!JE_PERSON && (!selbst || selbst.ebene !== "geschaeftsfuehrung")) return toast("Die eigene Ebene (Geschäftsführung) kann nicht geändert oder entfernt werden.", "fehler");
       const doppelt = neu.team.map((t) => t.kuerzel).filter((k, i, l) => k && l.indexOf(k) !== i);
       if (doppelt.length) return toast(`Kürzel doppelt: ${doppelt.join(", ")}`, "fehler");
       try {
         S.einstellungen = neu; await Daten.einstellungenSpeichern(S.einstellungen);
         for (const k of S.konten || []) {
+          if (JE_PERSON) { if (k.ebene === "partner" && k.aktiv !== false) await Daten.kontoAendern(k.id, "partner", k.name, [...new Set([...(k.formulare || []).filter((f) => !(f in window.FORMULARE)), ...partnerFormulare(gewerkVon(k.id), k.id)])]); continue; }   // Formulare des anderen Bereichs (Bad/Heizung) behalten
           const m = mitgliedZu(k.id);
           if (!m) { if (k.ebene !== "mitarbeiter" && k.aktiv && k.id !== S.ich.id) await Daten.kontoAktiv(k.email, false); continue; }   // Personalkarten-Zugänge (Ebene „mitarbeiter“) nicht sperren
-          const forms = m.ebene === "partner" ? partnerFormulare(m.gewerk) : [];
+          const forms = m.ebene === "partner" ? partnerFormulare(m.gewerk, m.id) : [];
           if (m.ebene !== k.ebene || m.name !== k.name || m.ebene === "partner") await Daten.kontoAendern(k.id, m.ebene, m.name, forms);
         }
         await kontenLaden(); toast("Übernommen"); render();

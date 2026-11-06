@@ -52,6 +52,7 @@
      nach der Bank des Mitarbeiters zugeordnet (Raiffeisen-/Volksbank → Raiffeisenbank, sonst Sparkasse). */
   const bankFest = (x) => x.d.lohn_bank || lesen("lohn:zuordnung", {})[x.nr] || "";
   function bankVon(x) {
+    if (bankFest(x) === "keine") return "keine";             // „Keine Überweisung“: taucht bei keiner Bank auf (Lohnzettel bleiben)
     return bankFest(x) || (/raiff|raiba|volksbank|\bvr[ -]?bank|\bvr\b/i.test(x.d.bank || "") ? "raiba" : "sparkasse");
   }
   const name = (d) => ((d.vorname || "") + " " + (d.nachname || "")).trim();
@@ -126,21 +127,8 @@
           <p class="leise klein-text">Von welchem Konto ein Lohn überwiesen wird, steht in der Personalkarte unter „Lohn wird bezahlt von“. Fehlt die Angabe, wird vorläufig nach der Bank des Mitarbeiters zugeordnet (Raiffeisen-/Volksbank → Raiffeisenbank, sonst Sparkasse).</p>
         </div>
       </details>
-      ${einstellungen()}`;
+`;
   };
-
-  /* ---------- Einstellungen: wer darf Lohnzettel hochladen? (Geschäftsführung immer) ---------- */
-  const TITEL = { planung: "Büro", monteur: "Monteur", mitarbeiter: "Mitarbeiter" };
-  function einstellungen() {
-    if (!window.pkZugang) return "";
-    const l = window.pkZugang.alle().filter((k) => k.ebene !== "geschaeftsfuehrung" && k.ebene !== "partner");
-    return `<details class="panel lo-konten lo-einst"><summary class="panel-titel">Einstellungen <small>Wer darf Lohnzettel hochladen?</small></summary>
-      <div class="panel-innen">
-        <p class="leise klein-text">Die Geschäftsführung darf immer. Freigegebene Personen sehen im Menü „Lohnzettel“ und können bei allen Mitarbeitern Lohnzettel hinzufügen – sonst nichts aus der Personalakte. Alle anderen können ihre eigenen Lohnzettel nur herunterladen.</p>
-        ${l.length ? `<ul class="lo-rechte">${l.map((k) => `<li><label><input type="checkbox" class="lo-recht" data-email="${esc(k.email)}"${k.lohnzettel ? " checked" : ""}${k.aktiv === false ? " disabled" : ""}> <b>${esc(k.name || k.benutzer)}</b> <small>${esc(TITEL[k.ebene] || k.ebene)} · ${esc(k.benutzer)}${k.aktiv === false ? " · gesperrt" : ""}</small></label></li>`).join("")}</ul>`
-          : '<p class="leise">Noch keine Zugänge. Zugänge legst du in der Personalkarte unter „Zugang zum Dashboard“ an.</p>'}
-      </div></details>`;
-  }
 
   /* ---------- Nur Lohnzettel (Konto mit Freigabe, nicht Geschäftsführung) ---------- */
   function zeichnenZettel() {
@@ -355,7 +343,6 @@ ${l.map((x, i) => `<CdtTrfTxInf><PmtId><EndToEndId>${id.slice(0, 28)}-${i + 1}</
     if (t.id === "lo-monat" && t.value) { monat = t.value; return zeichnen(); }
     if (t.classList.contains("lo-betrag")) { const z = zahl(t.value); wert(nr, { betrag: z ? z.toFixed(2) : "", quelle: "" }); return setTimeout(neuMitFokus); }
     if (t.classList.contains("lo-ueberwiesen")) { wert(nr, { ueberwiesen: t.checked, datum: t.checked ? new Date().toLocaleDateString("de-DE") : "" }); return zeichnen(); }
-    if (t.classList.contains("lo-recht") && window.pkZugang) { Promise.resolve(window.pkZugang.lohnzettel(t.dataset.email, t.checked)).catch((e) => alert("Freigabe konnte nicht gespeichert werden: " + (e.message || e))); toast(t.checked ? "Freigegeben: darf Lohnzettel hochladen" : "Freigabe entfernt"); return; }
     if (t.classList.contains("lo-konto") || t.id === "lo-firma") {
       const k = lesen("lohn:konten", {});
       if (t.id === "lo-firma") k.firma = t.value.trim(); else { k[t.dataset.k] = { ...(k[t.dataset.k] || {}), [t.dataset.f]: t.dataset.f === "iban" ? ibanSauber(t.value) : t.value.trim() }; }

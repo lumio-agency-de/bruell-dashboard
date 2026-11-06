@@ -6,6 +6,18 @@
   const setzen = (w) => { document.documentElement.dataset.thema = w; };
   setzen(t);
   if (window !== window.top) return;                       // Auszug-Rahmen der Übersicht: kein Knopf
+
+  /* App-Symbol + Installieren (Schreibtisch, Dock, Startmenü, Home-Bildschirm): auf jeder Seite dieselbe App
+     (manifest.webmanifest in der Dashboard-Wurzel, Symbole in gesamt/icons/) – Wurzel aus dem Pfad dieser Datei */
+  const wurzel = ((document.currentScript && document.currentScript.src) || "").replace(/gesamt\/thema\.js.*$/, "");
+  if (wurzel && !document.querySelector('link[rel="manifest"]')) {
+    const kopf = (tag, attr) => { const el = document.createElement(tag); Object.entries(attr).forEach(([k, v]) => el.setAttribute(k, v)); document.head.appendChild(el); };
+    kopf("link", { rel: "manifest", href: wurzel + "manifest.webmanifest" });
+    kopf("link", { rel: "apple-touch-icon", href: wurzel + "gesamt/icons/apple-touch-icon.png" });
+    kopf("meta", { name: "apple-mobile-web-app-title", content: "Brüll" });
+    kopf("meta", { name: "apple-mobile-web-app-capable", content: "yes" });
+    kopf("meta", { name: "mobile-web-app-capable", content: "yes" });
+  }
   function knopf() {
     if (document.querySelector(".thema-knopf")) return;
     const b = document.createElement("button");

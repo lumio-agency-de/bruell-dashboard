@@ -44,18 +44,17 @@ do $$ begin insert into storage.objects (bucket_id, name) values ('personal', 'l
 do $$ begin perform konto_personal('max@konto.bad-dashboard.de', '902', true); perform _pruef('Max: sich selbst umhängen/freigeben gesperrt', false); exception when others then perform _pruef('Max: sich selbst umhängen/freigeben gesperrt', true); end $$;
 commit;
 
--- Erika (Nr. 902, Lohnzettel-Freigabe)
+-- Erika (Nr. 902, hatte früher die Lohnzettel-Freigabe – seit 06.11.2026 laden nur Admins Lohnzettel hoch)
 begin; set local role authenticated; select _als('erika@konto.bad-dashboard.de');
 select _pruef('Erika: keine Karten direkt', (select count(*) from personal) = 0);
-select _pruef('Erika: Namensliste (2 Einträge, ohne Details)', jsonb_array_length(personal_namen()) = 2 and not (personal_namen() -> 0 ? 'daten'));
-select _pruef('Erika: Lohnzettel-Liste für Max setzen', lohnzettel_liste_setzen('901', '{"2026-02":"lz-2026-02"}'));
-select _pruef('Erika: sieht eigene Dateien + alle Lohnzettel', (select array_agg(name order by name) from storage.objects) = array['dokumente/902/zeugnis.pdf', 'lohnzettel/901/2026-01.pdf', 'lohnzettel/902/2026-01.pdf']);
-insert into storage.objects (bucket_id, name) values ('personal', 'lohnzettel/901/2026-02.pdf');
-select _pruef('Erika: Lohnzettel für Max hochgeladen', true);
+do $$ begin perform personal_namen(); perform _pruef('Erika: Namensliste (nur für Lohnzettel-Hochlader) gesperrt', false); exception when others then perform _pruef('Erika: Namensliste (nur für Lohnzettel-Hochlader) gesperrt', true); end $$;
+do $$ begin perform lohnzettel_liste_setzen('901', '{"2026-02":"lz-2026-02"}'); perform _pruef('Erika: Lohnzettel-Liste setzen nur Admins', false); exception when others then perform _pruef('Erika: Lohnzettel-Liste setzen nur Admins', true); end $$;
+select _pruef('Erika: sieht nur eigene Dateien', (select array_agg(name order by name) from storage.objects) = array['dokumente/902/zeugnis.pdf', 'lohnzettel/902/2026-01.pdf']);
+do $$ begin insert into storage.objects (bucket_id, name) values ('personal', 'lohnzettel/901/2026-02.pdf'); perform _pruef('Erika: Lohnzettel hochladen nur Admins', false); exception when others then perform _pruef('Erika: Lohnzettel hochladen nur Admins', true); end $$;
 do $$ begin insert into storage.objects (bucket_id, name) values ('personal', 'foto/901/neu.jpg'); perform _pruef('Erika: Foto fremder Karte gesperrt', false); exception when others then perform _pruef('Erika: Foto fremder Karte gesperrt', true); end $$;
 do $$ begin insert into storage.objects (bucket_id, name) values ('personal', 'dokumente/901/x.pdf'); perform _pruef('Erika: Dokument fremder Karte gesperrt', false); exception when others then perform _pruef('Erika: Dokument fremder Karte gesperrt', true); end $$;
 commit;
-select _pruef('Lohnzettel-Liste bei Max angekommen, Rest unverändert', (select daten ->> '_lohnzettel' = '{"2026-02":"lz-2026-02"}' and daten ->> 'sonstnotiz' = 'geheim' from personal where nr = '901'));
+select _pruef('Karte von Max unverändert', (select daten ->> '_lohnzettel' is null and daten ->> 'sonstnotiz' = 'geheim' from personal where nr = '901'));
 
 -- Monteur ohne Personalkarte
 begin; set local role authenticated; select _als('moritz@konto.bad-dashboard.de');

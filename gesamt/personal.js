@@ -47,7 +47,7 @@ var PK_NR = (new URLSearchParams(location.search).get("nr") || "").replace(/\D/g
   if (!PERSON || PERSON.mussAendern) { try { sessionStorage.setItem("bruell:zurueck", "1"); } catch (e) { /* egal */ } location.replace("../bad/" + QS); return; }   // Startpasswort wird bei der Anmeldung geändert
   const GF = PERSON.ebene === "geschaeftsfuehrung";
   /* Freigabe „Lohnzettel hochladen“ (Lohnabrechnung → Einstellungen): Seite Lohnzettel + Reiter Lohnzettel fremder Karten */
-  const LZ_FREI = !GF && PERSON.lohnzettel, HIER = document.body.dataset.bereich || "";
+  const LZ_FREI = false, HIER = document.body.dataset.bereich || "";
   if (!GF) PERSON.pk = pkVon(PERSON);
   /* ---------- Zugang nach Rechten (gesamt/thema.js → BruellRechte; Konten-Seite) ----------
      Admin (GF): alles. Alle anderen: nur freigegebene Bereiche, dort nur lesen; die eigene Personalkarte immer. */

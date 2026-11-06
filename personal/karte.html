@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="../gesamt/dunkel-auto.css?v=202611032230">
   <link rel="stylesheet" href="../gesamt/thema.css?v=202611050800">
   <link rel="stylesheet" href="../gesamt/mobil.css?v=202610252020">
-  <script src="../gesamt/thema.js?v=202611061800"></script>
+  <script src="../gesamt/thema.js?v=202611062100"></script>
 </head>
 <body class="personal-seite karte-seite">
 <div class="shell">
@@ -67,7 +67,7 @@
 <div class="form-group"><label>Bank</label><input id="bank" type="text"/></div>
 <div class="form-group"><label>IBAN</label><input id="iban" type="text"/></div>
 <div class="form-group"><label>BIC / Bankleitzahl</label><input id="bic" type="text"/></div>
-<div class="form-group"><label>Lohn wird bezahlt von</label><select id="lohn_bank" title="Von welchem Firmenkonto der Lohn überwiesen wird (Personal → Lohnabrechnung)"><option value="">– bitte wählen –</option><option value="sparkasse">Sparkasse</option><option value="raiba">Raiffeisenbank</option></select></div>
+<div class="form-group"><label>Lohn wird bezahlt von</label><select id="lohn_bank" title="Von welchem Firmenkonto der Lohn überwiesen wird (Personal → Lohnabrechnung)"><option value="">– bitte wählen –</option><option value="sparkasse">Sparkasse</option><option value="raiba">Raiffeisenbank</option><option value="keine">Keine Überweisung</option></select></div>
 </div>
 <div class="sec" style="margin-top:28px;">Beschäftigung</div>
 <div class="form-grid">
@@ -103,7 +103,6 @@
 <div class="gz-card"><div class="gz-label">Überstunden-Konto aktuell</div><input id="gz_konto" type="text" readonly title="Übertrag Vorjahr + Monats-Salden + manuelle Überstunden − abgebaut (laufendes Jahr)"/></div>
 </div>
 <div class="sec" style="margin-top:28px;">Überstunden je Jahr</div>
-<p class="dok-hinweis">Stunden als Kommazahl in Viertelstunden, z. B. 1,25 · 1,5 · -8. „Monats-Salden“ kommt automatisch aus den Monaten oben. „Überstunden (manuell)“ für Jahre ohne Monatswerte oder Korrekturen. Stand = Übertrag + Monats-Salden + manuell − abgebaut, er wird automatisch ins nächste Jahr übertragen. Nur beim ersten Jahr lässt sich der Übertrag als Startwert eintragen.</p>
 <button type="button" class="jahre-umschalter" data-tabelle="ueberTab" onclick="alteJahre(this)"></button>
 <table class="dt dt-eng" id="ueberTab"><thead><tr><th>Jahr</th><th>Übertrag Vorjahr</th><th>Monats-Salden</th><th>Überstunden (manuell)</th><th>Abgebaut / ausbezahlt</th><th>Stand Jahresende</th><th>Bemerkung</th></tr></thead><tbody id="ueberBody"></tbody></table>
 <!-- URLAUB (im selben Reiter) -->
@@ -115,8 +114,6 @@
 <!-- LOHNZETTEL -->
 <div class="tab-content" id="tab-lz">
 <div class="sec">Lohnzettel</div>
-<p class="dok-hinweis lz-darf">Ein Ordner je Jahr. PDFs in das Feld des Jahres ziehen – der Monat wird aus dem Dateinamen erkannt (z. B. „Februar“, „Feb“ oder „2026-02“). Später kommen die Lohnzettel automatisch aus der Löhne-ZIP vom Steuerberater.</p>
-<p class="dok-hinweis lz-lesen">Deine Lohnzettel nach Jahren. Lohnzettel anhaken und „Ausgewählte herunterladen“ – oder auf den Namen klicken, um ihn anzusehen.</p>
 <div class="lz-leiste"><span class="lz-jahr-neu"><select id="lzJahrWahl" aria-label="Jahr"></select><button type="button" class="dok-knopf" onclick="lzJahrOeffnen()">📁 Ordner öffnen</button></span>
 <button type="button" class="dok-knopf lz-auswahl-laden" onclick="lzAuswahlLaden()" disabled>⬇ Ausgewählte herunterladen</button></div>
 <div id="lzListe" class="lz-liste"></div>
@@ -137,7 +134,6 @@
 <!-- SONSTIGES -->
 <div class="tab-content" id="tab-son">
 <div class="sec">Dokumente &amp; Nachweise</div>
-<p class="dok-hinweis lz-gf">Datei hineinziehen oder auf 📩 klicken. Klick auf den Dateinamen öffnet sie. Die Dateien bleiben nur auf diesem Rechner (nicht online).</p>
 <div id="dokListe" class="dok-liste"></div>
 <button onclick="addDokument()" type="button" style="margin-top:10px;">+ Dokument hinzufügen</button>
 <div style="margin-top:22px;"><div class="sec">Weiterbildungen</div><textarea id="weiterbildung" placeholder="Schulungen, Kurse, Zertifikate …"></textarea></div>
@@ -173,7 +169,6 @@
 <!-- WERKZEUG -->
 <div class="tab-content" id="tab-wz">
 <div class="sec">Ausgegebenes Werkzeug &amp; Geräte</div>
-<p class="dok-hinweis lz-gf">Je Werkzeug: Stammdaten · Ausgabe · Rücknahme · Reparatur/Kosten. Zurückgenommenes Werkzeug kommt ins Firmenlager (Menü „Werkzeuge“).</p>
 <div id="wzBereich"></div>
 <div style="margin-top:16px;"><div class="sec">Schlüssel &amp; Zugänge</div>
 <div class="form-grid">
@@ -221,11 +216,11 @@
 <script src="../gesamt/tresor.js?v=202611061830"></script>
 <script src="../gesamt/werkzeug.js?v=202611061700"></script>
 <script src="../gesamt/cloud.js" onerror="this.remove()"></script>
-<script>if (window.BRUELL_CLOUD) document.write('<script src="../bad/app/vendor/supabase.js?v=202610271848"><\/script><script src="../gesamt/db.js?v=202611061800"><\/script>')</script>
-<script>if (window.BRUELL_CLOUD) document.write('<script src="../gesamt/sperre.js?v=202611061800"><\/script>')</script>
+<script>if (window.BRUELL_CLOUD) document.write('<script src="../bad/app/vendor/supabase.js?v=202610271848"><\/script><script src="../gesamt/db.js?v=202611061900"><\/script>')</script>
+<script>if (window.BRUELL_CLOUD) document.write('<script src="../gesamt/sperre.js?v=202611061900"><\/script>')</script>
 <script src="../gesamt/passwort.js?v=202611050800"></script>
 <script src="../gesamt/dateien.js?v=202611061500"></script>
-<script src="../gesamt/personal.js?v=202611061830"></script>
+<script src="../gesamt/personal.js?v=202611062030"></script>
 <script>
 /* ===== Funktionen der Personalkarte (aus der Vorlage übernommen) ===== */
 function applyPendingQty() {}
@@ -774,15 +769,14 @@ function zugangZeichnen(pw){
   const k=pkZugang.konto(PK_NR), v=id=>(document.getElementById(id)||{}).value||'';
   const neuPw=pw?`<p class="zugang-pw">Startpasswort: <b>${dokEsc(pw)}</b><small>Nur jetzt sichtbar – dem Mitarbeiter persönlich geben. Er muss es bei der ersten Anmeldung ändern.</small></p>`:'';
   if(!k){
-    box.innerHTML=`<p class="dok-hinweis">Noch kein Zugang. Mit dem Zugang sieht der Mitarbeiter nur seine eigene Personalkarte und seine Lohnzettel – nur lesen, ohne Bewertung und interne Notizen.</p>
+    box.innerHTML=`<p class="dok-hinweis">Noch kein Zugang.</p>
       <div class="zugang-neu"><input type="text" id="zugangBenutzer" value="${dokEsc(pkZugang.vorschlag(v('vorname'),v('nachname'),v('kuerzel')))}" placeholder="Benutzername" aria-label="Benutzername"><button type="button" class="dok-knopf" onclick="zugangAnlegen()">Zugang anlegen</button></div>`;
     return;
   }
   const status=k.aktiv===false?'gesperrt':k.mussAendern?'Startpasswort noch nicht geändert':k.letzterLogin?'zuletzt angemeldet '+new Date(k.letzterLogin).toLocaleDateString('de-DE'):'noch nie angemeldet';
   box.innerHTML=`<div class="zugang-da"><span><b>${dokEsc(k.benutzer)}</b><small>${dokEsc(pkZugang.titel(k.ebene))} · ${status}</small></span>
     ${k.ebene==='mitarbeiter'?`<button type="button" class="dok-knopf" onclick="zugangReset()">Passwort zurücksetzen</button>
-    <button type="button" class="dok-knopf" onclick="zugangAktiv(${k.aktiv===false})">${k.aktiv===false?'Entsperren':'Sperren'}</button>`:'<small class="dok-hinweis">Konto aus Bad/Heizung – verwaltet unter Bad → Einrichtung → Konten.</small>'}</div>${neuPw}
-    <p class="dok-hinweis">Mit diesem Zugang sieht die Person nur ihre eigene Personalkarte (nur lesen).</p>`;
+    <button type="button" class="dok-knopf" onclick="zugangAktiv(${k.aktiv===false})">${k.aktiv===false?'Entsperren':'Sperren'}</button>`:'<small class="dok-hinweis">Konto aus Bad/Heizung – verwaltet unter Bad → Einrichtung → Konten.</small>'}</div>${neuPw}`;
 }
 async function zugangAnlegen(){
   const v=id=>(document.getElementById(id)||{}).value||'';

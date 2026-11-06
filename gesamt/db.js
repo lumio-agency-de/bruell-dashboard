@@ -25,7 +25,8 @@ window.BruellDB = (function () {
   const PH = /^ph_(\d+)$/, FOTOSTAND = "bruell:ph-db", TANKEN = "bruell:tanken-db";
   const roh = { set: Storage.prototype.setItem, del: Storage.prototype.removeItem };
   const lesen = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } };
-  const still = (k, v) => { try { v == null ? roh.del.call(localStorage, k) : roh.set.call(localStorage, k, v); } catch (e) { /* voll */ } };
+  const GEAENDERT = new Set();                                    // Live: welche Schlüssel die Datenbank gerade geändert hat
+  const still = (k, v) => { try { if (localStorage.getItem(k) !== (v == null ? null : String(v))) GEAENDERT.add(k); v == null ? roh.del.call(localStorage, k) : roh.set.call(localStorage, k, v); } catch (e) { /* voll */ } };
   const ich = () => { try { const e = JSON.parse(sessionStorage.getItem("bruell:sitzung") || localStorage.getItem("bruell:sitzung") || "null"); return lesen("bruell:konten", []).find((x) => x.email === e) || null; } catch (e) { return null; } };
   const gf = () => (ich() || {}).ebene === "geschaeftsfuehrung";
   /* „Personal bearbeiten“ (gesamt/thema.js): darf Personalkarten + Fotos ändern, anlegen, löschen */
@@ -208,7 +209,12 @@ window.BruellDB = (function () {
     if (t === null ? !(k in lesen(ABLAGESTAND, {})) : nurBeispiel(k, t)) return;   // Löschen nur, was in der DB ist; Bank-Demo nie
     offen.set("ablage|" + k, ["ablage", k]); clearTimeout(timer); timer = setTimeout(senden, 500);
   }
+  let sendetGerade = 0, lokalZuletzt = 0;                         // Live-Abgleich wartet, solange hier geschrieben wird
   async function senden() {
+    sendetGerade++;
+    try { await sendenJetzt(); } finally { sendetGerade--; }
+  }
+  async function sendenJetzt() {
     const liste = [...offen.values()]; offen.clear(); if (!liste.length) return;
     const jetzt = Date.now();
     const ks = liste.filter(([x]) => x === "ablage").map(([, k]) => k);
@@ -229,10 +235,11 @@ window.BruellDB = (function () {
   Storage.prototype.setItem = function (k, v) {
     roh.set.call(this, k, v); if (this !== localStorage) return;
     const m = sammlungVon(k); if (m) vormerken(m[0], m[1]);
+    if (m || ABLAGE.test(k) || PH.test(k)) lokalZuletzt = Date.now();
     if (ABLAGE.test(k)) ablageVormerken(k);
     const f = PH.exec(k); if (f && darfHoch(SAMMLUNGEN[0], f[1])) fotoSenden(f[1]);
   };
-  Storage.prototype.removeItem = function (k) { roh.del.call(this, k); if (this !== localStorage) return; const m = sammlungVon(k); if (m) vormerken(m[0], m[1]); if (ABLAGE.test(k)) ablageVormerken(k); };
+  Storage.prototype.removeItem = function (k) { roh.del.call(this, k); if (this !== localStorage) return; const m = sammlungVon(k); if (m || ABLAGE.test(k)) lokalZuletzt = Date.now(); if (m) vormerken(m[0], m[1]); if (ABLAGE.test(k)) ablageVormerken(k); };
   window.addEventListener("pagehide", () => { if (offen.size) senden(); });
 
   /* Einmalige Übernahme: Karten, die es nur in diesem Browser gibt */
@@ -311,6 +318,83 @@ window.BruellDB = (function () {
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", hinweiseAnbieten); else setTimeout(hinweiseAnbieten, 300);
     return { angemeldet: true, geaendert, anzahl };
   })().catch((err) => { console.warn("Datenbank:", err); return { fehler: String(err.message || err) }; });
+
+  /* ---------- Live: alle 10 s Änderungen anderer holen + „Wer ist gerade hier?“ (supabase/live.sql) ----------
+     Betrifft eine Änderung die offene Seite, wird sie still neu geladen (gleiche Scroll-Position, gleicher
+     Reiter) – aber nie, während jemand tippt, ein Dialog offen ist oder noch etwas hochgeladen wird. */
+  const P = location.pathname, NR = (new URLSearchParams(location.search).get("nr") || "").replace(/\D/g, "");
+  const INTERESSE = /\/personal\/karte\.html$/.test(P) ? new RegExp(`^(pk_|ph_)${NR}$|^bruell:werkzeuge$`)
+    : /\/personal\/lohn\.html$/.test(P) ? /^(pk_\d+|lohn:.+)$/
+    : /\/personal\/(index\.html)?$/.test(P) ? /^(pk_|ph_)\d+$/
+    : /\/fahrzeuge\/karte\.html$/.test(P) ? new RegExp(`^fz_${NR}$`)
+    : /\/fahrzeuge\/(index\.html)?$/.test(P) ? /^fz_\d+$/
+    : /\/lager\/(index\.html)?$/.test(P) ? /^bruell:werkzeuge$/
+    : /\/betrieb\/(bank|bank-sparkasse|bank-raiba|buchhaltung)\.html$/.test(P) ? /^(buch:|bank:|lohn:konten$)/
+    : /\/betrieb\/(index\.html)?$/.test(P) ? /^bm:\d{4}$/
+    : null;
+  const SEITE = P.replace(/^.*?\/(personal|fahrzeuge|lager|betrieb|konten)\//, "$1/").replace(/^\/+/, "") + (NR ? "?nr=" + NR : "");
+  let zuletztGetippt = 0, liveToken = "", neuLadenOffen = false;
+  ["input", "keydown", "pointerdown"].forEach((t) => document.addEventListener(t, () => { zuletztGetippt = Date.now(); }, true));
+  const ZUSTAND = "bruell:live-zustand";
+  function ruhig() {
+    const a = document.activeElement;
+    return document.visibilityState === "visible" && !offen.size && Date.now() - zuletztGetippt > 15000
+      && !(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) && !document.querySelector("dialog[open]");
+  }
+  function neuLaden() {
+    const tabs = [...document.querySelectorAll(".tab-btn")], t = tabs.findIndex((b) => b.classList.contains("active"));
+    try { sessionStorage.setItem(ZUSTAND, JSON.stringify({ pfad: location.pathname + location.search, y: scrollY, tab: t })); } catch (e) { /* egal */ }
+    location.reload();
+  }
+  /* nach dem Neuladen: Reiter + Scroll-Position wiederherstellen */
+  (function () {
+    let z = null; try { z = JSON.parse(sessionStorage.getItem(ZUSTAND) || "null"); sessionStorage.removeItem(ZUSTAND); } catch (e) { /* egal */ }
+    if (!z || z.pfad !== location.pathname + location.search) return;
+    const los = () => setTimeout(() => { const b = document.querySelectorAll(".tab-btn")[z.tab]; if (z.tab > 0 && b) b.click(); scrollTo(0, z.y || 0); melden("Aktualisiert – jemand hat gerade etwas geändert"); }, 250);
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", los); else los();
+  })();
+  async function ablageNeu() {
+    const st = lesen(ABLAGESTAND, {}), seit = Math.max(0, ...Object.values(st)) - 3e5;   // 5 min Puffer (Uhren der Geräte)
+    const { data, error } = await sb.from("ablage").select("schluessel, wert, geaendert, geloescht").gt("geaendert", seit);
+    if (error) throw error;
+    for (const r of data) {
+      if (offen.has("ablage|" + r.schluessel)) continue;              // eigene Änderung ist unterwegs
+      if (r.geloescht) { if (r.schluessel in st) { delete st[r.schluessel]; still(r.schluessel, null); } continue; }
+      st[r.schluessel] = r.geaendert; still(r.schluessel, r.wert);
+    }
+    still(ABLAGESTAND, JSON.stringify(st));
+  }
+  function anwesendZeigen(liste) {
+    let el = document.getElementById("db-anwesend");
+    if (!liste.length) { if (el) el.remove(); return; }
+    if (!el) { el = document.createElement("div"); el.id = "db-anwesend"; el.setAttribute("aria-live", "polite");
+      el.style.cssText = "position:fixed;right:16px;bottom:16px;z-index:50;display:flex;gap:6px;align-items:center;padding:6px 10px 6px 12px;border-radius:999px;background:var(--panel,#fff);border:1px solid var(--linie,#d9dde3);box-shadow:0 4px 14px rgba(0,0,0,.12);font-size:.8rem";
+      document.body.appendChild(el); }
+    el.innerHTML = `<span class="leise">Auch hier:</span>` + liste.map((p) => `<span title="${esc(p.name || p.kuerzel)}" style="display:inline-grid;place-items:center;min-width:28px;height:28px;padding:0 6px;border-radius:999px;background:var(--tinte,#13285c);color:#fff;font-weight:700;font-size:.72rem">${esc(String(p.kuerzel || "?").slice(0, 3))}</span>`).join("");
+  }
+  async function liveRunde() {
+    if (document.visibilityState !== "visible") return;
+    try { const a = await sb.rpc("anwesenheit_melden", { p_seite: SEITE }); if (!a.error) anwesendZeigen(a.data || []); } catch (e) { /* später */ }
+    if (!INTERESSE) return;
+    if (sendetGerade || offen.size || Date.now() - lokalZuletzt < 20000) return;   // hier wird gerade geändert → nichts überschreiben
+    GEAENDERT.clear();
+    try {
+      for (const s of SAMMLUNGEN) if (!offen.size) await holen(s);
+      if (!offen.size) await ablageNeu();
+    } catch (e) { return; }
+    if ([...GEAENDERT].some((k) => INTERESSE.test(k))) neuLadenOffen = true;
+    if (neuLadenOffen && ruhig()) neuLaden();
+  }
+  fertig.then(async (r) => {
+    if (!r || !r.angemeldet) return;
+    try { const x = await sb.auth.getSession(); liveToken = (x.data.session && x.data.session.access_token) || ""; } catch (e) { /* egal */ }
+    setTimeout(liveRunde, 1500); setInterval(liveRunde, 10000);
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") liveRunde(); });
+  });
+  window.addEventListener("pagehide", () => {
+    if (!liveToken) return;
+    fetch(K.url + "/rest/v1/rpc/anwesenheit_weg", { method: "POST", keepalive: true, headers: { apikey: K.anonKey, Authorization: "Bearer " + liveToken, "Content-Type": "application/json" }, body: "{}" }).catch(() => {});
+  });
 
   /* Abmelden: Supabase-Sitzung beenden + aufräumen (sonst meldet das Bad-Dashboard sofort wieder an) */
   async function abmelden() {
