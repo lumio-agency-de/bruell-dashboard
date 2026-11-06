@@ -1,0 +1,45 @@
+-- Heizung im eigenen Schema (läuft nach ablage-test.sql; Moritz = Monteur mit uebersicht/fahrzeuge/personal, ohne heizung)
+begin; set local role authenticated; select _als('daniel@konto.bad-dashboard.de');
+insert into heizung.projekte (id, daten, geaendert) values ('h1', '{"projektnr":"H-1","zugriff":["MO"]}', 1), ('h2', '{"projektnr":"H-2"}', 1);
+insert into heizung.upload_links (token, projekt_id) values ('tok-h1', 'h1');
+insert into heizung.einstellungen (id, daten) values (1, '{"name":"Brüll"}') on conflict (id) do update set daten = excluded.daten;
+select _pruef('Heizung: Admin sieht beide Projekte', (select count(*) from heizung.projekte) = 2);
+select _pruef('Heizung: getrennt von Bad (public.projekte ohne h1)', not exists (select 1 from public.projekte where id = 'h1'));
+select _pruef('Heizung: Admin hält Schreibschutz', (heizung.sperre_holen('h1', 'Daniel') ->> 'frei')::boolean);
+commit;
+begin; set local role authenticated; select _als('moritz@konto.bad-dashboard.de');
+select _pruef('Heizung: Monteur ohne Bereich „heizung“ sieht nichts', (select count(*) from heizung.projekte) = 0 and (select count(*) from heizung.einstellungen) = 0);
+commit;
+begin; set local role authenticated; select _als('daniel@konto.bad-dashboard.de');
+select konto_bereiche('moritz@konto.bad-dashboard.de', array['uebersicht','heizung']);
+commit;
+begin; set local role authenticated; select _als('moritz@konto.bad-dashboard.de');
+select _pruef('Heizung: Monteur mit Bereich sieht nur zugewiesenes Projekt', (select array_agg(id) from heizung.projekte) = array['h1']);
+select _pruef('Heizung: Monteur sieht keine Kennzahlen/Links', (select count(*) from heizung.upload_links) = 0);
+select _pruef('Heizung: Schreibschutz greift (Admin bearbeitet)', not (heizung.sperre_holen('h1', 'Moritz') ->> 'frei')::boolean);
+do $$ begin update heizung.projekte set daten = daten || '{"zugriff":[]}' where id = 'h1'; perform _pruef('Heizung: Monteur ändert keine Zuweisung', false); exception when others then perform _pruef('Heizung: Monteur ändert keine Zuweisung', true); end $$;
+do $$ begin insert into heizung.projekte (id, daten) values ('h3', '{}'); perform _pruef('Heizung: Monteur legt kein Projekt an', false); exception when others then perform _pruef('Heizung: Monteur legt kein Projekt an', true); end $$;
+select _pruef('Heizung: Datei-Ordner Baustelle erlaubt', heizung.darf_hochladen('h1', 'baustelle') and not heizung.darf_hochladen('h2', 'baustelle'));
+commit;
+begin; set local role authenticated; select _als('max@konto.bad-dashboard.de');
+select _pruef('Heizung: Mitarbeiter ohne Freigabe sieht nichts', (select count(*) from heizung.projekte) = 0);
+commit;
+begin; set local role anon; select set_config('request.jwt.claims', '{"role":"anon"}', true);
+select _pruef('Heizung: Kundenportal mit gültigem Link', (heizung.portal_info('tok-h1') ->> 'phase') is null and heizung.portal_info('tok-h1') is not null and heizung.portal_info('falsch') is null);
+do $$ begin perform count(*) from heizung.projekte; perform _pruef('Heizung: anonym keine Projekte', false); exception when others then perform _pruef('Heizung: anonym keine Projekte', true); end $$;
+commit;
+-- Bad nur mit Bereich „bad“ (bad-rechte.sql). Moritz hat jetzt uebersicht + heizung, kein bad
+begin; set local role authenticated; select _als('daniel@konto.bad-dashboard.de');
+insert into public.projekte (id, daten, geaendert) values ('b1', '{"projektnr":"B-1","zugriff":["MO"]}', 1) on conflict (id) do nothing;
+select _pruef('Bad: Admin sieht Bad-Projekt', exists (select 1 from public.projekte where id = 'b1'));
+commit;
+begin; set local role authenticated; select _als('moritz@konto.bad-dashboard.de');
+select _pruef('Bad: Monteur ohne Bereich „bad“ sieht nichts (auch zugewiesen nicht)', (select count(*) from public.projekte) = 0 and (select count(*) from public.einstellungen) = 0);
+select _pruef('Bad: ohne Bereich keine Dateien hochladen', not (bad_darf() and darf_hochladen('b1', 'baustelle')));
+commit;
+begin; set local role authenticated; select _als('daniel@konto.bad-dashboard.de');
+select konto_bereiche('moritz@konto.bad-dashboard.de', null);   -- Standard Monteur: uebersicht, bad, heizung
+commit;
+begin; set local role authenticated; select _als('moritz@konto.bad-dashboard.de');
+select _pruef('Bad: Monteur mit Standard-Rechten sieht zugewiesenes Projekt', (select array_agg(id) from public.projekte) = array['b1']);
+commit;

@@ -29,7 +29,7 @@ var PK_NR = (new URLSearchParams(location.search).get("nr") || "").replace(/\D/g
     const k = email && lesen("bruell:konten", []).find((x) => x.email === email && x.aktiv !== false);
     return k ? { id: k.id, name: k.name || k.benutzer, ebene: k.ebene, email: k.email, pk: k.pk ? String(k.pk) : "", mussAendern: !!k.mussAendern, lohnzettel: !!k.lohnzettel } : null;
   }
-  const EBENE_TITEL = { geschaeftsfuehrung: "Geschäftsführung", planung: "Planung / Bearbeitung", monteur: "Monteur", mitarbeiter: "Mitarbeiter", partner: "Partner" };
+  const EBENE_TITEL = { geschaeftsfuehrung: "Geschäftsführung", planung: "Büro", monteur: "Monteur", mitarbeiter: "Mitarbeiter", partner: "Partner" };
   const norm = (t) => String(t || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   /* Personalnummer zu einem Konto */
   function pkVon(k) {
@@ -61,14 +61,19 @@ var PK_NR = (new URLSearchParams(location.search).get("nr") || "").replace(/\D/g
       if (s !== null) return location.replace("../" + s + (s.includes("?") ? QS.replace(/^\?/, "&") : QS));
       document.addEventListener("DOMContentLoaded", () => { document.body.innerHTML = '<main class="main"><div class="seite"><div class="panel startfeld"><h2>Kein Bereich freigegeben</h2><p>Bitte an die Geschäftsführung wenden.</p></div></div></main>'; });
     };
-    document.documentElement.classList.add("nur-lesen");             // ändern dürfen in den Gesamt-Bereichen nur Admins
+    /* ändern dürfen in den Gesamt-Bereichen nur Admins – Ausnahme: „Personal bearbeiten“ auf Personal-Liste und -Karten */
+    const PB = R.personalBearbeiten(KONTO), PB_HIER = PB && (SEITE === "personal" || SEITE === "karte") && !window.BRUELL_GESPERRT;
+    if (PB_HIER) window.PK_PB = true; else document.documentElement.classList.add("nur-lesen");
     if (LZ_FREI && HIER === "lohn" && !darf("lohn")) window.LOHN_NUR_ZETTEL = true;
     else if (SEITE === "karte") {
-      if (PERSON.pk && PK_NR === PERSON.pk) { window.PK_NUR_LESEN = true; if (LZ_FREI) window.PK_LZ_DARF = true; }
+      if (PERSON.pk && PK_NR === PERSON.pk) { window.PK_NUR_LESEN = !PB_HIER; if (LZ_FREI) window.PK_LZ_DARF = true; }
       else if (LZ_FREI && new URLSearchParams(location.search).has("lz")) { window.PK_NUR_LESEN = window.PK_NUR_LOHNZETTEL = window.PK_LZ_DARF = true; }
-      else if (darf("personal")) window.PK_NUR_LESEN = true;
+      else if (darf("personal")) window.PK_NUR_LESEN = !PB_HIER;
       else { weg(); return; }
     } else if (SEITE === "konten" || !darf(SEITE)) { weg(); return; }
+  } else if (window.BRUELL_GESPERRT) {                               // Admin, aber jemand anders bearbeitet gerade (gesamt/sperre.js)
+    document.documentElement.classList.add("nur-lesen");
+    if (SEITE === "karte") window.PK_NUR_LESEN = true;
   }
 
   /* ---------- Leiste ---------- */
@@ -113,7 +118,7 @@ var PK_NR = (new URLSearchParams(location.search).get("nr") || "").replace(/\D/g
       }).join("")}</nav>
       <div class="speicher"><div class="ich"><span class="ich-k">${esc(ini)}</span><span><b>${esc(PERSON.name)}</b><small>${esc(EBENE_TITEL[PERSON.ebene] || "")}</small></span></div>
         <div class="ich-aktionen">${R.einstellungenKnopf("../", hier === "konten")}<button class="btn klein hell" type="button" id="pw-aendern">Passwort ändern</button><button class="btn klein hell" type="button" id="abmelden">Abmelden</button></div>
-        <p class="modus">${!GF ? (LZ_FREI ? "Lohnzettel hochladen freigegeben" : "Nur lesen") + (DEMO ? " · Demo" : "") : DEMO ? "Demo – Daten nur in diesem Browser" : hier === "betrieb" ? "Betriebszahlen – vertraulich" : "Personaldaten – vertraulich"}</p></div>`;
+        <p class="modus">${!GF ? (window.PK_PB ? "Personal bearbeiten" : LZ_FREI ? "Lohnzettel hochladen freigegeben" : "Nur lesen") + (DEMO ? " · Demo" : "") : DEMO ? "Demo – Daten nur in diesem Browser" : hier === "betrieb" ? "Betriebszahlen – vertraulich" : "Personaldaten – vertraulich"}</p></div>`;
     $("#pw-aendern").addEventListener("click", () => window.BruellPasswort && window.BruellPasswort.oeffnen());
     $("#rail").addEventListener("click", (e) => {
       const b = e.target.closest(".nav-auf"); if (!b) return;
@@ -216,7 +221,7 @@ var PK_NR = (new URLSearchParams(location.search).get("nr") || "").replace(/\D/g
           <span class="ma-chips">${abt.map((a) => `<i>${esc(ABT[a] || a)}</i>`).join("")}</span></span>
         <span class="ma-werte"><span><small>Gleitzeit</small><b class="${saldo.startsWith("-") ? "minus" : ""}">${esc(saldo || "–")}</b></span><span><small>Resturlaub ${jahr}</small><b>${ru == null ? "–" : ru + " T."}</b></span></span></a>`;
     };
-    $("#liste").innerHTML = (aktiv.length ? `<div class="ma-raster">${aktiv.map(karte).join("")}</div>` : `<p class="ue-leer">${q ? "Keine Treffer." : "Noch keine Mitarbeiter – „+ Mitarbeiter“ oder „Alte Personalkarten importieren“."}</p>`)
+    $("#liste").innerHTML = (aktiv.length ? `<div class="ma-raster">${aktiv.map(karte).join("")}</div>` : `<p class="ue-leer">${q ? "Keine Treffer." : "Noch keine Mitarbeiter – „+ Mitarbeiter“."}</p>`)
       + (weg.length ? `<h2 class="ma-zwischen">Ausgeschieden</h2><div class="ma-raster">${weg.map(karte).join("")}</div>` : "");
     $("#anzahl").textContent = `${aktiv.length} ${aktiv.length === 1 ? "Mitarbeiter" : "Mitarbeiter"}${weg.length ? ` · ${weg.length} ausgeschieden` : ""}`;
   }
@@ -349,7 +354,7 @@ var PK_NR = (new URLSearchParams(location.search).get("nr") || "").replace(/\D/g
       const max = Math.max(0, ...Object.keys(localStorage).filter((k) => /^pk_\d+$/.test(k)).map((k) => +k.slice(3)).filter((n) => n < 900));
       location.href = "karte.html" + qs({ nr: max + 1 });
     });
-    $("#import").addEventListener("change", (e) => { if (e.target.files.length) importieren([...e.target.files]); e.target.value = ""; });
+    if ($("#import")) $("#import").addEventListener("change", (e) => { if (e.target.files.length) importieren([...e.target.files]); e.target.value = ""; });
   }
   if (document.body.classList.contains("karte-seite")) {
     document.addEventListener("input", (e) => { if (["vorname", "nachname", "position"].includes(e.target.id)) window.pkKopfAktualisieren(); });

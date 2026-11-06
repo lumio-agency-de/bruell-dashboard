@@ -13,6 +13,8 @@
        Werte bietet ein Hinweis zum Übernehmen an (Browser-Fassung bleibt als <prefix>vordb_<Nr> gesichert)
    Fotos: Bucket „personal“, Pfad foto/<Nr>/foto  ↔  ph_<Nr> im Browser (Daten-URL) + window.PK_FOTOS.
    Tankbuchungen (Tabelle „tanken“, nur GF) → window.FZ_TANKEN / FZ_TANKEN_OFFEN.
+   Ablage (Tabelle „ablage“, supabase/ablage.sql): übrige Schlüssel 1:1 – Werkzeuge, Bank/Buchhaltung, Lohn,
+   Betriebsmonitor, Widget-Auswahl, eigene Übersicht-Anordnung. Ändern: GF (Anordnung: jeder seine eigene).
    Laden vor personal.js / uebersicht.js (braucht ../bad/app/vendor/supabase.js davor).
    ========================================================================== */
 window.BruellDB = (function () {
@@ -26,6 +28,9 @@ window.BruellDB = (function () {
   const still = (k, v) => { try { v == null ? roh.del.call(localStorage, k) : roh.set.call(localStorage, k, v); } catch (e) { /* voll */ } };
   const ich = () => { try { const e = JSON.parse(sessionStorage.getItem("bruell:sitzung") || localStorage.getItem("bruell:sitzung") || "null"); return lesen("bruell:konten", []).find((x) => x.email === e) || null; } catch (e) { return null; } };
   const gf = () => (ich() || {}).ebene === "geschaeftsfuehrung";
+  /* „Personal bearbeiten“ (gesamt/thema.js): darf Personalkarten + Fotos ändern, anlegen, löschen */
+  const pb = () => !gf() && !!(window.BruellRechte && window.BruellRechte.personalBearbeiten && window.BruellRechte.personalBearbeiten());
+  const schreibt = (s) => gf() || (s.tabelle === "personal" && pb());
   const leer = (v) => v == null || String(v).trim() === "" || v === "[]" || v === "{}";
 
   /* Sammlungen: Browser-Schlüssel ↔ Tabelle */
@@ -34,6 +39,12 @@ window.BruellDB = (function () {
     { name: "Personalkarte", prefix: "pk_", tabelle: "personal", stand: "bruell:pk-db", uebernommen: "bruell:pk-uebernommen", eigene: "meine_personalkarte", recht: "personal", alle: "personal_alle", seite: /\/personal\/(index\.html)?$/ },
     { name: "Fahrzeugkarte", prefix: "fz_", tabelle: "fahrzeuge", stand: "bruell:fz-db", uebernommen: "bruell:fz-uebernommen", eigene: null, recht: "fahrzeuge", seite: /\/fahrzeuge\/(index\.html)?$/ },
   ].map((s) => ({ ...s, re: new RegExp("^" + s.prefix + "(\\d+)$"), abw: "bruell:abweichung:" + s.tabelle }));
+  /* Ablage: Schlüssel, die 1:1 als Zeile gespeichert werden (Rechte prüft die Datenbank je Schlüssel) */
+  const ABLAGE = /^(bruell:werkzeuge|buch:umsaetze|buch:rechnungen|bank:saldo|lohn:konten|lohn:(import:)?\d{4}-\d{2}|bm:\d{4}|bruell:widgets|bruell:raster:[^:]+)$/, ABLAGESTAND = "bruell:ablage-db";
+  const ABLAGE_NAMEN = [[/^bruell:werkzeuge$/, "Werkzeuge"], [/^(buch|bank):/, "Bank/Buchhaltung"], [/^lohn:/, "Lohn"], [/^bm:/, "Betriebsmonitor"], [/^bruell:(widgets|raster)/, "Übersicht"]];
+  const eigeneAnordnung = (k) => { const i = ich(); return !!i && k === "bruell:raster:" + i.id; };
+  /* Beispieldaten (Bank-Demo) nicht in die Datenbank */
+  const nurBeispiel = (k, v) => { try { const d = JSON.parse(v); if (k === "buch:umsaetze") return Array.isArray(d) && d.length > 0 && d.every((u) => String(u.id).startsWith("demo-")); if (k === "bank:saldo") return Object.values(d || {}).every((x) => !x || x.beispiel); } catch (e) { /* egal */ } return false; };
   const sammlungVon = (k) => { for (const s of SAMMLUNGEN) { const m = s.re.exec(k); if (m) return [s, m[1]]; } return null; };
 
   /* Ohne gültige Supabase-Sitzung: gespiegelte Anmeldung löschen → Seiten gehen zur Anmeldung.
@@ -42,7 +53,8 @@ window.BruellDB = (function () {
     try {
       for (const s of SAMMLUNGEN) { Object.keys(lesen(s.stand, {})).forEach((nr) => roh.del.call(localStorage, s.prefix + nr)); roh.del.call(localStorage, s.stand); }
       Object.keys(lesen(FOTOSTAND, {})).forEach((nr) => roh.del.call(localStorage, "ph_" + nr));
-      ["bruell:sitzung", "bruell:konten", FOTOSTAND, TANKEN].forEach((k) => roh.del.call(localStorage, k));
+      Object.keys(lesen(ABLAGESTAND, {})).forEach((k) => roh.del.call(localStorage, k));
+      ["bruell:sitzung", "bruell:konten", FOTOSTAND, TANKEN, ABLAGESTAND].forEach((k) => roh.del.call(localStorage, k));
       sessionStorage.removeItem("bruell:sitzung");
     } catch (e) { /* egal */ }
   }
@@ -52,7 +64,7 @@ window.BruellDB = (function () {
   /* ---------- Karten: Datenbank → Browser ---------- */
   async function holen(s) {
     const neu = {};
-    if (gf()) {
+    if (gf() || (s.tabelle === "personal" && pb())) {
       const { data, error } = await sb.from(s.tabelle).select("nr, daten, geaendert").eq("geloescht", false);
       if (error) throw error;
       data.forEach((r) => { neu[r.nr] = r; });
@@ -126,7 +138,7 @@ window.BruellDB = (function () {
 
   /* ---------- Fotos: Browser → Dateispeicher (nur GF, z. B. neues Foto in der Personalkarte) ---------- */
   async function fotoSenden(nr) {
-    if (!gf()) return;
+    if (!schreibt(SAMMLUNGEN[0])) return;
     const url = localStorage.getItem("ph_" + nr); if (!url || !url.startsWith("data:")) return;
     const blob = await (await fetch(url)).blob();
     const { error } = await sb.storage.from("personal").upload("foto/" + nr + "/foto", blob, { upsert: true, contentType: blob.type || "image/jpeg" });
@@ -154,13 +166,58 @@ window.BruellDB = (function () {
     return anders && data.length > 0;
   }
 
+  /* ---------- Ablage: Datenbank → Browser ---------- */
+  async function ablageHolen() {
+    const { data, error } = await sb.from("ablage").select("schluessel, wert, geaendert").eq("geloescht", false);
+    if (error) throw error;
+    const alt = lesen(ABLAGESTAND, {}), neu = {}; let geaendert = false;
+    for (const r of data) {
+      neu[r.schluessel] = r.geaendert;
+      const lokal = localStorage.getItem(r.schluessel);
+      if (lokal === r.wert) continue;
+      /* gab es hier schon vor der Datenbank: Browser-Fassung sichern, Datenbank gilt */
+      if (lokal !== null && !(r.schluessel in alt) && !localStorage.getItem("vordb:" + r.schluessel)) still("vordb:" + r.schluessel, lokal);
+      still(r.schluessel, r.wert); geaendert = true;
+    }
+    for (const k of Object.keys(alt)) if (!(k in neu) && localStorage.getItem(k) !== null) { still(k, null); geaendert = true; }
+    /* Nicht-GF: nur, was die Datenbank freigibt (eigene Anordnung darf neu sein) */
+    if (!gf()) Object.keys(localStorage).filter((k) => ABLAGE.test(k) && !(k in neu) && !eigeneAnordnung(k)).forEach((k) => { still(k, null); geaendert = true; });
+    still(ABLAGESTAND, JSON.stringify(neu));
+    return geaendert;
+  }
+  /* nur in diesem Browser (GF): einmalig übernehmen */
+  const ablageNurHier = () => { const st = lesen(ABLAGESTAND, {}); return Object.keys(localStorage).filter((k) => ABLAGE.test(k) && !(k in st) && !nurBeispiel(k, localStorage.getItem(k)) && (!k.startsWith("bruell:raster:") || eigeneAnordnung(k))); };
+  async function ablageUebernehmen() {
+    const ks = ablageNurHier(), jetzt = Date.now();
+    const zeilen = ks.map((k) => ({ schluessel: k, wert: localStorage.getItem(k), geaendert: jetzt, geloescht: false }));
+    for (let i = 0; i < zeilen.length; i += 20) { const { error } = await sb.from("ablage").upsert(zeilen.slice(i, i + 20)); if (error) throw error; }
+    const st = lesen(ABLAGESTAND, {}); ks.forEach((k) => { st[k] = jetzt; }); still(ABLAGESTAND, JSON.stringify(st));
+    return ks.length;
+  }
+
   /* ---------- Karten: Browser → Datenbank (nur GF) ---------- */
-  const offen = new Map(); let timer = 0;                         // Schlüssel "<tabelle>|<nr>"
-  const darfHoch = (s, nr) => gf() && (nr in lesen(s.stand, {}) || lesen(s.uebernommen, false));
+  const offen = new Map(); let timer = 0, bereit = false;         // Schlüssel "<tabelle>|<nr>" bzw. "ablage|<schlüssel>"
+  /* Schreibschutz (gesamt/sperre.js): bearbeitet gerade jemand anders → nichts hochladen */
+  const gesperrt = (k) => !!window.BRUELL_GESPERRT || (k === "bruell:werkzeuge" && !!window.BRUELL_WZ_GESPERRT);
+  const darfHoch = (s, nr) => schreibt(s) && !gesperrt() && (pb() || nr in lesen(s.stand, {}) || lesen(s.uebernommen, false));
   function vormerken(s, nr) { if (!darfHoch(s, nr)) return; offen.set(s.tabelle + "|" + nr, [s, nr]); clearTimeout(timer); timer = setTimeout(senden, 500); }
+  /* Ablage erst nach dem Abgleich hochladen (vorher steht im Browser evtl. ein alter Stand) */
+  function ablageVormerken(k) {
+    if (!bereit || !(gf() || eigeneAnordnung(k)) || (gesperrt(k) && !eigeneAnordnung(k))) return;
+    const t = localStorage.getItem(k);
+    if (t === null ? !(k in lesen(ABLAGESTAND, {})) : nurBeispiel(k, t)) return;   // Löschen nur, was in der DB ist; Bank-Demo nie
+    offen.set("ablage|" + k, ["ablage", k]); clearTimeout(timer); timer = setTimeout(senden, 500);
+  }
   async function senden() {
     const liste = [...offen.values()]; offen.clear(); if (!liste.length) return;
     const jetzt = Date.now();
+    const ks = liste.filter(([x]) => x === "ablage").map(([, k]) => k);
+    if (ks.length) {
+      const zeilen = ks.map((k) => { const t = localStorage.getItem(k); return t === null ? { schluessel: k, wert: "", geaendert: jetzt, geloescht: true } : { schluessel: k, wert: t, geaendert: jetzt, geloescht: false }; });
+      const { error } = await sb.from("ablage").upsert(zeilen);
+      if (error) { melden("Speichern in der Datenbank fehlgeschlagen: " + error.message, true); ks.forEach((k) => offen.set("ablage|" + k, ["ablage", k])); }
+      else { const st = lesen(ABLAGESTAND, {}); zeilen.forEach((z) => { if (z.geloescht) delete st[z.schluessel]; else st[z.schluessel] = jetzt; }); still(ABLAGESTAND, JSON.stringify(st)); }
+    }
     for (const s of SAMMLUNGEN) {
       const nrs = liste.filter(([x]) => x === s).map(([, nr]) => nr); if (!nrs.length) continue;
       const zeilen = nrs.map((nr) => { const t = localStorage.getItem(s.prefix + nr); return t === null ? { nr, daten: {}, geaendert: jetzt, geloescht: true } : { nr, daten: JSON.parse(t), geaendert: jetzt, geloescht: false }; });
@@ -172,9 +229,10 @@ window.BruellDB = (function () {
   Storage.prototype.setItem = function (k, v) {
     roh.set.call(this, k, v); if (this !== localStorage) return;
     const m = sammlungVon(k); if (m) vormerken(m[0], m[1]);
+    if (ABLAGE.test(k)) ablageVormerken(k);
     const f = PH.exec(k); if (f && darfHoch(SAMMLUNGEN[0], f[1])) fotoSenden(f[1]);
   };
-  Storage.prototype.removeItem = function (k) { roh.del.call(this, k); if (this !== localStorage) return; const m = sammlungVon(k); if (m) vormerken(m[0], m[1]); };
+  Storage.prototype.removeItem = function (k) { roh.del.call(this, k); if (this !== localStorage) return; const m = sammlungVon(k); if (m) vormerken(m[0], m[1]); if (ABLAGE.test(k)) ablageVormerken(k); };
   window.addEventListener("pagehide", () => { if (offen.size) senden(); });
 
   /* Einmalige Übernahme: Karten, die es nur in diesem Browser gibt */
@@ -194,6 +252,7 @@ window.BruellDB = (function () {
     still(s.abw, null); return Object.keys(abw).length;
   }
 
+  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   /* ---------- kleine Meldung unten ---------- */
   function melden(t, fehler) {
     let el = document.getElementById("toast");
@@ -217,6 +276,12 @@ window.BruellDB = (function () {
   }
   function hinweiseAnbieten() {
     if (!gf()) return;
+    const nh = ablageNurHier();
+    if (nh.length) {
+      const was = [...new Set(nh.map((k) => (ABLAGE_NAMEN.find(([re]) => re.test(k)) || [, k])[1]))].join(", ");
+      hinweis("db-uebernahme-ablage", `<b>Daten nur in diesem Browser: ${esc(was)}.</b><br><small class="leise">In die Datenbank auf dem Mac mini übernehmen – danach auf allen Geräten gleich.</small>`,
+        [["In die Datenbank übernehmen", "jetzt", async () => `${await ablageUebernehmen()} Einträge übernommen`]]);
+    }
     for (const s of SAMMLUNGEN) {
       if (!s.seite.test(location.pathname)) continue;
       const n = nurHier(s).length, abw = lesen(s.abw, {}), na = Object.keys(abw).length;
@@ -237,6 +302,8 @@ window.BruellDB = (function () {
     for (const s of SAMMLUNGEN) { const r = await holen(s); geaendert = geaendert || r.geaendert; if (s === SAMMLUNGEN[0]) anzahl = r.anzahl; }
     if (await fotosHolen(Object.keys(lesen(SAMMLUNGEN[0].stand, {})))) geaendert = true;
     if (await tankenHolen()) geaendert = true;
+    if (await ablageHolen()) geaendert = true;
+    bereit = true;
     /* Erster Besuch / neuer Stand aus der DB: einmal neu laden, damit die Seite ihn zeigt (nicht beim Tippen) */
     const frisch = performance.now() < 4000 && !document.querySelector("input:focus, textarea:focus, select:focus");
     if (geaendert && frisch && !sessionStorage.getItem("bruell:db-neu")) { sessionStorage.setItem("bruell:db-neu", "1"); location.reload(); return { geaendert, anzahl }; }
@@ -253,5 +320,5 @@ window.BruellDB = (function () {
     aufraeumen();
   }
 
-  return { sb, fertig, uebernehmen, nurHier, ich, abmelden, SAMMLUNGEN };
+  return { sb, fertig, uebernehmen, nurHier, ablageNurHier, ablageUebernehmen, ich, abmelden, SAMMLUNGEN };
 })();

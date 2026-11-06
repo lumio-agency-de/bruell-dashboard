@@ -4,7 +4,7 @@
    Holt sich von Bad und Heizung je einen „Auszug“ (versteckter Rahmen mit
    ?auszug=1 – dort rechnet jeder Bereich mit seiner eigenen Logik) und zeigt
    alles als Widgets. Welche Widgets eine Person sieht, legt die
-   Geschäftsführung unter „Übersicht anpassen“ fest.
+   Geschäftsführung unter ⚙ Einstellungen (Konten) fest.
    ========================================================================== */
 (function () {
   "use strict";
@@ -216,14 +216,16 @@
   }
 
   /* ---------- Anordnung je Person: freies Raster (GridStack, 12 Spalten) ----------
-     bruell:raster = { Person-ID: { Widget-ID: { x, y, w, h } } } – ohne Eintrag stellt GridStack die Kachel selbst auf.
+     bruell:raster:<Person-ID> = { Widget-ID: { x, y, w, h } } – ohne Eintrag stellt GridStack die Kachel selbst auf.
      Ältere Einstellung (bruell:layout: Reihenfolge + Breite in Vierteln) dient als Vorlage, bis neu angeordnet wurde. */
   const STANDARD_REIHE = ["bad", "heizung", "kalender", "mail", "baustellen", "neu", "kennzahlen", "personal"];
   const STANDARD_W = {}, STANDARD_H = { bad: 7, heizung: 7, kalender: 8, mail: 6, baustellen: 6, neu: 5, kennzahlen: 6, personal: 7 };
   const ZEILE = 48, ABSTAND = 9;                                   // Rasterzeile in px, halber Abstand zwischen Kacheln
   const altesLayout = (p) => { const l = lesen("bruell:layout", {})[p.id] || {}; return { reihe: Array.isArray(l.reihe) ? l.reihe : STANDARD_REIHE, groesse: l.groesse || {} }; };
-  const rasterVon = (p) => lesen("bruell:raster", {})[p.id] || null;
-  const rasterSpeichern = (p, r) => { const alle = lesen("bruell:raster", {}); if (r) alle[p.id] = r; else delete alle[p.id]; schreiben("bruell:raster", alle); };
+  /* je Person ein eigener Schlüssel bruell:raster:<ID> (Mac mini: in der Datenbank, auf allen Geräten gleich); früher alle in bruell:raster */
+  const rasterVon = (p) => lesen("bruell:raster:" + p.id, null) || lesen("bruell:raster", {})[p.id] || null;
+  const rasterSpeichern = (p, r) => { if (r) schreiben("bruell:raster:" + p.id, r); else try { localStorage.removeItem("bruell:raster:" + p.id); } catch (e) { /* egal */ }
+    const alt = lesen("bruell:raster", {}); if (p.id in alt) { delete alt[p.id]; schreiben("bruell:raster", alt); } };
   /* Platz einer Kachel: gespeichert, sonst aus der alten Einstellung (Breite ¼…1 → 3…12 Spalten) */
   function platzVon(p, id) {
     const r = rasterVon(p); if (r && r[id]) return r[id];
@@ -273,8 +275,7 @@
       </header>
       ${reihenfolge.length ? `<div class="ue-leiste">${BEARBEITEN ? `<span class="ue-tipp">Kachel an der <b>Kopfzeile</b> anfassen und an jede Stelle ziehen · an <b>Rand oder Ecke</b> ziehen für die Größe</span><button class="btn klein still" data-aktion="w-zuruecksetzen">Zurücksetzen</button><button class="btn jetzt" data-aktion="w-bearbeiten">✓ Fertig</button>` : `<button class="btn" data-aktion="w-bearbeiten">✎ Widgets anpassen</button>`}</div>
         <section class="grid-stack ue-gitter${BEARBEITEN ? " bearbeiten" : ""}">${reihenfolge.map(karte).join("")}</section>`
-        : `<div class="panel startfeld"><h2>Noch keine Widgets freigeschaltet</h2><p>Die Geschäftsführung kann unter „Übersicht anpassen“ festlegen, was hier erscheint.</p></div>`}
-      ${person.ebene === "geschaeftsfuehrung" ? anpassen(A) : ""}
+        : `<div class="panel startfeld"><h2>Noch keine Widgets freigeschaltet</h2><p>Die Geschäftsführung kann unter ⚙ Einstellungen festlegen, was hier erscheint.</p></div>`}
     </div>`;
   }
   /* ---------- Freies Raster (GridStack): im Bearbeiten-Modus Kopfzeile ziehen = verschieben, Rand/Ecke = Größe ---------- */
@@ -298,25 +299,9 @@
       rasterSpeichern(PERSON, r);
     });
   }
-  function zeichnen(offen) {
+  function zeichnen() {
     $("#main").innerHTML = seite(PERSON, AUSZUEGE);
-    if (offen && $("#anpassen")) $("#anpassen").open = true;
     gitterAn(); wetterLaden();
-  }
-
-  /* ---------- Übersicht anpassen (nur Geschäftsführung) ---------- */
-  function personen(A) {
-    const m = new Map();
-    for (const a of Object.values(A)) for (const t of (a && a.team) || []) if (!m.has(t.kuerzel)) m.set(t.kuerzel, { id: t.kuerzel, name: t.name, ebene: t.ebene, funktion: t.funktion });
-    return [...m.values()];
-  }
-  function anpassen(A) {
-    const P = personen(A);
-    return `<details class="panel ue-anpassen" id="anpassen"><summary><span>Übersicht anpassen</span><small>Welche Widgets sieht wer?</small></summary>
-      <div class="tab-wrap ohne-rand"><table class="kz-tab ue-matrix"><thead><tr><th>Mitarbeiter</th>${WIDGETS.map((w) => `<th title="${esc(w.text)}">${esc(w.titel)}</th>`).join("")}</tr></thead>
-      <tbody>${P.map((p) => { const s = widgetsFuer(p); return `<tr data-person="${esc(p.id)}"><td><b>${esc(p.name)}</b><br><small class="leise">${esc(p.funktion || p.ebene)}</small></td>${WIDGETS.map((w) => `<td class="mitte"><input type="checkbox" data-widget="${w.id}"${s.includes(w.id) ? " checked" : ""} aria-label="${esc(p.name + ": " + w.titel)}"></td>`).join("")}</tr>`; }).join("")}</tbody></table></div>
-      <div class="aktionen panel-innen"><button class="btn jetzt" data-aktion="widgets-speichern">Übernehmen</button><button class="btn still" data-aktion="widgets-standard">Standard je Rolle</button>
-        <span class="leise klein-text">Gilt sofort für die jeweilige Person. Im Demo-Modus nur in diesem Browser gespeichert.</span></div></details>`;
   }
 
   /* ---------- Leiste ---------- */
@@ -327,7 +312,7 @@
       ${darf("fahrzeuge") ? `<a href="fahrzeuge/${QS}"><span class="nav-i i-einrichtung" aria-hidden="true"></span>Fahrzeuge</a>` : ""}${darf("werkzeuge") ? `<a href="lager/${QS}"><span class="nav-i i-werkzeug" aria-hidden="true"></span>Werkzeuge</a>` : ""}
       ${darf("betrieb") && ["buchhaltung", "bank", "monitor", "monat", "jahr", "abschluss"].some(darf) ? `<a href="betrieb/${QS}"><span class="nav-i i-kennzahlen" aria-hidden="true"></span>Betrieb</a>` : ""}`;
     const ini = (person.name || "?").split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
-    $("#ich").innerHTML = `<div class="ich"><span class="ich-k">${esc(ini)}</span><span><b>${esc(person.name)}</b><small>${esc({ geschaeftsfuehrung: "Geschäftsführung", planung: "Planung / Bearbeitung", monteur: "Monteur" }[person.ebene] || "")}</small></span></div>
+    $("#ich").innerHTML = `<div class="ich"><span class="ich-k">${esc(ini)}</span><span><b>${esc(person.name)}</b><small>${esc({ geschaeftsfuehrung: "Geschäftsführung", planung: "Büro", monteur: "Monteur" }[person.ebene] || "")}</small></span></div>
       <div class="ich-aktionen">${R ? R.einstellungenKnopf("") : ""}<button class="btn klein hell" data-aktion="passwort">Passwort ändern</button><button class="btn klein hell" data-aktion="abmelden">Abmelden</button></div>
       ${DEMO ? '<p class="modus">Demo – Daten nur in diesem Browser</p>' : ""}`;
   }
@@ -363,16 +348,6 @@
     if (akt === "passwort") return window.BruellPasswort && window.BruellPasswort.oeffnen();
     if (akt === "w-bearbeiten") { BEARBEITEN = !BEARBEITEN; return zeichnen(); }
     if (akt === "w-zuruecksetzen") { rasterSpeichern(PERSON, null); toast("Standard-Anordnung"); return zeichnen(); }
-    if (akt === "widgets-speichern") {
-      const neu = lesen("bruell:widgets", {});
-      for (const tr of $$("[data-person]")) neu[tr.dataset.person] = $$("[data-widget]", tr).filter((x) => x.checked).map((x) => x.dataset.widget);
-      schreiben("bruell:widgets", neu); toast("Übersicht angepasst");
-      zeichnen(true);
-    }
-    if (akt === "widgets-standard") {
-      for (const tr of $$("[data-person]")) { const p = personen(AUSZUEGE).find((x) => x.id === tr.dataset.person); const s = STANDARD[p.ebene] || STANDARD.planung; $$("[data-widget]", tr).forEach((x) => { x.checked = s.includes(x.dataset.widget); }); }
-      toast("Standard gesetzt – mit „Übernehmen“ speichern");
-    }
   });
   start();
 })();

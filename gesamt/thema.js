@@ -44,7 +44,8 @@
 
 /* ==========================================================================
    Rechte: welche Menüpunkte (Bereiche) das angemeldete Konto sieht. Hier, weil thema.js auf JEDER Seite
-   läuft (auch Bad/Heizung). Admin = Geschäftsführung: alles, und nur er ändert in den Gesamt-Bereichen.
+   läuft (auch Bad/Heizung). Admin = Geschäftsführung: alles, und nur er ändert in den Gesamt-Bereichen –
+   Ausnahme Personal: mit „Personal bearbeiten“ ändern auch andere die Personalkarten.
    Konto.bereiche (Konten-Seite) – sonst Standard je Ebene. Die Datenbank prüft dasselbe (supabase/rechte.sql).
    ========================================================================== */
 window.BruellRechte = (function () {
@@ -52,7 +53,7 @@ window.BruellRechte = (function () {
   /* Schlüssel, Name, Adresse ab Dashboard-Wurzel, Symbol, übergeordneter Punkt */
   const BEREICHE = [
     ["uebersicht", "Übersicht", "", "i-cockpit"], ["bad", "Bad", "bad/", "i-projekte"], ["heizung", "Heizung", "heizung/", "i-projekte"],
-    ["personal", "Personal", "personal/", "i-konten"], ["lohn", "Lohnabrechnung", "personal/lohn.html", "i-lohn", "personal"],
+    ["personal", "Personal", "personal/", "i-konten"], ["personal_bearbeiten", "Personal bearbeiten", "", "i-konten", "personal"], ["lohn", "Lohnabrechnung", "personal/lohn.html", "i-lohn", "personal"],
     ["fahrzeuge", "Fahrzeuge", "fahrzeuge/", "i-einrichtung"], ["werkzeuge", "Werkzeuge", "lager/", "i-werkzeug"],
     ["betrieb", "Betrieb", "betrieb/", "i-kennzahlen"], ["buchhaltung", "Buchhaltung", "betrieb/buchhaltung.html", "i-unter", "betrieb"],
     ["bank", "Bank", "betrieb/bank.html", "i-unter", "betrieb"], ["monitor", "Betriebsmonitor", "betrieb/", "i-unter", "betrieb"],
@@ -76,8 +77,11 @@ window.BruellRechte = (function () {
   function darf(key, k = konto()) {
     const l = wirksam(k), b = BEREICHE.find((x) => x.key === key);
     if (!b || !l.includes(key)) return false;
+    if (key === "personal_bearbeiten") return l.includes("personal");          // Stufe zu „Personal“, allein wirkungslos
     return !b.eltern || b.eltern === "personal" || l.includes(b.eltern);
   }
+  /* Personalkarten ändern/anlegen/löschen: Admin oder Freigabe „Personal“ + „bearbeiten“ (z. B. Personalbüro) */
+  const personalBearbeiten = (k = konto()) => admin(k) || darf("personal_bearbeiten", k);
   /* Bereich der aktuellen Seite (Pfad ab Dashboard-Wurzel) */
   function bereichVon(pfad) {
     const p = String(pfad || "").replace(/^\/+/, "").replace(/index\.html$/, "");
@@ -96,8 +100,8 @@ window.BruellRechte = (function () {
   function startseite(k = konto()) {
     if (!k) return null;
     if (darf("uebersicht", k) || admin(k)) return "";
-    for (const b of BEREICHE) if (b.key !== "uebersicht" && b.key !== "betrieb" && darf(b.key, k)) return b.pfad;
+    for (const b of BEREICHE) if (b.pfad && b.key !== "betrieb" && darf(b.key, k)) return b.pfad;
     return k.pk ? "personal/karte.html?nr=" + encodeURIComponent(k.pk) : null;
   }
-  return { BEREICHE, STANDARD, konto, admin, wirksam, darf, bereichVon, einstellungenKnopf, startseite };
+  return { BEREICHE, STANDARD, konto, admin, wirksam, darf, personalBearbeiten, bereichVon, einstellungenKnopf, startseite };
 })();

@@ -9,21 +9,27 @@
   "use strict";
 
   const LS = { projekte: "heizdashboard:projekte", einstellungen: "heizdashboard:einstellungen", links: "heizdashboard:links" };
-  const BUCKET = "akten";
+  /* Brüll-Server (Mac mini): gemeinsame Datenbank mit Bad – Heizung hat dort ein eigenes Schema „heizung“
+     (Dashboard Gesamt/supabase/heizung.sql) und den Bucket „akten-heizung“; Konten/Anmeldung sind gemeinsam. */
+  const BRUELL = !!(window.BRUELL_CLOUD && window.BRUELL_CLOUD.url && window.BRUELL_CLOUD.anonKey);
+  const BUCKET = BRUELL ? "akten-heizung" : "akten";
   const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
   const token = () => [...crypto.getRandomValues(new Uint8Array(18))].map((b) => b.toString(36).padStart(2, "0")).join("").slice(0, 24);
   const sicher = (n) => n.normalize("NFKD").replace(/[̀-ͯ]/g, "").replace(/[^\w.\-]+/g, "_").slice(-80);
 
   /* Zugang aus firma.js – oder, falls dort leer, im Browser hinterlegt (Einrichtung → Cloud verbinden) */
   /* Benutzername → interne Login-Adresse (wie konto_email() in schema.sql) */
-  const kontoEmail = (b) => { const x = String(b || "").trim().toLowerCase(); return x.includes("@") ? x : `${x}@konto.heizungs-dashboard.de`; };
+  const kontoEmail = (b) => { const x = String(b || "").trim().toLowerCase(); return x.includes("@") ? x : `${x}@konto.${BRUELL ? "bad" : "heizungs"}-dashboard.de`; };
   async function pruefsumme(salz, pw) {
     const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(salz + "|" + pw));
     return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, "0")).join("");
   }
-  const normMitglied = (m) => m && { id: m.id, ebene: m.ebene, name: m.name, benutzer: m.benutzer || m.email, email: m.email, mussAendern: !!(m.mussAendern ?? m.muss_aendern), aktiv: m.aktiv !== false, formulare: m.formulare || [] };
+  const normMitglied = (m) => m && { id: m.id, ebene: m.ebene, name: m.name, benutzer: m.benutzer || m.email, email: m.email, mussAendern: !!(m.mussAendern ?? m.muss_aendern), aktiv: m.aktiv !== false, formulare: m.formulare || [],
+    pk: m.pk ? String(m.pk) : "", lohnzettel: !!m.lohnzettel, bereiche: Array.isArray(m.bereiche) ? m.bereiche : null };
 
   function cloudKonfig() {
+    /* Brüll-Server (Mac mini): Zugang kommt aus /gesamt/cloud.js, das nur der Server ausliefert (nicht im Repo) */
+    if (BRUELL) return window.BRUELL_CLOUD;
     const c = (window.FIRMA && window.FIRMA.cloud) || {};
     if (c.url && c.anonKey) return c;
     try { const l = JSON.parse(localStorage.getItem("heizdashboard:cloud")); if (l && l.url && l.anonKey) return l; } catch (e) { /* keiner */ }
@@ -215,6 +221,8 @@
     /* Kundenportal immer anonym – auch wenn im selben Browser jemand vom Team angemeldet ist */
     let anonym = null;
     const sbKunde = () => (anonym = anonym || window.supabase.createClient(konf.url, konf.anonKey, { auth: { persistSession: false, autoRefreshToken: false, storageKey: "heizdashboard-portal" } }));
+    /* Projekt-Tabellen und -Funktionen: auf dem Brüll-Server im Schema „heizung“, sonst wie gehabt */
+    const H = BRUELL ? sb.schema("heizung") : sb, HKunde = () => (BRUELL ? sbKunde().schema("heizung") : sbKunde());
     let stand = 0;
     return {
       modus: "cloud",
@@ -227,12 +235,24 @@
       async _mitgliedLaden(email) {
         const { data } = await sb.from("mitglieder").select("*").eq("email", String(email || "").toLowerCase()).maybeSingle();
         this.mitglied = data && data.aktiv !== false ? normMitglied(data) : null;
+        this._spiegeln();
+      },
+      /* Anmeldung für die übrigen Seiten (Übersicht, Personal, Bad …) sichtbar machen (nur Brüll-Server) */
+      _spiegeln() {
+        if (!BRUELL) return;
+        const m = this.mitglied;
+        try {
+          if (!m) { localStorage.removeItem("bruell:sitzung"); sessionStorage.removeItem("bruell:sitzung"); localStorage.removeItem("bruell:konten"); return; }
+          localStorage.setItem("bruell:konten", JSON.stringify([{ ...m, cloud: true }]));
+          localStorage.setItem("bruell:sitzung", JSON.stringify(m.email));
+          sessionStorage.setItem("bruell:sitzung", JSON.stringify(m.email));
+        } catch (e) { /* Speicher gesperrt */ }
       },
       async start() {
         const { data } = await sb.auth.getSession();
         this.angemeldet = !!data.session;
         this.nutzer = data.session ? data.session.user.email : null;
-        if (this.angemeldet) await this._mitgliedLaden(this.nutzer);
+        if (this.angemeldet) await this._mitgliedLaden(this.nutzer); else { this.mitglied = null; this._spiegeln(); }
         return this.angemeldet;
       },
       async anmelden(benutzer, passwort) {
@@ -244,19 +264,20 @@
         this.angemeldet = true; this.nutzer = data.user.email;
         await this._mitgliedLaden(this.nutzer);
       },
-      async abmelden() { await sb.auth.signOut(); this.angemeldet = false; this.mitglied = null; },
+      async abmelden() { await sb.auth.signOut(); this.angemeldet = false; this.mitglied = null; this._spiegeln(); },
       async sperreHolen(res, name, erzwingen) {
-        const { data, error } = await sb.rpc("sperre_holen", { p_ressource: res, p_name: name, p_erzwingen: !!erzwingen });
+        const { data, error } = await H.rpc("sperre_holen", { p_ressource: res, p_name: name, p_erzwingen: !!erzwingen });
         if (error) throw error;
         return data && data.seit ? { ...data, seit: new Date(data.seit).getTime() } : data;
       },
-      async sperreFreigeben(res) { await sb.rpc("sperre_freigeben", { p_ressource: res }); },
+      async sperreFreigeben(res) { await H.rpc("sperre_freigeben", { p_ressource: res }); },
       async passwortAendern(neu) {
         if (String(neu).length < 8) throw new Error("Mindestens 8 Zeichen.");
         const { error } = await sb.auth.updateUser({ password: neu });
         if (error) throw new Error(/same|different/i.test(error.message) ? "Bitte ein neues Passwort wählen, nicht das Startpasswort." : error.message);
         await sb.rpc("passwort_geaendert");
         if (this.mitglied) this.mitglied.mussAendern = false;
+        this._spiegeln();
       },
       async konten() {
         const { data, error } = await sb.rpc("konten_liste");
@@ -280,25 +301,25 @@
         if (error) throw new Error(error.message);
       },
       async zahlenLaden() {
-        const { data, error } = await sb.from("kennzahlen").select("projekt_id,daten");
+        const { data, error } = await H.from("kennzahlen").select("projekt_id,daten");
         if (error) throw error;
         return Object.fromEntries((data || []).map((r) => [r.projekt_id, r.daten]));
       },
       async zahlenSpeichern(pid, daten) {
-        const { error } = await sb.from("kennzahlen").upsert({ projekt_id: pid, daten, geaendert: Date.now() });
+        const { error } = await H.from("kennzahlen").upsert({ projekt_id: pid, daten, geaendert: Date.now() });
         if (error) throw error;
       },
       async partnerAuftraege() {
-        const { data, error } = await sb.rpc("partner_auftraege");
+        const { data, error } = await H.rpc("partner_auftraege");
         if (error) throw error;
         return data || [];
       },
       async partnerMelden(pid, erledigt, notiz) {
-        const { data, error } = await sb.rpc("partner_melden", { p_projekt: pid, p_erledigt: erledigt, p_notiz: notiz });
+        const { data, error } = await H.rpc("partner_melden", { p_projekt: pid, p_erledigt: erledigt, p_notiz: notiz });
         if (error || !data) throw new Error("Meldung fehlgeschlagen");
       },
       async projekteLaden() {
-        const { data, error } = await sb.from("projekte").select("daten,geaendert");
+        const { data, error } = await H.from("projekte").select("daten,geaendert");
         if (error) throw error;
         stand = Math.max(0, ...data.map((r) => r.geaendert));
         return data.map((r) => ({ ...r.daten, geaendert: r.geaendert }));
@@ -306,31 +327,31 @@
       async projektSpeichern(p) {
         /* erst aktualisieren (dürfen auch Monteure), nur wenn neu: anlegen (nur das Büro) */
         const zeile = { daten: p, geaendert: p.geaendert, geloescht: !!p.geloescht };
-        const { data, error } = await sb.from("projekte").update(zeile).eq("id", p.id).select("id");
+        const { data, error } = await H.from("projekte").update(zeile).eq("id", p.id).select("id");
         if (error) throw error;
-        if (!data.length) { const r = await sb.from("projekte").insert({ id: p.id, ...zeile }); if (r.error) throw r.error; }
+        if (!data.length) { const r = await H.from("projekte").insert({ id: p.id, ...zeile }); if (r.error) throw r.error; }
         stand = Math.max(stand, p.geaendert);
       },
       async einstellungenLaden() {
-        const { data } = await sb.from("einstellungen").select("daten").eq("id", 1).maybeSingle();
+        const { data } = await H.from("einstellungen").select("daten").eq("id", 1).maybeSingle();
         return data ? data.daten : null;
       },
       async einstellungenSpeichern(e) {
-        const { error } = await sb.from("einstellungen").upsert({ id: 1, daten: e, geaendert: Date.now() });
+        const { error } = await H.from("einstellungen").upsert({ id: 1, daten: e, geaendert: Date.now() });
         if (error) throw error;
       },
       async dateien(pid) {
-        const { data, error } = await sb.from("dateien").select("*").eq("projekt_id", pid).order("am");
+        const { data, error } = await H.from("dateien").select("*").eq("projekt_id", pid).order("am");
         if (error) throw error;
         return data;
       },
       async alleDateien() {
-        const { data, error } = await sb.from("dateien").select("*").order("am");
+        const { data, error } = await H.from("dateien").select("*").order("am");
         if (error) throw error;
         return data || [];
       },
       async dateiVerschieben(rec, kat) {
-        const { error } = await sb.from("dateien").update({ kategorie: kat }).eq("id", rec.id);
+        const { error } = await H.from("dateien").update({ kategorie: kat }).eq("id", rec.id);
         if (error) throw error;
         rec.kategorie = kat;
       },
@@ -340,7 +361,7 @@
         const up = await sb.storage.from(BUCKET).upload(pfad, file, { contentType: file.type || "application/octet-stream" });
         if (up.error) throw up.error;
         const rec = { projekt_id: pid, kategorie, name: file.name, typ: file.type, groesse: file.size, pfad, quelle };
-        const { data, error } = await sb.from("dateien").insert(rec).select().single();
+        const { data, error } = await H.from("dateien").insert(rec).select().single();
         if (error) throw error;
         return data;
       },
@@ -351,27 +372,27 @@
       },
       async dateiLoeschen(rec) {
         await sb.storage.from(BUCKET).remove([rec.pfad]);
-        await sb.from("dateien").delete().eq("id", rec.id);
+        await H.from("dateien").delete().eq("id", rec.id);
       },
-      async gesehen(pid) { await sb.from("dateien").update({ neu: false }).eq("projekt_id", pid).eq("neu", true); },
+      async gesehen(pid) { await H.from("dateien").update({ neu: false }).eq("projekt_id", pid).eq("neu", true); },
       async uploadLink(p) {
-        const { data } = await sb.from("upload_links").select("token").eq("projekt_id", p.id).gt("gueltig_bis", new Date().toISOString()).limit(1);
+        const { data } = await H.from("upload_links").select("token").eq("projekt_id", p.id).gt("gueltig_bis", new Date().toISOString()).limit(1);
         if (data && data[0]) return data[0].token;
         const t = token();
-        const { error } = await sb.from("upload_links").insert({ token: t, projekt_id: p.id });
+        const { error } = await H.from("upload_links").insert({ token: t, projekt_id: p.id });
         if (error) throw error;
         return t;
       },
       /* geänderte Projekte holen (Kolleg:innen, Kunden-Uploads) */
       async abgleichen() {
-        const { data, error } = await sb.from("projekte").select("daten,geaendert").gt("geaendert", stand);
+        const { data, error } = await H.from("projekte").select("daten,geaendert").gt("geaendert", stand);
         if (error || !data.length) return [];
         stand = Math.max(stand, ...data.map((r) => r.geaendert));
         return data.map((r) => ({ ...r.daten, geaendert: r.geaendert }));
       },
       /* Portal */
       async portalInfo(t) {
-        const { data, error } = await sbKunde().rpc("portal_info", { p_token: t });
+        const { data, error } = await HKunde().rpc("portal_info", { p_token: t });
         if (error) throw error;
         return data;
       },
@@ -380,7 +401,7 @@
         const pfad = `kunde/${t}/${kategorie}/${uid()}-${sicher(file.name)}`;
         const up = await sbKunde().storage.from(BUCKET).upload(pfad, file, { contentType: file.type || "application/octet-stream" });
         if (up.error) throw new Error("Upload fehlgeschlagen");
-        const { data, error } = await sbKunde().rpc("portal_upload_melden", { p_token: t, p_pfad: pfad, p_kategorie: kategorie, p_name: file.name, p_typ: file.type, p_groesse: file.size });
+        const { data, error } = await HKunde().rpc("portal_upload_melden", { p_token: t, p_pfad: pfad, p_kategorie: kategorie, p_name: file.name, p_typ: file.type, p_groesse: file.size });
         if (error || !data) throw new Error("Upload konnte nicht zugeordnet werden");
         return { name: file.name, kategorie };
       },

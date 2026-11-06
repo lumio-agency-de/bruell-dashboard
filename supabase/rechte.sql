@@ -94,3 +94,53 @@ drop policy if exists fahrzeuge_lesen on storage.objects;
 drop policy if exists fahrzeuge_admin on storage.objects;
 create policy fahrzeuge_lesen on storage.objects for select to authenticated using (bucket_id = 'fahrzeuge' and darf_bereich('fahrzeuge'));
 create policy fahrzeuge_admin on storage.objects for all to authenticated using (bucket_id = 'fahrzeuge' and ist_gf()) with check (bucket_id = 'fahrzeuge' and ist_gf());
+
+-- ---------------------------------------------------------------------------
+-- „Personal bearbeiten“ (Bereich personal_bearbeiten, nur zusammen mit „personal“): z. B. Personalbüro.
+-- Darf alle Personalkarten komplett lesen und ändern (inkl. Bewertung/Notizen), anlegen und löschen,
+-- dazu Fotos und Dokumente der Karten. Lohnzettel bleiben bei „Lohn“/Lohnzettel-Freigabe, Konten beim Admin.
+-- ---------------------------------------------------------------------------
+create or replace function public.darf_personal_bearbeiten() returns boolean language sql stable security definer set search_path = public as $$
+  select ist_gf() or (darf_bereich('personal') and 'personal_bearbeiten' = any(meine_bereiche()))
+$$;
+revoke all on function public.darf_personal_bearbeiten() from public, anon;
+grant execute on function public.darf_personal_bearbeiten() to authenticated;
+
+drop policy if exists pe_bearbeiten on public.personal;
+create policy pe_bearbeiten on public.personal for all to authenticated using (darf_personal_bearbeiten()) with check (darf_personal_bearbeiten());
+
+create or replace function public.personal_alle() returns jsonb language plpgsql stable security definer set search_path = public as $$
+begin
+  if not darf_bereich('personal') then raise exception 'nicht erlaubt'; end if;
+  return coalesce((select jsonb_agg(jsonb_build_object('nr', nr, 'daten', case when darf_personal_bearbeiten() then daten else personal_ohne_intern(daten) end, 'geaendert', geaendert) order by nr::int)
+    from personal where not geloescht), '[]'::jsonb);
+end $$;
+
+drop policy if exists personal_bearbeiten_hoch on storage.objects;
+drop policy if exists personal_bearbeiten_aendern on storage.objects;
+drop policy if exists personal_bearbeiten_loeschen on storage.objects;
+create policy personal_bearbeiten_hoch on storage.objects for insert to authenticated with check (
+  bucket_id = 'personal' and (storage.foldername(name))[1] in ('foto', 'dokumente') and darf_personal_bearbeiten());
+create policy personal_bearbeiten_aendern on storage.objects for update to authenticated
+  using (bucket_id = 'personal' and (storage.foldername(name))[1] in ('foto', 'dokumente') and darf_personal_bearbeiten())
+  with check (bucket_id = 'personal' and (storage.foldername(name))[1] in ('foto', 'dokumente') and darf_personal_bearbeiten());
+create policy personal_bearbeiten_loeschen on storage.objects for delete to authenticated using (
+  bucket_id = 'personal' and (storage.foldername(name))[1] in ('foto', 'dokumente') and darf_personal_bearbeiten());
+
+-- ---------------------------------------------------------------------------
+-- Konto löschen (nur Admin, nicht das eigene; Personalkarte bleibt). Sperren geht weiter mit konto_aktiv.
+-- ---------------------------------------------------------------------------
+create or replace function public.konto_loeschen(p_email text) returns boolean
+language plpgsql security definer set search_path = public, auth as $$
+declare v_email text := lower(trim(p_email));
+begin
+  if not ist_gf() then raise exception 'nicht erlaubt'; end if;
+  if v_email = ich_email() then raise exception 'eigenes Konto kann nicht gelöscht werden'; end if;
+  delete from mitglieder where email = v_email;
+  if not found then return false; end if;
+  delete from auth.identities where user_id in (select id from auth.users where email = v_email);
+  delete from auth.users where email = v_email;
+  return true;
+end $$;
+revoke all on function public.konto_loeschen(text) from public, anon;
+grant execute on function public.konto_loeschen(text) to authenticated;

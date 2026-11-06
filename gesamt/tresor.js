@@ -65,8 +65,9 @@
       }
     });
   }
-  /* Mac mini (Datenbank): Entsperren nur der Geschäftsführung anbieten – alle anderen bekommen ihre Daten nur aus der DB */
+  /* Mac mini (Datenbank): kein Datenpasswort mehr – alle Daten kommen aus der Datenbank; alte entsperrte Kopie hier löschen */
   const anbieten = () => {
+    if (window.BruellDB) { weg(); return; }
     let gf = true;
     try { const e = JSON.parse(sessionStorage.getItem("bruell:sitzung") || localStorage.getItem("bruell:sitzung") || "null"); gf = (JSON.parse(localStorage.getItem("bruell:konten") || "[]").find((k) => k.email === e) || {}).ebene === "geschaeftsfuehrung"; } catch (e) { /* egal */ }
     if (window.BruellDB && !gf) return;

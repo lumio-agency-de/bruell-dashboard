@@ -17,8 +17,11 @@
   if (!box || !$("#rail").innerHTML) return;                                   // nicht angemeldet → personal.js leitet um
   if (!R.admin()) { location.replace("../" + location.search); return; }       // nur Admin
 
-  const ROLLEN = [["geschaeftsfuehrung", "Admin / Geschäftsführung"], ["planung", "Planung / Bearbeitung"], ["monteur", "Monteur"], ["mitarbeiter", "Mitarbeiter (nur eigene Karte)"], ["partner", "Partner (extern)"]];
-  const rolleTitel = (e) => (ROLLEN.find((r) => r[0] === e) || [, e])[1];
+  /* Büro = früher „Planung“ (gleiche Rechte in Bad/Heizung, intern weiter „planung“); „Mitarbeiter“ nur noch für alte Konten */
+  const ROLLEN = [["geschaeftsfuehrung", "Admin / Geschäftsführung"], ["planung", "Büro"], ["monteur", "Monteur"], ["partner", "Partner (extern)"]];
+  const ALT = { mitarbeiter: "Mitarbeiter (alt – bitte Rolle wählen)" };
+  const rolleTitel = (e) => (ROLLEN.find((r) => r[0] === e) || [, ALT[e] || e])[1];
+  const rollenFuer = (e) => (ALT[e] ? [...ROLLEN, [e, ALT[e]]] : ROLLEN);
   const kontoEmail = (b) => { const x = String(b || "").trim().toLowerCase(); return x.includes("@") ? x : `${x}@konto.bad-dashboard.de`; };
   const startPasswort = () => { const z = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789", r = crypto.getRandomValues(new Uint8Array(10)); return [...r].map((b) => z[b % z.length]).join(""); };
   const datum = (s) => (s ? new Date(s).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "noch nie");
@@ -47,6 +50,7 @@
     rolle: (k, ebene) => rpc("konto_aendern", { p_id: k.id, p_ebene: ebene, p_name: k.name, p_formulare: [] }),
     passwort: (email, pw) => rpc("konto_passwort_zuruecksetzen", { p_email: email, p_passwort: pw }),
     aktiv: (email, an) => rpc("konto_aktiv", { p_email: email, p_aktiv: an }),
+    loeschen: (email) => rpc("konto_loeschen", { p_email: email }),
     lohnzettel: (k, an) => rpc("konto_personal", { p_email: k.email, p_pk: k.pk || null, p_lohnzettel: an }),
   } : {
     liste: async () => lokal.get().map((k) => ({ ...k, bereicheWirksam: Array.isArray(k.bereiche) ? k.bereiche : R.STANDARD[k.ebene] || [] })),
@@ -60,16 +64,32 @@
     rolle: async (k, ebene) => lokal.mit(k.email, (x) => { x.ebene = ebene; }),
     passwort: async (email, pw) => { const salz = startPasswort() + startPasswort(), h = await pruefsumme(salz, pw); lokal.mit(email, (k) => { k.salz = salz; k.hash = h; k.mussAendern = true; }); },
     aktiv: async (email, an) => lokal.mit(email, (k) => { k.aktiv = an; }),
+    loeschen: async (email) => { const l = lokal.get(); if (!l.some((x) => x.email === email)) throw new Error("Konto nicht gefunden"); lokal.set(l.filter((x) => x.email !== email)); },
     lohnzettel: async (k, an) => lokal.mit(k.email, (x) => { x.lohnzettel = an; }),
   };
+
+  /* ---------- Übersicht: welche Widgets jemand sieht (gleiche Liste wie gesamt/uebersicht.js) ---------- */
+  const WIDGETS = [["kalender", "Kalender"], ["mail", "E-Mail"], ["bad", "Bad"], ["heizung", "Heizung"], ["baustellen", "Baustellen"], ["kennzahlen", "Kennzahlen"], ["personal", "Personal"], ["neu", "Neu vom Kunden"]];
+  const WIDGET_RECHT = { bad: ["bad"], heizung: ["heizung"], kalender: ["bad", "heizung", "fahrzeuge"], mail: ["bad", "heizung"], baustellen: ["bad", "heizung"], neu: ["bad", "heizung"], kennzahlen: ["monitor"], personal: ["personal"] };
+  const WIDGET_STANDARD = { geschaeftsfuehrung: WIDGETS.map((w) => w[0]), planung: ["kalender", "mail", "bad", "heizung", "baustellen", "neu"], monteur: ["kalender", "baustellen"] };
+  const widgetsVon = (k) => { const w = lesen("bruell:widgets", {})[k.id]; return Array.isArray(w) ? w : WIDGET_STANDARD[k.ebene] || WIDGET_STANDARD.planung; };
+  function widgetsSetzen(k, liste) { const alle = lesen("bruell:widgets", {}); if (liste) alle[k.id] = liste; else delete alle[k.id]; localStorage.setItem("bruell:widgets", JSON.stringify(alle)); }
+  function widgetAuswahl(k, admin, w) {
+    if (!admin && !w.includes("uebersicht")) return '<p class="leise">Sieht die Übersicht nicht (oben „Übersicht“ anhaken).</p>';
+    const an = widgetsVon(k), eigen = Array.isArray(lesen("bruell:widgets", {})[k.id]);
+    return `<label class="kt-haken"><input type="checkbox" data-a="w-standard"${eigen ? "" : " checked"}> Standard der Rolle verwenden</label>
+      <div class="kt-bereiche">${WIDGETS.map(([id, titel]) => { const frei = admin || WIDGET_RECHT[id].some((b) => w.includes(b)), aus = !eigen || !frei;
+        return `<label class="kt-haken${aus ? " aus" : ""}"${frei ? "" : ' title="Bereich dafür nicht freigegeben"'}><input type="checkbox" name="w-${esc(k.email)}" value="${id}"${an.includes(id) && frei ? " checked" : ""}${aus ? " disabled" : ""}> ${esc(titel)}</label>`; }).join("")}</div>
+      <small class="leise">Ausgegraut = Bereich dafür nicht freigegeben. Gespeichert in diesem Browser.</small>`;
+  }
 
   /* ---------- Anzeige ---------- */
   let KONTEN = [], OFFEN = "";
   const toast = (t) => { const el = $("#toast"); if (!el) return; el.textContent = t; el.classList.add("an"); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("an"), 2600); };
   const haken = (name, wert, an, aus) => `<label class="kt-haken${aus ? " aus" : ""}"><input type="checkbox" name="${name}" value="${wert}"${an ? " checked" : ""}${aus ? " disabled" : ""}> ${esc(R.BEREICHE.find((b) => b.key === wert)?.titel || wert)}</label>`;
   function bereichsAuswahl(name, aktiv, gesperrt) {
-    const haupt = R.BEREICHE.filter((b) => !b.eltern || b.eltern === "personal");
-    return `<div class="kt-bereiche">${haupt.map((b) => `<div class="kt-gruppe">${haken(name, b.key, aktiv.includes(b.key), gesperrt)}${b.key === "betrieb" ? `<div class="kt-unter">${R.BEREICHE.filter((u) => u.eltern === "betrieb").map((u) => haken(name, u.key, aktiv.includes(u.key), gesperrt)).join("")}</div>` : ""}</div>`).join("")}</div>`;
+    const haupt = R.BEREICHE.filter((b) => (!b.eltern || b.eltern === "personal") && b.key !== "personal_bearbeiten");
+    return `<div class="kt-bereiche">${haupt.map((b) => `<div class="kt-gruppe">${haken(name, b.key, aktiv.includes(b.key), gesperrt)}${b.key === "personal" ? `<div class="kt-unter">${haken(name, "personal_bearbeiten", aktiv.includes("personal_bearbeiten"), gesperrt)}</div>` : ""}${b.key === "betrieb" ? `<div class="kt-unter">${R.BEREICHE.filter((u) => u.eltern === "betrieb").map((u) => haken(name, u.key, aktiv.includes(u.key), gesperrt)).join("")}</div>` : ""}</div>`).join("")}</div>`;
   }
   function zeichnen() {
     const ich = R.konto();
@@ -84,14 +104,16 @@
             <span class="kt-name"><b>${esc(k.name || k.benutzer)}</b><small>${esc(rolleTitel(k.ebene))}${k.pk ? ` · Pers.-Nr. ${esc(k.pk)}` : ""}</small></span>
             <span class="kt-chips">${admin ? '<span class="status-chip">Admin – alles</span>' : w.map((x) => `<span class="kt-chip">${esc((R.BEREICHE.find((b) => b.key === x) || {}).titel || x)}</span>`).join("") || '<small class="leise">nur eigene Personalkarte</small>'}</span>${status}</button>
           ${OFFEN === k.email ? `<div class="kt-detail">
-            <div class="feld"><label>Rolle (Bad / Heizung)</label><select class="eingabe auto" data-a="rolle"${eigen ? " disabled" : ""}>${ROLLEN.map(([e, t]) => `<option value="${e}"${e === k.ebene ? " selected" : ""}>${t}</option>`).join("")}</select></div>
+            <div class="feld"><label>Rolle</label><select class="eingabe auto" data-a="rolle"${eigen ? " disabled" : ""}>${rollenFuer(k.ebene).map(([e, t]) => `<option value="${e}"${e === k.ebene ? " selected" : ""}>${t}</option>`).join("")}</select></div>
             <div class="feld"><label>Sieht im Menü</label>${admin ? '<p class="leise">Admins sehen alles und dürfen alles ändern.</p>' : `
               <label class="kt-haken"><input type="checkbox" data-a="standard"${Array.isArray(k.bereiche) ? "" : " checked"}> Standard der Rolle verwenden</label>
               ${bereichsAuswahl("b-" + k.email, w, !Array.isArray(k.bereiche))}`}</div>
+            ${k.ebene !== "partner" ? `<div class="feld"><label>Widgets auf der Übersicht</label>${widgetAuswahl(k, admin, w)}</div>` : ""}
             ${k.ebene !== "partner" && !admin ? `<label class="kt-haken"><input type="checkbox" data-a="lz"${k.lohnzettel ? " checked" : ""}> Darf Lohnzettel für alle hochladen</label>` : ""}
             <div class="kt-knoepfe">${k.pk ? `<a class="btn klein still" href="../personal/karte.html${location.search ? location.search + "&" : "?"}nr=${encodeURIComponent(k.pk)}">Personalkarte</a>` : ""}
               <button type="button" class="btn klein" data-a="pw">Neues Startpasswort</button>
-              ${eigen ? "" : `<button type="button" class="btn klein ${k.aktiv === false ? "" : "still gefahr"}" data-a="sperre">${k.aktiv === false ? "Entsperren" : "Sperren"}</button>`}</div>
+              ${eigen ? "" : `<button type="button" class="btn klein ${k.aktiv === false ? "" : "still gefahr"}" data-a="sperre">${k.aktiv === false ? "Entsperren" : "Sperren"}</button>
+              <button type="button" class="btn klein still gefahr" data-a="loeschen">Konto löschen</button>`}</div>
           </div>` : ""}</section>`;
       }).join("") || '<section class="panel"><p class="leise" style="padding:16px">Noch keine Zugänge.</p></section>'}</div>`;
   }
@@ -123,7 +145,7 @@
       <div class="dlg-inhalt"><div class="felder">
         <div class="feld"><label for="kt-p">Mitarbeiter</label><select class="eingabe" id="kt-p" required><option value="">– bitte wählen –</option>${ps.map((p) => `<option value="${p.nr}"${vergeben.has(p.nr) ? " disabled" : ""}>${esc(p.name)}${p.kuerzel ? ` (${esc(p.kuerzel)})` : ""}${vergeben.has(p.nr) ? " – hat schon einen Zugang" : ""}</option>`).join("")}</select></div>
         <div class="feld"><label for="kt-b">Benutzername</label><input class="eingabe" id="kt-b" required autocapitalize="characters" spellcheck="false" placeholder="Kürzel"></div>
-        <div class="feld"><label for="kt-r">Rolle (Bad / Heizung)</label><select class="eingabe" id="kt-r">${ROLLEN.filter(([e]) => e !== "partner").map(([e, t]) => `<option value="${e}"${e === "mitarbeiter" ? " selected" : ""}>${t}</option>`).join("")}</select></div>
+        <div class="feld"><label for="kt-r">Rolle</label><select class="eingabe" id="kt-r">${ROLLEN.filter(([e]) => e !== "partner").map(([e, t]) => `<option value="${e}"${e === "planung" ? " selected" : ""}>${t}</option>`).join("")}</select></div>
         <div class="feld"><label>Sieht im Menü</label><div id="kt-bereiche"></div></div>
       </div><p class="luecken versteckt" id="kt-f" role="alert"></p></div>
       <div class="dlg-fuss"><button class="btn" type="button" data-zu>Abbrechen</button><button class="btn jetzt" type="submit">Anlegen</button></div></form>`, (d) => {
@@ -157,6 +179,10 @@
       if (a.dataset.a === "neu") return neuDialog();
       if (a.dataset.a === "auf") { OFFEN = OFFEN === k.email ? "" : k.email; return zeichnen(); }
       if (a.dataset.a === "pw") { if (!confirm(`Neues Startpasswort für ${k.benutzer.toUpperCase()} erzeugen? Das bisherige gilt dann nicht mehr.`)) return; const pw = startPasswort(); await Konten.passwort(k.email, pw); await laden(); return passwortZeigen(k.name, k.benutzer.toUpperCase(), pw); }
+      if (a.dataset.a === "loeschen") {
+        if (!confirm(`Zugang „${String(k.benutzer || "").toUpperCase()}“ (${k.name}) endgültig löschen?\n\nDie Person kann sich danach nicht mehr anmelden. Die Personalkarte bleibt erhalten. Nur vorübergehend? Dann lieber „Sperren“.`)) return;
+        await Konten.loeschen(k.email); OFFEN = ""; toast("Zugang gelöscht"); return laden();
+      }
       if (a.dataset.a === "sperre") { const an = k.aktiv === false; if (!an && !confirm(`${k.name} sperren? Die Person kann sich dann nicht mehr anmelden.`)) return; await Konten.aktiv(k.email, an); toast(an ? "Entsperrt" : "Gesperrt"); return laden(); }
     } catch (err) { alert(err.message || err); }
   });
@@ -165,6 +191,8 @@
     try {
       if (t.dataset.a === "rolle") { await Konten.rolle(k, t.value); toast("Rolle geändert"); return laden(); }
       if (t.dataset.a === "standard") { await Konten.bereiche(k.email, t.checked ? null : (k.bereicheWirksam || [])); toast(t.checked ? "Standard der Rolle" : "Eigene Auswahl"); return laden(); }
+      if (t.dataset.a === "w-standard") { widgetsSetzen(k, t.checked ? null : widgetsVon(k)); toast(t.checked ? "Widgets: Standard der Rolle" : "Widgets: eigene Auswahl"); return zeichnen(); }
+      if (t.name === "w-" + k.email) { widgetsSetzen(k, [...box.querySelectorAll(`input[name="w-${CSS.escape(k.email)}"]:checked`)].map((x) => x.value)); toast("Widgets gespeichert"); return; }
       if (t.dataset.a === "lz") { await Konten.lohnzettel(k, t.checked); toast(t.checked ? "Lohnzettel-Freigabe erteilt" : "Freigabe entzogen"); return laden(); }
       if (t.name === "b-" + k.email) { await Konten.bereiche(k.email, [...box.querySelectorAll(`input[name="b-${CSS.escape(k.email)}"]:checked`)].map((x) => x.value)); toast("Gespeichert"); return laden(); }
     } catch (err) { alert(err.message || err); laden(); }

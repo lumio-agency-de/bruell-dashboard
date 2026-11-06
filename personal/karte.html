@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="../gesamt/dunkel-auto.css?v=202611032230">
   <link rel="stylesheet" href="../gesamt/thema.css?v=202611050800">
   <link rel="stylesheet" href="../gesamt/mobil.css?v=202610252020">
-  <script src="../gesamt/thema.js?v=202611050800"></script>
+  <script src="../gesamt/thema.js?v=202611061800"></script>
 </head>
 <body class="personal-seite karte-seite">
 <div class="shell">
@@ -218,13 +218,14 @@
 <script>document.write('<script src="daten-lokal.js" onerror="this.remove()"><\/script>')</script>
 <script>document.write('<script src="fotos-lokal.js" onerror="this.remove()"><\/script>')</script>
 <script src="../personal/daten-tresor.js?v=1792953619395" onerror="this.remove()"></script>
-<script src="../gesamt/tresor.js?v=202611050800"></script>
-<script src="../gesamt/werkzeug.js?v=202611012000"></script>
+<script src="../gesamt/tresor.js?v=202611061830"></script>
+<script src="../gesamt/werkzeug.js?v=202611061700"></script>
 <script src="../gesamt/cloud.js" onerror="this.remove()"></script>
-<script>if (window.BRUELL_CLOUD) document.write('<script src="../bad/app/vendor/supabase.js?v=202610271848"><\/script><script src="../gesamt/db.js?v=202611050800"><\/script>')</script>
+<script>if (window.BRUELL_CLOUD) document.write('<script src="../bad/app/vendor/supabase.js?v=202610271848"><\/script><script src="../gesamt/db.js?v=202611061800"><\/script>')</script>
+<script>if (window.BRUELL_CLOUD) document.write('<script src="../gesamt/sperre.js?v=202611061800"><\/script>')</script>
 <script src="../gesamt/passwort.js?v=202611050800"></script>
-<script src="../gesamt/dateien.js?v=202611050800"></script>
-<script src="../gesamt/personal.js?v=202611050800"></script>
+<script src="../gesamt/dateien.js?v=202611061500"></script>
+<script src="../gesamt/personal.js?v=202611061830"></script>
 <script>
 /* ===== Funktionen der Personalkarte (aus der Vorlage übernommen) ===== */
 function applyPendingQty() {}
@@ -641,7 +642,7 @@ function dokLaden(d){
 // Hochladen dürfen die Geschäftsführung und Konten mit Freigabe „Lohnzettel hochladen“ (Lohnabrechnung → Einstellungen).
 const LZ_MONATE=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 let LZ=[], LZ_JAHRE_OFFEN=[];
-const lzDarf=()=>!window.PK_NUR_LESEN||!!window.PK_LZ_DARF;
+const lzDarf=()=>(!window.PK_NUR_LESEN&&!window.PK_PB)||!!window.PK_LZ_DARF;   // „Personal bearbeiten“ allein: keine Lohnzettel
 const lzText=m=>{const [j,mo]=m.split('-');return LZ_MONATE[+mo-1]+' '+j;};
 // Geschlossene Ordner merkt sich jeder Browser selbst (nur Anzeige)
 const LZ_ZU_KEY='lz-zu:'+PK_NR;
@@ -799,10 +800,10 @@ async function zugangAktiv(an){
 // ── Nur lesen (eigene Karte eines Mitarbeiters) ───────────────────────────
 function nurLesen(){
   document.body.classList.add('nur-lesen');
-  document.querySelectorAll('.nur-intern').forEach(el=>el.remove());
+  if(!window.BRUELL_GESPERRT) document.querySelectorAll('.nur-intern').forEach(el=>el.remove());   // Admin im Nur-Lesen (Schreibschutz) sieht weiter alles
   document.querySelectorAll('#main input, #main select, #main textarea').forEach(el=>{el.disabled=true;});
   window.saveData=function(){};
-  const z=document.querySelector('.back-btn'); if(z) z.remove();
+  const z=document.querySelector('.back-btn'); if(z&&!window.BRUELL_GESPERRT) z.remove();
   if(window.PK_NUR_LOHNZETTEL){
     document.body.classList.add('nur-lohnzettel');
     document.querySelectorAll('.tab-btn').forEach(b=>{ if(!/showTab\('lz'/.test(b.getAttribute('onclick')||'')) b.remove(); });
@@ -961,7 +962,8 @@ function loadData(){
   dokLaden(d);
   try{ LZ=d._lohnzettel?JSON.parse(d._lohnzettel):[]; }catch(e){ LZ=[]; }
   lzZeichnen();
-  if(!window.PK_NUR_LESEN) zugangZeichnen();
+  if(!window.PK_NUR_LESEN&&!window.PK_PB) zugangZeichnen();   // Zugang/Konto: nur Admin
+  if(window.PK_PB){ const zb=document.getElementById('zugangBox'); if(zb) zb.remove(); }
   // Gleitzeit je Monat (ältere Karten: einzelner Ist-Wert → in seinen Monat übernehmen)
   try{ GZ=d._gleitzeit?JSON.parse(d._gleitzeit):{}; }catch(e){ GZ={}; }
   if(!d._gleitzeit&&String(d.gz_ist||'').trim()&&ueStd(d.gz_ist)!==0){   /* „0:00“ aus alten Karten nicht übernehmen */ const h=new Date(), k=/^\d{4}-\d{2}$/.test(d.gz_monat||'')?d.gz_monat:h.getFullYear()+'-'+String(h.getMonth()+1).padStart(2,'0'); GZ[k]={ist:ueTxt(ueStd(d.gz_ist))}; }
@@ -1063,7 +1065,7 @@ if(window.PK_NUR_LESEN) nurLesen();
 // Werkzeug & Geräte (gemeinsame Liste mit dem Firmenlager, gesamt/werkzeug.js); alte Tabelle einmalig übernehmen
 if(window.Werkzeug&&document.getElementById('wzBereich')){
   try{ Werkzeug.uebernehmen(PK_NR,(JSON.parse(localStorage.getItem(SK)||'{}'))._wz_table); }catch(e){}
-  Werkzeug.einbauen(document.getElementById('wzBereich'),{bei:PK_NR,nurLesen:!!window.PK_NUR_LESEN});
+  Werkzeug.einbauen(document.getElementById('wzBereich'),{bei:PK_NR,nurLesen:!!window.PK_NUR_LESEN||!!window.PK_PB});   // Werkzeuge ändern nur Admins
 }
 { const tab={'#lohnzettel':'lz','#gleitzeit':'gz','#dokumente':'son'}[location.hash];   // Direktlinks auf einen Reiter
   const b=tab&&[...document.querySelectorAll('.tab-btn')].find(x=>(x.getAttribute('onclick')||'').includes(`showTab('${tab}'`)); if(b) showTab(tab,b); }

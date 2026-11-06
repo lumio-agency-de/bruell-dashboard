@@ -130,7 +130,7 @@
   };
 
   /* ---------- Einstellungen: wer darf Lohnzettel hochladen? (Geschäftsführung immer) ---------- */
-  const TITEL = { planung: "Planung / Bearbeitung", monteur: "Monteur", mitarbeiter: "Mitarbeiter" };
+  const TITEL = { planung: "Büro", monteur: "Monteur", mitarbeiter: "Mitarbeiter" };
   function einstellungen() {
     if (!window.pkZugang) return "";
     const l = window.pkZugang.alle().filter((k) => k.ebene !== "geschaeftsfuehrung" && k.ebene !== "partner");

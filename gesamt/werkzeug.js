@@ -6,7 +6,7 @@
    (bei = Pers.-Nr.) oder im Firmenlager (bei = "").
    Je Werkzeug: Stammdaten · Ausgabe · Rücknahme · Reparatur/Kosten.
    Speicher: localStorage „bruell:werkzeuge“ (nur dieser Browser, nie im Repo),
-   Bilder in IndexedDB „bruell-dokumente“ unter „wz-bild:<id>“.
+   Bilder in IndexedDB „bruell-dokumente“ unter „wz-bild:<id>“ (Mac mini: zusätzlich Dateispeicher, über gesamt/dateien.js).
    ========================================================================== */
 window.Werkzeug = (function () {
   "use strict";
@@ -67,8 +67,13 @@ window.Werkzeug = (function () {
       img.src = URL.createObjectURL(datei);
     });
   }
+  /* Mac mini: über gesamt/dateien.js (Dateispeicher, auf allen Geräten); sonst nur im Browser */
+  const D = () => window.BruellDateien;
+  const bildGet = (id) => (D() ? D().get("wz-bild:" + id) : idb("readonly", (st) => st.get("wz-bild:" + id)));
+  const bildPut = (id, b) => (D() ? D().put("wz-bild:" + id, b) : idb("readwrite", (st) => st.put(b, "wz-bild:" + id)));
+  const bildDel = (id) => (D() ? D().del("wz-bild:" + id) : idb("readwrite", (st) => st.delete("wz-bild:" + id)));
   async function bildZeigen(box, id) {
-    const b = await idb("readonly", (st) => st.get("wz-bild:" + id)).catch(() => null);
+    const b = await bildGet(id).catch(() => null);
     const el = box.querySelector(`.wz-bild[data-id="${id}"]`); if (!el) return;
     el.innerHTML = b ? `<img src="${URL.createObjectURL(b)}" alt="Bild">` : '<span class="leise">kein Bild</span>';
   }
@@ -160,6 +165,12 @@ window.Werkzeug = (function () {
       if (neuZeichnen) { o.offen = id; zeichnen(); }
     }
     const wert = (karteEl, sel) => (karteEl.querySelector(sel) || {}).value || "";
+    /* Mac mini: bearbeitet gerade jemand anders die Werkzeuge (gesamt/sperre.js) → hier nur lesen */
+    document.addEventListener("bruell:teil-gesperrt", (e) => {
+      if (e.detail.ressource !== "gesamt:werkzeuge" || o.nurLesen) return;
+      o.nurLesen = true; zeichnen();
+      box.insertAdjacentHTML("afterbegin", `<p class="leise wz-leer">🔒 ${esc(e.detail.name || "Jemand")} bearbeitet gerade die Werkzeuge – hier nur lesen.</p>`);
+    });
     box.addEventListener("change", async (e) => {
       const t = e.target, k = t.closest(".wz-karte"), id = k && k.dataset.id;
       if (t.dataset.f && id && !o.nurLesen) {
@@ -169,7 +180,7 @@ window.Werkzeug = (function () {
         if (f === "preis" && v) t.value = String(v).replace(".", ",");
       }
       if (t.dataset.bild && t.files[0]) {
-        try { const b = await verkleinern(t.files[0]); await idb("readwrite", (st) => st.put(b, "wz-bild:" + t.dataset.bild)); aendern(t.dataset.bild, (w) => { w.bild = true; }, true); }
+        try { const b = await verkleinern(t.files[0]); await bildPut(t.dataset.bild, b); aendern(t.dataset.bild, (w) => { w.bild = true; }, true); }
         catch (err) { alert(err.message || err); }
       }
       if (t.matches("[data-aus-lager]") && t.value) {
@@ -212,11 +223,11 @@ window.Werkzeug = (function () {
         setTimeout(() => { const kk = box.querySelector(`.wz-karte[data-id="${b.dataset.reparatur}"] [data-reiter="rep"]`); if (kk) kk.click(); });
         return;
       }
-      if (b.dataset.bildWeg) { await idb("readwrite", (st) => st.delete("wz-bild:" + b.dataset.bildWeg)).catch(() => {}); aendern(b.dataset.bildWeg, (w) => { w.bild = false; }, true); return; }
+      if (b.dataset.bildWeg) { await bildDel(b.dataset.bildWeg).catch(() => {}); aendern(b.dataset.bildWeg, (w) => { w.bild = false; }, true); return; }
       if (b.dataset.loeschen) {
         const w = alle().find((x) => x.id === b.dataset.loeschen);
         if (!w || !confirm(`„${titel(w)}“ endgültig löschen? Der Verlauf geht dabei verloren.\n(Ausgemusterte Geräte besser auf Zustand „ausgemustert“ setzen.)`)) return;
-        speichern(alle().filter((x) => x.id !== w.id)); idb("readwrite", (st) => st.delete("wz-bild:" + w.id)).catch(() => {}); zeichnen();
+        speichern(alle().filter((x) => x.id !== w.id)); bildDel(w.id).catch(() => {}); zeichnen();
       }
     });
     zeichnen();

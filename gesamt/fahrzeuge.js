@@ -240,7 +240,7 @@
     };
     $("#fz-speichern").addEventListener("click", speichern); $("#fz-speichern2").addEventListener("click", speichern);
     /* Nur Admins ändern Fahrzeuge – alle anderen (Freigabe „Fahrzeuge“) sehen die Karte nur lesend; Dokumente öffnen geht */
-    if (window.BruellRechte && !window.BruellRechte.admin()) {
+    if ((window.BruellRechte && !window.BruellRechte.admin()) || window.BRUELL_GESPERRT) {   // gesperrt: jemand anders bearbeitet (gesamt/sperre.js)
       inhalt.querySelectorAll("input:not([type=hidden]), select, textarea").forEach((el) => { el.disabled = true; });
       inhalt.querySelectorAll("#fz-speichern, #fz-speichern2, #fz-loeschen, [data-zeile-neu], [data-zeile-weg], [data-datei-wahl]").forEach((el) => (el.closest("label") || el).remove());
       $("#fz-status").textContent = "Nur lesen";

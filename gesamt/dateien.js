@@ -8,8 +8,8 @@
      „<Nr>:lz-<JJJJ-MM>“  → Bucket personal   lohnzettel/<Nr>/lz-<JJJJ-MM>
      „<Nr>:<Feld-ID>“     → Bucket personal   dokumente/<Nr>/<Feld-ID>
      „fz:<Nr>:<Zeile>“    → Bucket fahrzeuge  dokumente/<Nr>/<Zeile>
-     andere (z. B. „wz-bild:…“) bleiben nur im Browser.
-   Rechte prüft die Datenbank (supabase/personal.sql, fahrzeuge.sql).
+     „wz-bild:<ID>“       → Bucket werkzeuge  bilder/<ID>
+   Rechte prüft die Datenbank (supabase/personal.sql, fahrzeuge.sql, ablage.sql).
    Laden nach db.js (falls vorhanden) und vor der Seite.
    ========================================================================== */
 window.BruellDateien = (function () {
@@ -23,6 +23,7 @@ window.BruellDateien = (function () {
   const sicher = (s) => String(s).replace(/[^A-Za-z0-9._-]/g, "_");
   function ziel(k) {
     let m;
+    if ((m = /^wz-bild:(.+)$/.exec(k))) return ["werkzeuge", `bilder/${sicher(m[1])}`];
     if ((m = /^fz:(\d+):(.+)$/.exec(k))) return ["fahrzeuge", `dokumente/${m[1]}/${sicher(m[2])}`];
     if ((m = /^(\d+):(lz-.+)$/.exec(k))) return ["personal", `lohnzettel/${m[1]}/${sicher(m[2])}`];
     if ((m = /^(\d+):(.+)$/.exec(k))) return ["personal", `dokumente/${m[1]}/${sicher(m[2])}`];
@@ -59,6 +60,7 @@ window.BruellDateien = (function () {
     const fz = (await sb.storage.from("fahrzeuge").list("dokumente", { limit: 1000 })).data || [];
     const fzDa = new Set();
     for (const ordner of fz) { const l = (await sb.storage.from("fahrzeuge").list("dokumente/" + ordner.name, { limit: 1000 })).data || []; l.forEach((f) => fzDa.add(`dokumente/${ordner.name}/${f.name}`)); }
+    ((await sb.storage.from("werkzeuge").list("bilder", { limit: 5000 })).data || []).forEach((f) => fzDa.add(`bilder/${f.name}`));
     const schluessel = await lokal("readonly", (st) => st.getAllKeys()).catch(() => []);
     let n = 0;
     for (const k of schluessel) {

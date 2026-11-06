@@ -138,7 +138,7 @@ window.FIRMA = {
 window.EBENEN = [
   { id: "geschaeftsfuehrung", titel: "Geschäftsführung",
     kann: ["Alle Projekte sehen und bearbeiten", "Interne Freigaben (z. B. Angebot geprüft)", "Einrichtung: Firma, Team, Partner, Rechte", "Projekte löschen", "Team-Auslastung im Cockpit"] },
-  { id: "planung", titel: "Planung / Bearbeitung",
+  { id: "planung", titel: "Büro",
     kann: ["Alle Projekte sehen und bearbeiten", "Neue Anfragen anlegen, Level freischalten", "Kundenmails & Kundenlinks", "Monteure und Partner zuweisen"] },
   { id: "monteur", titel: "Monteur",
     kann: ["Nur zugewiesene Baustellen", "Besichtigung, Restarbeiten, Abnahmeprotokoll mit Unterschrift", "Fotos hochladen, Monteurmappe drucken", "Keine Angebote, Aufträge, Rechnungen"] },
